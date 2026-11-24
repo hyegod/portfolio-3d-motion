@@ -525,13 +525,27 @@ export function Act4SkillsPitch() {
           if (bgEl) {
             if (!isCurrent) {
               bgEl.style.visibility = "hidden";
+              bgEl.style.clipPath = "none";
             } else {
               bgEl.style.visibility = "visible";
               if (cIdx === 0) {
+                // Civil: circular iris from center — like a blueprint opening
                 const wipeIn = easeInOutCubic(clamp01((p - 0.105) / 0.035));
                 bgEl.style.clipPath = `circle(${(wipeIn * 150).toFixed(1)}% at 50% 50%)`;
+              } else if (cIdx === 1) {
+                // Software: horizontal inset wipe from left → right (like a terminal loading bar)
+                const wipeIn = easeInOutCubic(clamp01((p - 0.315) / 0.03));
+                const pct = ((1 - wipeIn) * 100).toFixed(1);
+                bgEl.style.clipPath = `inset(0 ${pct}% 0 0)`;
+              } else if (cIdx === 2) {
+                // UI/UX & 3D: vertical blind drop from top — curtain rising on a stage
+                const wipeIn = easeInOutCubic(clamp01((p - 0.51) / 0.03));
+                const pct = ((1 - wipeIn) * 100).toFixed(1);
+                bgEl.style.clipPath = `inset(0 0 ${pct}% 0)`;
               } else {
-                bgEl.style.clipPath = "none";
+                // Hobbies: circle wipe from bottom-center — like a spotlight hitting the stage
+                const wipeIn = easeInOutCubic(clamp01((p - 0.705) / 0.03));
+                bgEl.style.clipPath = `circle(${(wipeIn * 150).toFixed(1)}% at 50% 100%)`;
               }
             }
           }
@@ -597,12 +611,37 @@ export function Act4SkillsPitch() {
                     const norm =
                       absD <= 0.28 ? 1 : 1 - (absD - 0.28) / 0.26;
                     const eased = norm * norm * (3 - 2 * norm);
-                    const yShift = absD <= 0.16 ? 0 : d * 48;
-                    const skew = absD <= 0.16 ? 0 : d * -10;
-                    const sc = 0.94 + eased * 0.06;
+                    let transform = "";
+
+                    if (cIdx === 0) {
+                      // Civil & Structural — vertical film-roll drum + skewX (blueprint paper feel)
+                      const yShift = absD <= 0.16 ? 0 : d * 52;
+                      const skew = absD <= 0.16 ? 0 : d * -12;
+                      const sc = 0.93 + eased * 0.07;
+                      transform = `translate3d(0, ${yShift.toFixed(1)}px, 0) skewX(${skew.toFixed(1)}deg) scale(${sc.toFixed(3)})`;
+                    } else if (cIdx === 1) {
+                      // Software & Solvers — horizontal code-scroll swipe + depth push
+                      const xShift = absD <= 0.16 ? 0 : d * -95;
+                      const yShift = absD <= 0.16 ? 0 : d * 12;
+                      const sc = 0.92 + eased * 0.08;
+                      transform = `translate3d(${xShift.toFixed(1)}px, ${yShift.toFixed(1)}px, 0) scale(${sc.toFixed(3)})`;
+                    } else if (cIdx === 2) {
+                      // UI/UX & 3D — perspective rotateX flip (like a spatial card turning in 3D)
+                      const rotX = absD <= 0.16 ? 0 : d * 24;
+                      const yShift = absD <= 0.16 ? 0 : d * 22;
+                      const sc = 0.95 + eased * 0.05;
+                      transform = `perspective(900px) translate3d(0, ${yShift.toFixed(1)}px, 0) rotateX(${rotX.toFixed(1)}deg) scale(${sc.toFixed(3)})`;
+                    } else {
+                      // Hobbies — vinyl spin-in: scale pulse + slight rotation (organic, laid-back)
+                      const sc = 0.66 + eased * 0.34;
+                      const rot = absD <= 0.16 ? 0 : d * -9;
+                      const yShift = absD <= 0.16 ? 0 : d * 30;
+                      transform = `translate3d(0, ${yShift.toFixed(1)}px, 0) rotate(${rot.toFixed(1)}deg) scale(${sc.toFixed(3)})`;
+                    }
+
                     slide.style.visibility = "visible";
                     slide.style.opacity = eased.toFixed(3);
-                    slide.style.transform = `translate3d(0, ${yShift.toFixed(1)}px, 0) skewX(${skew.toFixed(1)}deg) scale(${sc.toFixed(3)})`;
+                    slide.style.transform = transform;
                   }
                 }
 
