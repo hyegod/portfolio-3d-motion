@@ -85,26 +85,12 @@ export function Act3KineticBridge() {
     };
 
     const ctx = gsap.context(() => {
-      ScrollTrigger.create({
-        trigger: section,
-        start: "top top",
-        end: "bottom bottom",
-        scrub: true,
-        onEnter: () => {
-          setActiveChapter("act-3");
-          setLetterboxActive(true);
-        },
-        onEnterBack: () => {
-          setActiveChapter("act-3");
-          setLetterboxActive(true);
-        },
-        onUpdate: (self) => {
-          const p = self.progress;
-          setLetterboxActive(p <= 0.78);
+      const applyProgress = (p: number, updateHud = true) => {
+        if (updateHud) setLetterboxActive(p <= 0.78);
 
-          // === BEAT 0 (0.00 -> 0.40): CLICK RIPPLE + CHROMATIC SNAP + WHIP-PAN SKEW ===
-          if (p < 0.4) {
-            setActiveBeat(0);
+        // === BEAT 0 (0.00 -> 0.40): CLICK RIPPLE + CHROMATIC SNAP + WHIP-PAN SKEW ===
+        if (p < 0.4) {
+          setActiveBeat(0);
             const nextWord =
               p < 0.16
                 ? PORTFOLIO_DATA.kineticBridge.initialSkillText
@@ -245,8 +231,28 @@ export function Act3KineticBridge() {
               createSubRef.current.style.opacity = Math.min(1, local * 3).toFixed(3);
             }
           }
+      };
+
+      const st = ScrollTrigger.create({
+        trigger: section,
+        start: "top top",
+        end: "bottom bottom",
+        scrub: true,
+        onEnter: () => {
+          setActiveChapter("act-3");
+          setLetterboxActive(true);
+        },
+        onEnterBack: () => {
+          setActiveChapter("act-3");
+          setLetterboxActive(true);
+        },
+        onUpdate: (self) => {
+          applyProgress(self.progress, true);
         },
       });
+
+      // Pre-seed exact p=0 state on mount so entering "top top" never flicks!
+      applyProgress(st.progress, false);
     }, section);
 
     return () => ctx.revert();

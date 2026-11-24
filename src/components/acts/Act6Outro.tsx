@@ -26,7 +26,7 @@ function clamp01(v: number) {
 }
 
 function easeOutBack(x: number) {
-  const c1 = 1.85;
+  const c1 = 1.8;
   const c3 = c1 + 1;
   return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2);
 }
@@ -91,17 +91,26 @@ const INQUIRY_CHANNELS: InquiryChannel[] = [
   },
 ];
 
+const LIT_CLASSES = [
+  "-rotate-1",
+  "scale-[1.04]",
+  "bg-[#C6FF3D]",
+  "text-[#050C14]",
+  "shadow-[0_18px_50px_rgba(198,255,61,0.42)]",
+  "ring-2",
+  "ring-white/80",
+];
+const UNLIT_CLASSES = ["bg-white/[0.04]", "text-[#C6FF3D]"];
+
 /**
  * Explosive Kinetic Showreel Finale & Magnetic Contact Launchpad (Chapter 06)
- * - Counter-racing kinetic background typography ribbons scrubbed on scroll
- * - Expanding concentric radar sonar portal + 3D perspective stage tilt
- * - Per-letter elastic 3D flip-slam on "Extraordinary." + animated cursor click highlight
- * - Live 60fps harmonic oscilloscope SVG reacting to selected collaboration channel
- * - Magnetic cursor-pull hero launch capsule + celebratory copy shockwave burst
+ * - Zero FOUC / Zero double-animation: pre-seeded initial hidden transforms + seamless "top 88%" scrub
+ * - Zero React re-renders during scroll or clock ticks (100% direct DOM refs)
  */
 export function Act6Outro() {
   const sectionRef = useRef<HTMLElement>(null);
   const stage3DRef = useRef<HTMLDivElement>(null);
+  const clockSpanRef = useRef<HTMLSpanElement>(null);
 
   // Background kinetic ribbons & portal rings
   const ribbonTopRef = useRef<HTMLDivElement>(null);
@@ -112,7 +121,7 @@ export function Act6Outro() {
   // Kinetic headline refs
   const line1Ref = useRef<HTMLSpanElement>(null);
   const line2Ref = useRef<HTMLSpanElement>(null);
-  const extraPillRef = useRef<HTMLDivElement>(null);
+  const extraBtnRef = useRef<HTMLButtonElement>(null);
   const extraCharsRef = useRef<(HTMLSpanElement | null)[]>([]);
   const pointerCursorRef = useRef<HTMLDivElement>(null);
 
@@ -126,9 +135,6 @@ export function Act6Outro() {
   const [activeChannelId, setActiveChannelId] = useState<string>("software-api");
   const [copied, setCopied] = useState(false);
   const [burstKey, setBurstKey] = useState(0);
-  const [pillLit, setPillLit] = useState(false);
-  const wasLitRef = useRef(false);
-  const [timeString, setTimeString] = useState<string>("12:00:00");
 
   const { setActiveChapter, setLetterboxActive, setContactOpen, scrollToChapter } =
     useShowreel();
@@ -142,30 +148,48 @@ export function Act6Outro() {
 
   const freqRef = useRef(selectedChannel.freq);
   const spikeRef = useRef(0);
+  const isPillLitRef = useRef(false);
+
+  const setPillLitDOM = (lit: boolean) => {
+    if (isPillLitRef.current === lit) return;
+    isPillLitRef.current = lit;
+    const btn = extraBtnRef.current;
+    if (!btn) return;
+    if (lit) {
+      btn.classList.remove(...UNLIT_CLASSES);
+      btn.classList.add(...LIT_CLASSES);
+      spikeRef.current = 1.05;
+    } else {
+      btn.classList.remove(...LIT_CLASSES);
+      btn.classList.add(...UNLIT_CLASSES);
+    }
+  };
 
   useEffect(() => {
     freqRef.current = selectedChannel.freq;
-    spikeRef.current = 1.0; // Energetic amplitude burst whenever user switches channel!
+    spikeRef.current = 1.0;
   }, [selectedChannel]);
 
-  // Live Jakarta WIB clock (UTC+7)
+  // Zero-rerender live Jakarta WIB clock (updates DOM textContent directly)
   useEffect(() => {
-    const updateTime = () => {
-      const options: Intl.DateTimeFormatOptions = {
-        timeZone: "Asia/Jakarta",
-        hour12: false,
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-      };
-      setTimeString(new Intl.DateTimeFormat("en-GB", options).format(new Date()));
+    const fmt = new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Asia/Jakarta",
+      hour12: false,
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    });
+    const tickClock = () => {
+      if (clockSpanRef.current) {
+        clockSpanRef.current.textContent = `WIB ${fmt.format(new Date())}`;
+      }
     };
-    updateTime();
-    const interval = setInterval(updateTime, 1000);
+    tickClock();
+    const interval = setInterval(tickClock, 1000);
     return () => clearInterval(interval);
   }, []);
 
-  // 1. Scroll-Scrubbed Kinetic Choreography + Living 60fps Harmonic Oscilloscope
+  // Scroll-Scrubbed Kinetic Choreography + Living 60fps Harmonic Oscilloscope
   useEffect(() => {
     const section = sectionRef.current;
     if (!section) return;
@@ -174,7 +198,6 @@ export function Act6Outro() {
     let inViewport = false;
     let phase = 0;
 
-    // Lightweight 60fps SVG Dual-Harmonic Oscilloscope & Living Character Ripple
     const tickWave = () => {
       if (inViewport) {
         phase += 0.065;
@@ -215,15 +238,88 @@ export function Act6Outro() {
       ([entry]) => {
         inViewport = entry.isIntersecting;
       },
-      { rootMargin: "200px 0px" }
+      { rootMargin: "250px 0px" }
     );
     observer.observe(section);
     rafId = requestAnimationFrame(tickWave);
 
+    // Pure deterministic scrub function called BOTH on mount (p=st.progress) AND on every scroll frame!
+    const applyProgress = (p: number) => {
+      if (ribbonTopRef.current) {
+        ribbonTopRef.current.style.transform = `translate3d(${(240 - p * 680).toFixed(1)}px, 0, 0) rotate(-3deg)`;
+      }
+      if (ribbonBotRef.current) {
+        ribbonBotRef.current.style.transform = `translate3d(${(-340 + p * 680).toFixed(1)}px, 0, 0) rotate(-3deg)`;
+      }
+
+      if (portalRingsRef.current) {
+        const pScale = 0.45 + clamp01(p / 0.6) * 0.65;
+        portalRingsRef.current.style.transform = `translate(-50%, -50%) scale(${pScale.toFixed(3)}) rotate(${(p * 100).toFixed(1)}deg)`;
+        portalRingsRef.current.style.opacity = (0.18 + clamp01(p / 0.45) * 0.6).toFixed(3);
+      }
+
+      // Entrance begins smoothly as soon as Act 6 rises into the bottom of the viewport (p: 0.04 -> 0.34)
+      const t1 = easeOutBack(clamp01((p - 0.04) / 0.26));
+      const t2 = easeOutBack(clamp01((p - 0.09) / 0.26));
+
+      if (line1Ref.current) {
+        const x1 = (1 - t1) * -130;
+        const sk1 = (1 - t1) * -15;
+        line1Ref.current.style.transform = `translate3d(${x1.toFixed(1)}px, 0, 0) skewX(${sk1.toFixed(1)}deg) scale(${(0.84 + t1 * 0.16).toFixed(3)})`;
+        line1Ref.current.style.opacity = clamp01((p - 0.03) / 0.14).toFixed(3);
+      }
+      if (line2Ref.current) {
+        const x2 = (1 - t2) * 130;
+        const sk2 = (1 - t2) * 15;
+        line2Ref.current.style.transform = `translate3d(${x2.toFixed(1)}px, 0, 0) skewX(${sk2.toFixed(1)}deg) scale(${(0.84 + t2 * 0.16).toFixed(3)})`;
+        line2Ref.current.style.opacity = clamp01((p - 0.08) / 0.14).toFixed(3);
+      }
+
+      // Per-letter 3D elastic flip-slam on "Extraordinary."
+      for (let i = 0; i < EXTRAORDINARY_CHARS.length; i++) {
+        const span = extraCharsRef.current[i];
+        if (!span) continue;
+        const charP = clamp01((p - (0.14 + i * 0.014)) / 0.22);
+        const sp = easeOutBack(charP);
+        const y = (1 - sp) * 52;
+        const rot = (1 - sp) * (i % 2 === 0 ? -22 : 22);
+        const sc = 0.55 + sp * 0.45;
+        span.style.transform = `translate3d(0, ${y.toFixed(1)}px, 0) rotate(${rot.toFixed(1)}deg) scale(${sc.toFixed(3)})`;
+        span.style.opacity = clamp01(charP * 2.5).toFixed(3);
+      }
+
+      // Studio vector pointer swoops in and clicks "Extraordinary." once pinned!
+      const cursorProgress = clamp01((p - 0.34) / 0.2);
+      if (pointerCursorRef.current) {
+        const cx = (1 - cursorProgress) * 90;
+        const cy = (1 - cursorProgress) * 60;
+        const clickPress = p > 0.5 && p < 0.58 ? 0.84 : 1.0;
+        pointerCursorRef.current.style.transform = `translate3d(${cx.toFixed(1)}px, ${cy.toFixed(1)}px, 0) scale(${clickPress})`;
+        pointerCursorRef.current.style.opacity = clamp01((p - 0.32) / 0.1).toFixed(3);
+      }
+
+      setPillLitDOM(p >= 0.5);
+
+      // Launchpad console & social satellites spring upward smoothly
+      const padT = easeOutBack(clamp01((p - 0.26) / 0.3));
+      if (launchpadWrapRef.current) {
+        const py = (1 - padT) * 56;
+        const pSc = 0.9 + padT * 0.1;
+        launchpadWrapRef.current.style.transform = `translate3d(0, ${py.toFixed(1)}px, 0) scale(${pSc.toFixed(3)})`;
+        launchpadWrapRef.current.style.opacity = clamp01((p - 0.24) / 0.18).toFixed(3);
+      }
+
+      if (creditsRef.current) {
+        creditsRef.current.style.opacity = clamp01((p - 0.34) / 0.22).toFixed(3);
+      }
+    };
+
     const ctx = gsap.context(() => {
-      ScrollTrigger.create({
+      const st = ScrollTrigger.create({
         trigger: section,
-        start: "top top",
+        // Start scrubbing right as Act 6 enters the bottom of the viewport so it NEVER
+        // scrolls in static/assembled first and then snaps back to 0 at "top top"!
+        start: "top 88%",
         end: "bottom bottom",
         scrub: 0.35,
         onEnter: () => {
@@ -235,87 +331,15 @@ export function Act6Outro() {
           setLetterboxActive(false);
         },
         onUpdate: (self) => {
-          const p = self.progress;
-
-          // Counter-racing colossal kinetic background typography ribbons
-          if (ribbonTopRef.current) {
-            ribbonTopRef.current.style.transform = `translate3d(${(220 - p * 640).toFixed(1)}px, 0, 0) rotate(-3deg)`;
-          }
-          if (ribbonBotRef.current) {
-            ribbonBotRef.current.style.transform = `translate3d(${(-320 + p * 640).toFixed(1)}px, 0, 0) rotate(-3deg)`;
-          }
-
-          // Expanding concentric sonar portal rings
-          if (portalRingsRef.current) {
-            const pScale = 0.48 + clamp01(p / 0.55) * 0.62;
-            portalRingsRef.current.style.transform = `translate(-50%, -50%) scale(${pScale.toFixed(3)}) rotate(${(p * 95).toFixed(1)}deg)`;
-            portalRingsRef.current.style.opacity = (0.22 + clamp01(p / 0.4) * 0.55).toFixed(3);
-          }
-
-          // Opposite-direction kinetic whip-slam for "LET'S BUILD" & "SOMETHING"
-          const t1 = easeOutBack(clamp01(p / 0.26));
-          const t2 = easeOutBack(clamp01((p - 0.05) / 0.28));
-
-          if (line1Ref.current) {
-            const x1 = (1 - t1) * -140;
-            const sk1 = (1 - t1) * -16;
-            line1Ref.current.style.transform = `translate3d(${x1.toFixed(1)}px, 0, 0) skewX(${sk1.toFixed(1)}deg) scale(${(0.84 + t1 * 0.16).toFixed(3)})`;
-            line1Ref.current.style.opacity = clamp01(p / 0.14).toFixed(3);
-          }
-          if (line2Ref.current) {
-            const x2 = (1 - t2) * 140;
-            const sk2 = (1 - t2) * 16;
-            line2Ref.current.style.transform = `translate3d(${x2.toFixed(1)}px, 0, 0) skewX(${sk2.toFixed(1)}deg) scale(${(0.84 + t2 * 0.16).toFixed(3)})`;
-            line2Ref.current.style.opacity = clamp01((p - 0.04) / 0.14).toFixed(3);
-          }
-
-          // Per-letter 3D elastic flip-slam on "Extraordinary."
-          for (let i = 0; i < EXTRAORDINARY_CHARS.length; i++) {
-            const span = extraCharsRef.current[i];
-            if (!span) continue;
-            const charP = clamp01((p - (0.1 + i * 0.015)) / 0.24);
-            const sp = easeOutBack(charP);
-            const y = (1 - sp) * 56;
-            const rot = (1 - sp) * (i % 2 === 0 ? -24 : 24);
-            const sc = 0.55 + sp * 0.45;
-            span.style.transform = `translate3d(0, ${y.toFixed(1)}px, 0) rotate(${rot.toFixed(1)}deg) scale(${sc.toFixed(3)})`;
-            span.style.opacity = clamp01(charP * 2.5).toFixed(3);
-          }
-
-          // Animated pointer cursor swoops in & clicks "Extraordinary." pill at p >= 0.42!
-          const cursorProgress = clamp01((p - 0.24) / 0.22);
-          if (pointerCursorRef.current) {
-            const cx = (1 - cursorProgress) * 95;
-            const cy = (1 - cursorProgress) * 65;
-            const clickPress = p > 0.42 && p < 0.5 ? 0.84 : 1.0;
-            pointerCursorRef.current.style.transform = `translate3d(${cx.toFixed(1)}px, ${cy.toFixed(1)}px, 0) scale(${clickPress})`;
-            pointerCursorRef.current.style.opacity = clamp01((p - 0.2) / 0.1).toFixed(3);
-          }
-
-          const shouldLight = p >= 0.42;
-          if (shouldLight !== wasLitRef.current) {
-            wasLitRef.current = shouldLight;
-            setPillLit(shouldLight);
-            spikeRef.current = 1.0;
-          }
-
-          // Launchpad console & social satellites spring upward into frame
-          const padT = easeOutBack(clamp01((p - 0.22) / 0.34));
-          if (launchpadWrapRef.current) {
-            const py = (1 - padT) * 64;
-            const pSc = 0.88 + padT * 0.12;
-            launchpadWrapRef.current.style.transform = `translate3d(0, ${py.toFixed(1)}px, 0) scale(${pSc.toFixed(3)})`;
-            launchpadWrapRef.current.style.opacity = clamp01((p - 0.18) / 0.2).toFixed(3);
-          }
-
-          if (creditsRef.current) {
-            creditsRef.current.style.opacity = clamp01((p - 0.3) / 0.25).toFixed(3);
-          }
+          applyProgress(self.progress);
         },
       });
+
+      // Seed exact initial transform/opacity immediately on mount (zero FOUC!)
+      applyProgress(st.progress);
     }, section);
 
-    // 2. Desktop Magnetic Cursor Pull + 3D Stage Tilt
+    // Desktop Magnetic Cursor Pull + 3D Stage Tilt
     const stageRotX = stage3DRef.current
       ? gsap.quickTo(stage3DRef.current, "rotateX", { duration: 0.5, ease: "power2.out" })
       : null;
@@ -373,10 +397,10 @@ export function Act6Outro() {
     <section
       id="act-6"
       ref={sectionRef}
-      className="relative h-[260vh] w-full bg-[#040A12] text-white"
+      className="relative h-[240vh] w-full bg-[#040A12] text-white"
     >
       <div className="sticky top-0 flex h-[100dvh] w-full flex-col items-center justify-between overflow-hidden bg-[#040A12] px-4 pb-3 pt-11 sm:px-8 sm:pb-5 sm:pt-14 [perspective:1200px]">
-        {/* === DYNAMIC ACCENT ATMOSPHERE GLOW (Morphs Color with Selected Channel!) === */}
+        {/* === DYNAMIC ACCENT ATMOSPHERE GLOW === */}
         <div
           aria-hidden="true"
           className="pointer-events-none absolute left-1/2 top-1/2 h-[480px] w-[480px] sm:h-[640px] sm:w-[640px] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[120px] transition-colors duration-700"
@@ -400,13 +424,12 @@ export function Act6Outro() {
           READY TO SHIP • JAKARTA TO WORLDWIDE • LET&apos;S COLLABORATE • AXIS._ •
         </div>
 
-        {/* === EXPANDING SONAR PORTAL RINGS + ROTATING RADAR SWEEP === */}
+        {/* === EXPANDING SONAR PORTAL RINGS + ROTATING RADAR SWEEP (No inline transform prop so React re-renders never reset GSAP!) === */}
         <svg
           ref={portalRingsRef}
           aria-hidden="true"
           viewBox="0 0 600 600"
-          className="pointer-events-none absolute left-1/2 top-1/2 h-[420px] w-[420px] sm:h-[620px] sm:w-[620px] will-change-transform"
-          style={{ transform: "translate(-50%, -50%) scale(0.6)" }}
+          className="pointer-events-none absolute left-1/2 top-1/2 h-[420px] w-[420px] sm:h-[620px] sm:w-[620px] opacity-20 will-change-transform"
         >
           <defs>
             <linearGradient id="radarBeamGrad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -472,22 +495,22 @@ export function Act6Outro() {
             <span className="hidden sm:inline text-white/25">•</span>
             <span className="hidden sm:inline-flex items-center gap-1 font-mono text-[10px] text-slate-300">
               <Clock className="h-3 w-3 text-[#38BDF8]" />
-              <span>WIB {timeString}</span>
+              <span ref={clockSpanRef}>WIB --:--:--</span>
             </span>
           </div>
 
-          {/* === KINETIC WHIP-SLAM + PER-LETTER FLIP HEADLINE === */}
+          {/* === KINETIC WHIP-SLAM + PER-LETTER FLIP HEADLINE (Pre-hidden opacity-0 prevents FOUC!) === */}
           <h2 className="mt-2.5 sm:mt-4 flex flex-col items-center leading-[0.94] tracking-tight select-none">
             <div className="flex flex-wrap items-center justify-center gap-x-2.5 sm:gap-x-3.5">
               <span
                 ref={line1Ref}
-                className="inline-block font-display text-[clamp(1.85rem,7vw,4.3rem)] font-black uppercase text-white will-change-transform"
+                className="inline-block opacity-0 font-display text-[clamp(1.85rem,7vw,4.3rem)] font-black uppercase text-white will-change-transform"
               >
                 LET&apos;S BUILD
               </span>
               <span
                 ref={line2Ref}
-                className="inline-block font-display text-[clamp(1.85rem,7vw,4.3rem)] font-black uppercase text-sky-200 will-change-transform"
+                className="inline-block opacity-0 font-display text-[clamp(1.85rem,7vw,4.3rem)] font-black uppercase text-sky-200 will-change-transform"
               >
                 SOMETHING
               </span>
@@ -497,17 +520,10 @@ export function Act6Outro() {
             <div className="relative mt-1.5 sm:mt-2 inline-flex items-center justify-center">
               <button
                 type="button"
-                ref={extraPillRef as unknown as React.RefObject<HTMLButtonElement>}
+                ref={extraBtnRef}
                 onClick={() => setContactOpen(true)}
-                onMouseEnter={() => {
-                  setPillLit(true);
-                  spikeRef.current = 1.1;
-                }}
-                className={`relative inline-flex items-center rounded-2xl px-4 py-0.5 sm:px-6 sm:py-1 font-serif italic text-[clamp(2.25rem,8.8vw,5.1rem)] leading-none transition-all duration-300 cursor-pointer ${
-                  pillLit
-                    ? "-rotate-1 scale-[1.04] bg-[#C6FF3D] text-[#050C14] shadow-[0_18px_50px_rgba(198,255,61,0.42)] ring-2 ring-white/80"
-                    : "bg-white/[0.04] text-[#C6FF3D]"
-                }`}
+                onMouseEnter={() => setPillLitDOM(true)}
+                className="relative inline-flex items-center rounded-2xl bg-white/[0.04] px-4 py-0.5 sm:px-6 sm:py-1 font-serif italic text-[clamp(2.25rem,8.8vw,5.1rem)] leading-none text-[#C6FF3D] transition-all duration-300 cursor-pointer"
               >
                 {EXTRAORDINARY_CHARS.map((ch, idx) => (
                   <span
@@ -515,7 +531,7 @@ export function Act6Outro() {
                     ref={(el) => {
                       extraCharsRef.current[idx] = el;
                     }}
-                    className="inline-block will-change-transform"
+                    className="inline-block opacity-0 will-change-transform"
                   >
                     {ch}
                   </span>
@@ -526,7 +542,7 @@ export function Act6Outro() {
               <div
                 ref={pointerCursorRef}
                 aria-hidden="true"
-                className="pointer-events-none absolute -bottom-5 -right-6 sm:-bottom-6 sm:-right-8 z-30 will-change-transform"
+                className="pointer-events-none absolute -bottom-5 -right-6 sm:-bottom-6 sm:-right-8 z-30 opacity-0 will-change-transform"
               >
                 <svg
                   viewBox="0 0 36 36"
@@ -543,12 +559,12 @@ export function Act6Outro() {
             </div>
           </h2>
 
-          {/* === FRAMELESS MAGNETIC ORBITAL LAUNCHPAD === */}
+          {/* === FRAMELESS MAGNETIC ORBITAL LAUNCHPAD (Pre-hidden opacity-0 prevents FOUC!) === */}
           <div
             ref={launchpadWrapRef}
-            className="mt-4 sm:mt-6 flex w-full max-w-3xl flex-col items-center will-change-transform"
+            className="mt-4 sm:mt-6 flex w-full max-w-3xl flex-col items-center opacity-0 will-change-transform"
           >
-            {/* 4 Tactile Frequency-Tuned Channel Pills (Tilted Hover Spring!) */}
+            {/* 4 Tactile Frequency-Tuned Channel Pills */}
             <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2.5">
               {INQUIRY_CHANNELS.map((ch, idx) => {
                 const Icon = ch.icon;
@@ -608,12 +624,11 @@ export function Act6Outro() {
               </span>
             </div>
 
-            {/* === MAGNETIC HERO DISPATCH CAPSULE (Curved Pill — Zero Boxiness!) === */}
+            {/* === MAGNETIC HERO DISPATCH CAPSULE === */}
             <div
               ref={magneticCardRef}
               className="relative mt-3 flex w-full max-w-2xl flex-col items-center justify-between gap-2.5 rounded-3xl sm:rounded-full border border-white/20 bg-gradient-to-r from-[#0B1B2B]/95 via-[#0F273D]/95 to-[#091522]/95 p-2.5 sm:flex-row sm:px-4 sm:py-2.5 shadow-[0_22px_60px_rgba(0,0,0,0.75)] backdrop-blur-xl will-change-transform"
             >
-              {/* Celebratory Shockwave Ring Burst on Email Copy */}
               {copied && (
                 <span
                   key={burstKey}
@@ -622,7 +637,6 @@ export function Act6Outro() {
                 />
               )}
 
-              {/* Direct Email + 1-Click Tactile Copy Pill */}
               <button
                 type="button"
                 onClick={handleCopyEmail}
@@ -645,7 +659,6 @@ export function Act6Outro() {
                 </div>
               </button>
 
-              {/* Twin High-Energy Action Pills */}
               <div className="flex flex-wrap items-center justify-center gap-2">
                 <button
                   type="button"
@@ -668,7 +681,7 @@ export function Act6Outro() {
               </div>
             </div>
 
-            {/* Floating Orbiting Social Satellites + Replay Rocket Pill */}
+            {/* Floating Orbiting Social Satellites + Replay Pill */}
             <div className="mt-3.5 flex flex-wrap items-center justify-center gap-2">
               {PORTFOLIO_DATA.socials.map((s, idx) => (
                 <a
@@ -700,7 +713,7 @@ export function Act6Outro() {
         {/* === MINIMAL FLOATING CREDITS SIGNATURE === */}
         <footer
           ref={creditsRef}
-          className="relative z-10 flex w-full max-w-5xl flex-wrap items-center justify-between gap-2 border-t border-white/10 pt-2 text-[10px] font-mono text-slate-400"
+          className="relative z-10 flex w-full max-w-5xl flex-wrap items-center justify-between gap-2 border-t border-white/10 pt-2 text-[10px] font-mono text-slate-400 opacity-0"
         >
           <div className="flex items-center gap-2">
             <span className="font-display text-xs font-extrabold text-white">

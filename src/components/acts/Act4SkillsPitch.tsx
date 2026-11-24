@@ -106,14 +106,12 @@ export function Act4SkillsPitch() {
     let counterPlayed = false;
 
     const ctx = gsap.context(() => {
+      // Trigger counter smoothly right when Act 4 enters viewport (not late at "top top"!)
       ScrollTrigger.create({
         trigger: section,
-        start: "top top",
-        end: "bottom bottom",
-        scrub: true,
+        start: "top 82%",
+        once: true,
         onEnter: () => {
-          setActiveChapter("act-4");
-          setLetterboxActive(false);
           if (!counterPlayed && giantNumRef.current) {
             counterPlayed = true;
             const obj = { val: 0 };
@@ -128,6 +126,21 @@ export function Act4SkillsPitch() {
               },
             });
           }
+        },
+      });
+
+      if (giantNumRef.current) {
+        giantNumRef.current.style.transform = "scale(0.95)";
+      }
+
+      ScrollTrigger.create({
+        trigger: section,
+        start: "top top",
+        end: "bottom bottom",
+        scrub: true,
+        onEnter: () => {
+          setActiveChapter("act-4");
+          setLetterboxActive(false);
         },
         onEnterBack: () => {
           setActiveChapter("act-4");
@@ -246,7 +259,7 @@ export function Act4SkillsPitch() {
             aria-hidden="true"
             className="pointer-events-none absolute font-display text-[36vw] sm:text-[26vw] font-black leading-none tracking-tighter text-[#1D4ED8]/[0.08] select-none will-change-transform"
           >
-            45+
+            0+
           </span>
 
           {/* Frameless Floating Tool Emblems in Open Space */}
