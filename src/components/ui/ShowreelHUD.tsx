@@ -31,7 +31,7 @@ export function ShowreelHUD() {
 
       {/* Minimal Top-Right Controls: Play Reel & Let's Talk ONLY */}
       <div
-        className="pointer-events-none fixed right-4 sm:right-7 z-50 flex items-center gap-2 transition-all duration-300"
+        className="pointer-events-auto fixed right-4 sm:right-7 z-50 flex items-center gap-2 transition-all duration-300"
         style={{
           top: letterboxActive ? "clamp(6px, 1.3vh, 13px)" : "14px",
         }}
