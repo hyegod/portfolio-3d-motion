@@ -34,16 +34,14 @@ interface KineticSkillCard {
 }
 
 interface DisciplineChapter {
-  id: string;
+  id: "civil" | "software" | "design" | "hobbies";
   num: string;
   shortTab: string;
   kicker: string;
   headline: string;
   chars: string[];
   accentHex: string;
-  ribbonTop: string;
-  ribbonBot: string;
-  twinLabel: string;
+  camLabel: string;
   startP: number;
   endP: number;
   jumpRatio: number;
@@ -59,14 +57,10 @@ const CHAPTERS: DisciplineChapter[] = [
     headline: "CIVIL.",
     chars: "CIVIL.".split(""),
     accentHex: "#F59E0B",
-    ribbonTop:
-      "42F SEISMIC DIAGRID • 280M BRIDGE FEA • REVIT BIM LOD 400 • SNI 1726 •",
-    ribbonBot:
-      "ETABS MODAL SPECTRUM • SAP2000 NONLINEAR • AUTOCAD CIVIL 3D • ACI 318 •",
-    twinLabel: "3D Twin • 42F Seismic Diagrid & Tower Crane",
-    startP: 0.12,
-    endP: 0.33,
-    jumpRatio: 0.22,
+    camLabel: "CAM 01 • HELICOPTER SPIRAL → CRANE JIB",
+    startP: 0.115,
+    endP: 0.315,
+    jumpRatio: 0.21,
     rows: [
       {
         code: "CIV-01",
@@ -106,13 +100,9 @@ const CHAPTERS: DisciplineChapter[] = [
     headline: "SOFTWARE.",
     chars: "SOFTWARE.".split(""),
     accentHex: "#38BDF8",
-    ribbonTop:
-      "TYPESCRIPT STRICT • NEXT.JS 16 • PYTHON FEA SOLVER • FASTAPI • DOCKER •",
-    ribbonBot:
-      "120 FPS THREE.JS • WEBGL2 SHADERS • IFC STREAMING • POSTGRESQL •",
-    twinLabel: "3D Twin • 3x3x3 Compute Cluster & Data Bus",
-    startP: 0.31,
-    endP: 0.52,
+    camLabel: "CAM 02 • FPV Z-TUNNEL DIVE THROUGH CORE",
+    startP: 0.315,
+    endP: 0.51,
     jumpRatio: 0.41,
     rows: [
       {
@@ -153,13 +143,9 @@ const CHAPTERS: DisciplineChapter[] = [
     headline: "DESIGN.",
     chars: "DESIGN.".split(""),
     accentHex: "#C6FF3D",
-    ribbonTop:
-      "FIGMA VARIABLES • SPATIAL 3D INTERFACES • GSAP CHOREOGRAPHY • LENIS •",
-    ribbonBot:
-      "TACTILE DESIGN SYSTEMS • CUBIC-BEZIER PHYSICS • DESIGN-TO-CODE •",
-    twinLabel: "3D Twin • Spatial UI Stack & Kinetic Spline",
-    startP: 0.5,
-    endP: 0.71,
+    camLabel: "CAM 03 • LATERAL S-CURVE DOLLY SLALOM",
+    startP: 0.51,
+    endP: 0.705,
     jumpRatio: 0.6,
     rows: [
       {
@@ -200,14 +186,10 @@ const CHAPTERS: DisciplineChapter[] = [
     headline: "OFF-CLOCK.",
     chars: "OFF-CLOCK.".split(""),
     accentHex: "#FF6B4A",
-    ribbonTop:
-      "ELECTRIC GUITAR MAJ9 • 112 BPM ANALOG SYNTH • LATE NIGHT DAW SESSIONS •",
-    ribbonBot:
-      "V60 SPECIALTY POUR-OVER • DOUBLE ESPRESSO • URBAN SKETCHING •",
-    twinLabel: "3D Twin • 6-String Fretboard, EQ & Turntable",
-    startP: 0.69,
-    endP: 0.87,
-    jumpRatio: 0.78,
+    camLabel: "CAM 04 • FRETBOARD STRING-RUN → TURNTABLE",
+    startP: 0.705,
+    endP: 0.85,
+    jumpRatio: 0.77,
     rows: [
       {
         code: "TRK-01",
@@ -265,11 +247,8 @@ const STAND_LIT = [
 ];
 
 /**
- * Act 4 — 3D + Kinetic Discipline Showreel (640vh)
- * - Beat 0: Pure Kinetic 45+ Entrance Choreography (Zero 3D cube blocking text!)
- * - Beats 1..4: Separated Civil, Software, UI/UX & 3D, and Off-Clock Hobbies with
- *   Tactile Rounded-Rectangle (rounded-2xl) UI + Beveled <RoundedBox> 3D WebGL Models!
- * - Beat 5: Classic Sunburst Creator Portrait + Royal-Blue/Volt-Lime "STAND OUT" Finale!
+ * Act 4 — 3D Cinema Camera Flythrough Showreel (760vh)
+ * Every discipline has its OWN distinct Act-2-style 3D Camera Movement AND its OWN distinct HUD motion!
  */
 export function Act4SkillsPitch() {
   const sectionRef = useRef<HTMLElement>(null);
@@ -283,15 +262,16 @@ export function Act4SkillsPitch() {
   });
   const hoveredRowRef = useRef<number | null>(null);
 
-  // Rounded-2xl Dock Switcher & 3D Canvas visibility refs
+  // Rounded-2xl Dock Switcher, 3D Canvas, Camera Telemetry & Cut Flash refs
   const hudDockRef = useRef<HTMLDivElement>(null);
   const tabBtnRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const tabFillRefs = useRef<(HTMLSpanElement | null)[]>([]);
   const canvasLayerRef = useRef<HTMLDivElement>(null);
-  const twinReadoutRef = useRef<HTMLDivElement>(null);
-  const twinLabelSpanRef = useRef<HTMLSpanElement>(null);
+  const cutFlashRef = useRef<HTMLDivElement>(null);
+  const camBadgeRef = useRef<HTMLDivElement>(null);
+  const camLabelSpanRef = useRef<HTMLSpanElement>(null);
 
-  // Beat 0: Dynamic Kinetic 45+ Intro refs (Zero 3D Cube!)
+  // Beat 0: Dynamic Kinetic 45+ Intro refs
   const bg0Ref = useRef<HTMLDivElement>(null);
   const introMarqueeTopRef = useRef<HTMLDivElement>(null);
   const introMarqueeBotRef = useRef<HTMLDivElement>(null);
@@ -306,16 +286,16 @@ export function Act4SkillsPitch() {
   const introChipLeftRef = useRef<HTMLDivElement>(null);
   const introChipRightRef = useRef<HTMLDivElement>(null);
 
-  // Beats 1..4: Separated 3D + Kinetic Discipline refs
+  // Beats 1..4: Separated 3D + Distinct Foreground HUD Choreography refs
   const bgChapterRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const ribbonTopRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const ribbonBotRefs = useRef<(HTMLDivElement | null)[]>([]);
   const fgChapterRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const headerBlockRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const cardsBlockRefs = useRef<(HTMLDivElement | null)[]>([]);
   const charRefs = useRef<(HTMLSpanElement | null)[][]>([[], [], [], []]);
   const rowRefs = useRef<(HTMLDivElement | null)[][]>([[], [], [], []]);
   const barRefs = useRef<(HTMLSpanElement | null)[][]>([[], [], [], []]);
 
-  // Beat 5: Restored Sunburst Portrait + "STAND OUT" Finale refs
+  // Beat 5: Classic White Circular Iris Wipe + "STAND OUT" Finale refs
   const stageFinaleRef = useRef<HTMLDivElement>(null);
   const finalePortraitRef = useRef<HTMLDivElement>(null);
   const finaleLine1Ref = useRef<HTMLParagraphElement>(null);
@@ -360,11 +340,10 @@ export function Act4SkillsPitch() {
     );
     observer.observe(section);
 
-    let lastTwinText = "";
+    let lastCamText = "";
     let lastLitTab = -1;
 
     const ctx = gsap.context(() => {
-      // Pre-pin scroll-scrubbed kinetic entrance for Beat 0 (as Act 4 enters viewport!)
       const applyIntroEntrance = (ep: number, pinnedP: number) => {
         const spNum = easeOutBack(clamp01(ep / 0.72));
         const targetVal = Math.round(
@@ -376,7 +355,7 @@ export function Act4SkillsPitch() {
         if (giantNumLimeEchoRef.current) giantNumLimeEchoRef.current.textContent = textVal;
         if (giantNumCyanEchoRef.current) giantNumCyanEchoRef.current.textContent = textVal;
 
-        const exitSplit = clamp01((pinnedP - 0.065) / 0.06);
+        const exitSplit = clamp01((pinnedP - 0.06) / 0.055);
 
         if (introMarqueeTopRef.current) {
           introMarqueeTopRef.current.style.transform = `translate3d(${(180 - ep * 260 - pinnedP * 900).toFixed(1)}px, 0, 0) skewX(-10deg)`;
@@ -387,7 +366,10 @@ export function Act4SkillsPitch() {
 
         if (introKickerRef.current) {
           const kSp = easeOutBack(clamp01((ep - 0.08) / 0.55));
-          introKickerRef.current.style.opacity = (clamp01(ep * 2.4) * (1 - exitSplit)).toFixed(3);
+          introKickerRef.current.style.opacity = (
+            clamp01(ep * 2.4) *
+            (1 - exitSplit)
+          ).toFixed(3);
           introKickerRef.current.style.transform = `translate3d(0, ${((1 - kSp) * -36 - exitSplit * 45).toFixed(1)}px, 0) scale(${(0.78 + kSp * 0.22).toFixed(3)})`;
         }
 
@@ -395,11 +377,13 @@ export function Act4SkillsPitch() {
           const dropY = (1 - spNum) * 95;
           const tilt = (1 - spNum) * -9;
           const zoom = (0.42 + spNum * 0.58) * (1 + exitSplit * 0.72);
-          numStageRef.current.style.opacity = (clamp01(ep * 2.8) * (1 - exitSplit)).toFixed(3);
+          numStageRef.current.style.opacity = (
+            clamp01(ep * 2.8) *
+            (1 - exitSplit)
+          ).toFixed(3);
           numStageRef.current.style.transform = `translate3d(0, ${dropY.toFixed(1)}px, 0) rotate(${tilt.toFixed(2)}deg) scale(${zoom.toFixed(3)})`;
         }
 
-        // Chromatic 3D echo layers snap cleanly behind 45+ on arrival, then fan out on exit!
         const spreadEcho = (1 - clamp01(ep / 0.85)) * 26 + exitSplit * 34;
         if (giantNumLimeEchoRef.current) {
           giantNumLimeEchoRef.current.style.transform = `translate3d(${(-8 - spreadEcho).toFixed(1)}px, ${(6 + spreadEcho * 0.5).toFixed(1)}px, 0)`;
@@ -408,7 +392,6 @@ export function Act4SkillsPitch() {
           giantNumCyanEchoRef.current.style.transform = `translate3d(${(8 + spreadEcho).toFixed(1)}px, ${(-6 - spreadEcho * 0.5).toFixed(1)}px, 0)`;
         }
 
-        // Opposite-velocity kinetic headlines ("STRUCTURES & APPS" / "Engineered & Shipped")
         const lineT = easeOutBack(clamp01((ep - 0.18) / 0.65));
         if (s0TopLineRef.current) {
           const x1 = (1 - lineT) * -185 - exitSplit * 310;
@@ -423,7 +406,6 @@ export function Act4SkillsPitch() {
           s0BotLineRef.current.style.transform = `translate3d(${x2.toFixed(1)}px, 0, 0) skewX(${sk2.toFixed(1)}deg)`;
         }
 
-        // Floating outer telemetry squircle chips
         if (introChipLeftRef.current && introChipRightRef.current) {
           const chSp = easeOutBack(clamp01((ep - 0.28) / 0.58));
           const chOp = clamp01((ep - 0.28) * 3) * (1 - exitSplit * 1.4);
@@ -433,7 +415,6 @@ export function Act4SkillsPitch() {
           introChipRightRef.current.style.transform = `translate3d(${((1 - chSp) * 70 + exitSplit * 120).toFixed(1)}px, ${(Math.sin(ep * Math.PI) * 8).toFixed(1)}px, 0) rotate(6deg) scale(${Math.max(0.2, chSp).toFixed(3)})`;
         }
 
-        // Staggered parabolic spring-wave on the 5 squircle tool icons!
         const tilts = [-9, 6, -4, 7, -6];
         for (let i = 0; i < CORE_TOOLS.length; i++) {
           const bEl = introBadgeRefs.current[i];
@@ -464,17 +445,13 @@ export function Act4SkillsPitch() {
       const applyProgress = (p: number) => {
         currentPinnedP = p;
         skillsScrollRef.current.progress = p;
-        applyIntroEntrance(
-          p > 0.001 ? 1 : entranceSt.progress,
-          p
-        );
+        applyIntroEntrance(p > 0.001 ? 1 : entranceSt.progress, p);
 
-        // Show 3D WebGL Canvas & Rounded Dock Switcher ONLY inside Beats 1..4, staying visible underneath while the white circular iris expands!
-        const irisP = clamp01((p - 0.82) / 0.11);
+        const irisP = clamp01((p - 0.835) / 0.105);
         const foundryVis =
-          clamp01((p - 0.115) / 0.035) * (irisP >= 0.98 ? 0 : 1);
+          clamp01((p - 0.11) / 0.03) * (irisP >= 0.98 ? 0 : 1);
         const dockVis =
-          clamp01((p - 0.115) / 0.035) * (1 - clamp01((p - 0.81) / 0.03));
+          clamp01((p - 0.11) / 0.03) * (1 - clamp01((p - 0.825) / 0.025));
 
         if (canvasLayerRef.current) {
           canvasLayerRef.current.style.opacity = foundryVis.toFixed(3);
@@ -486,20 +463,33 @@ export function Act4SkillsPitch() {
           hudDockRef.current.style.visibility =
             dockVis > 0.005 ? "visible" : "hidden";
         }
-        if (twinReadoutRef.current) {
-          twinReadoutRef.current.style.opacity = dockVis.toFixed(3);
+        if (camBadgeRef.current) {
+          camBadgeRef.current.style.opacity = dockVis.toFixed(3);
+        }
+
+        // Subtle cinema lens speed-flash right at chapter camera cuts (0.315, 0.51, 0.705)
+        if (cutFlashRef.current) {
+          const cuts = [0.315, 0.51, 0.705];
+          let flash = 0;
+          for (const cp of cuts) {
+            const dist = Math.abs(p - cp);
+            if (dist < 0.018) {
+              flash = Math.max(flash, (1 - dist / 0.018) * 0.55);
+            }
+          }
+          cutFlashRef.current.style.opacity = flash.toFixed(3);
         }
 
         const activeChIdx =
-          p < 0.31 ? 0 : p < 0.5 ? 1 : p < 0.69 ? 2 : 3;
+          p < 0.315 ? 0 : p < 0.51 ? 1 : p < 0.705 ? 2 : 3;
 
         if (activeChIdx !== lastLitTab) {
           lastLitTab = activeChIdx;
-          CHAPTERS.forEach((ch, idx) => {
+          CHAPTERS.forEach((_, idx) => {
             const btn = tabBtnRefs.current[idx];
             if (!btn) return;
             if (idx === activeChIdx) {
-              btn.style.backgroundColor = "rgba(255,255,255,0.12)";
+              btn.style.backgroundColor = "rgba(255,255,255,0.14)";
               btn.style.color = "#FFFFFF";
             } else {
               btn.style.backgroundColor = "transparent";
@@ -508,11 +498,11 @@ export function Act4SkillsPitch() {
           });
         }
 
-        const nextTwin = CHAPTERS[activeChIdx].twinLabel;
-        if (nextTwin !== lastTwinText && twinLabelSpanRef.current) {
-          lastTwinText = nextTwin;
-          twinLabelSpanRef.current.textContent = nextTwin;
-          twinLabelSpanRef.current.style.color = CHAPTERS[activeChIdx].accentHex;
+        const nextCam = CHAPTERS[activeChIdx].camLabel;
+        if (nextCam !== lastCamText && camLabelSpanRef.current) {
+          lastCamText = nextCam;
+          camLabelSpanRef.current.textContent = nextCam;
+          camLabelSpanRef.current.style.color = CHAPTERS[activeChIdx].accentHex;
         }
 
         CHAPTERS.forEach((ch, idx) => {
@@ -522,99 +512,107 @@ export function Act4SkillsPitch() {
           fillEl.style.transform = `scaleX(${Math.max(0.08, f).toFixed(3)})`;
         });
 
-        // Beat 0 visibility
-        const s0Fade = clamp01((p - 0.1) / 0.045);
+        const s0Fade = clamp01((p - 0.1) / 0.035);
         if (bg0Ref.current) {
           bg0Ref.current.style.opacity = (1 - s0Fade).toFixed(3);
-          bg0Ref.current.style.visibility = s0Fade >= 0.995 ? "hidden" : "visible";
+          bg0Ref.current.style.visibility =
+            s0Fade >= 0.995 ? "hidden" : "visible";
         }
 
+        const isDesktop = window.innerWidth >= 1024;
+
         // ====================================================================
-        // BEATS 1..4: 4 SEPARATED 3D + KINETIC DISCIPLINE STAGES
+        // BEATS 1..4: 4 DISTINCT CAMERA + HUD CHOREOGRAPHIES
         // ====================================================================
         CHAPTERS.forEach((ch, cIdx) => {
-          const wipeIn = easeInOutCubic(clamp01((p - ch.startP) / 0.05));
-          const nextStart = cIdx < 3 ? CHAPTERS[cIdx + 1].startP : 0.94;
-          const wipeOut = easeInOutCubic(clamp01((p - (nextStart + 0.035)) / 0.04));
-          const local = clamp01(
-            (p - (ch.startP + 0.015)) / (ch.endP - ch.startP - 0.015)
-          );
+          const isCurrent =
+            cIdx === 0
+              ? p >= 0.105 && p < 0.315
+              : cIdx === 1
+                ? p >= 0.315 && p < 0.51
+                : cIdx === 2
+                  ? p >= 0.51 && p < 0.705
+                  : p >= 0.705 && irisP < 0.98;
 
+          const local = clamp01((p - ch.startP) / (ch.endP - ch.startP));
           const bgEl = bgChapterRefs.current[cIdx];
           const fgEl = fgChapterRefs.current[cIdx];
+          const headerEl = headerBlockRefs.current[cIdx];
+          const cardsEl = cardsBlockRefs.current[cIdx];
 
           if (bgEl) {
-            if (wipeIn <= 0.003 || wipeOut >= 0.998) {
+            if (!isCurrent) {
               bgEl.style.visibility = "hidden";
             } else {
               bgEl.style.visibility = "visible";
               if (cIdx === 0) {
-                const lead = 122 - wipeIn * 148;
-                const tail = 98 - wipeIn * 148;
-                bgEl.style.clipPath =
-                  wipeIn >= 0.995
-                    ? "polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)"
-                    : `polygon(${lead.toFixed(1)}% 0%, 100% 0%, 100% 100%, ${tail.toFixed(1)}% 100%)`;
-              } else if (cIdx === 1) {
-                const lead = -22 + wipeIn * 148;
-                const tail = 2 + wipeIn * 148;
-                bgEl.style.clipPath =
-                  wipeIn >= 0.995
-                    ? "polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)"
-                    : `polygon(0% 0%, ${lead.toFixed(1)}% 0%, ${tail.toFixed(1)}% 100%, 0% 100%)`;
-              } else if (cIdx === 2) {
-                bgEl.style.clipPath = `inset(${((1 - wipeIn) * 100).toFixed(1)}% 0% 0% 0%)`;
+                const wipeIn = easeInOutCubic(clamp01((p - 0.105) / 0.035));
+                bgEl.style.clipPath = `circle(${(wipeIn * 150).toFixed(1)}% at 50% 50%)`;
               } else {
-                const lead = 122 - wipeIn * 148;
-                const tail = 98 - wipeIn * 148;
-                bgEl.style.clipPath =
-                  wipeIn >= 0.995
-                    ? "polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)"
-                    : `polygon(${lead.toFixed(1)}% 0%, 100% 0%, 100% 100%, ${tail.toFixed(1)}% 100%)`;
+                bgEl.style.clipPath = "none";
               }
             }
           }
 
-          if (wipeIn > 0.005 && wipeOut < 0.995) {
-            const rTop = ribbonTopRefs.current[cIdx];
-            const rBot = ribbonBotRefs.current[cIdx];
-            if (rTop) {
-              rTop.style.transform = `translate3d(${(240 - local * 720).toFixed(1)}px, 0, 0) skewX(-12deg)`;
-            }
-            if (rBot) {
-              rBot.style.transform = `translate3d(${(-260 + local * 720).toFixed(1)}px, 0, 0) skewX(-12deg)`;
-            }
-          }
-
-          const exitFade = clamp01((p - (nextStart - 0.005)) / 0.04);
-          const fgOp = clamp01(wipeIn * 1.6) * (1 - exitFade);
-
           if (fgEl) {
+            const fadeEdge =
+              cIdx === 3
+                ? 1 - clamp01((irisP - 0.25) / 0.5)
+                : Math.min(
+                    clamp01(local * 7),
+                    clamp01((1 - local) * 7.5 + 0.15)
+                  );
+            const fgOp = isCurrent ? fadeEdge : 0;
+
             if (fgOp <= 0.005) {
               fgEl.style.visibility = "hidden";
               fgEl.style.opacity = "0";
             } else {
               fgEl.style.visibility = "visible";
               fgEl.style.opacity = fgOp.toFixed(3);
-              fgEl.style.transform = `translate3d(0, ${(-exitFade * 44).toFixed(1)}px, 0)`;
 
+              // DISTINCT PER-CHAPTER SPATIAL HUD PARALLAX SYNCED TO THE 3D CAMERA!
+              if (isDesktop && headerEl && cardsEl) {
+                if (cIdx === 0) {
+                  // 01 Civil: Counter-glide vertically as helicopter spirals up!
+                  headerEl.style.transform = `translate3d(0, ${((0.5 - local) * 46).toFixed(1)}px, 0)`;
+                  cardsEl.style.transform = `translate3d(0, ${((0.5 - local) * 28).toFixed(1)}px, 0)`;
+                } else if (cIdx === 1) {
+                  // 02 Software: Wing-HUD spreads outward as FPV camera dives into the center tunnel!
+                  const tunnelPush = Math.sin(local * Math.PI) * 22;
+                  headerEl.style.transform = `translate3d(0, ${(-tunnelPush * 0.5).toFixed(1)}px, 0) scale(${(1 + Math.sin(local * Math.PI) * 0.04).toFixed(3)})`;
+                  cardsEl.style.transform = `translate3d(0, ${(tunnelPush * 0.35).toFixed(1)}px, 0)`;
+                } else if (cIdx === 2) {
+                  // 03 Design: Bottom Bento glides horizontally opposite the S-curve lateral dolly!
+                  headerEl.style.transform = `translate3d(${((local - 0.5) * 60).toFixed(1)}px, 0, 0)`;
+                  cardsEl.style.transform = `translate3d(${((0.5 - local) * 75).toFixed(1)}px, 0, 0)`;
+                } else {
+                  // 04 Hobbies: Right-side diagonal cascade glides upward with the fretboard string-run!
+                  headerEl.style.transform = `translate3d(${((0.5 - local) * -35).toFixed(1)}px, ${((0.5 - local) * 32).toFixed(1)}px, 0)`;
+                  cardsEl.style.transform = `translate3d(0, ${((0.5 - local) * 32).toFixed(1)}px, 0)`;
+                }
+              } else if (headerEl && cardsEl) {
+                headerEl.style.transform = "none";
+                cardsEl.style.transform = "none";
+              }
+
+              // Per-character whip-slam on discipline headline
               const chars = ch.chars;
               for (let i = 0; i < chars.length; i++) {
                 const cSpan = charRefs.current[cIdx]?.[i];
                 if (!cSpan) continue;
-                const cT = clamp01((local * 1.45 - i * 0.032) / 0.28);
+                const cT = clamp01((local * 2.2 - i * 0.04) / 0.35);
                 const sp = easeOutBack(cT);
-                const dropY = (1 - sp) * (i % 2 === 0 ? -52 : 52);
-                const sk = (1 - sp) * -16;
-                const sc = Math.max(0.2, 1.42 - sp * 0.42);
+                const dropY = (1 - sp) * (i % 2 === 0 ? -42 : 42);
+                const sk = (1 - sp) * -14;
                 cSpan.style.opacity = clamp01(cT * 3.2).toFixed(3);
-                cSpan.style.transform = `translate3d(0, ${dropY.toFixed(1)}px, 0) skewX(${sk.toFixed(1)}deg) scale(${sc.toFixed(3)})`;
+                cSpan.style.transform = `translate3d(0, ${dropY.toFixed(1)}px, 0) skewX(${sk.toFixed(1)}deg)`;
               }
 
               const scannedIdx =
                 hoveredRowRef.current !== null
                   ? hoveredRowRef.current
-                  : Math.min(3, Math.floor(clamp01(local * 1.15) * 4));
+                  : Math.min(3, Math.floor(clamp01(local * 1.08) * 4));
               if (activeChIdx === cIdx) {
                 skillsScrollRef.current.activeRow = scannedIdx;
               }
@@ -622,27 +620,43 @@ export function Act4SkillsPitch() {
               ch.rows.forEach((row, rIdx) => {
                 const rowEl = rowRefs.current[cIdx]?.[rIdx];
                 const barEl = barRefs.current[cIdx]?.[rIdx];
-                const rT = clamp01((local * 1.5 - 0.06 - rIdx * 0.065) / 0.3);
+                const rT = clamp01((local * 2.1 - 0.04 - rIdx * 0.06) / 0.32);
                 const rSp = easeOutBack(rT);
                 const isLit = rIdx === scannedIdx;
 
                 if (rowEl) {
-                  const slideX = (1 - rSp) * -80 + (isLit ? 10 : 0);
-                  const skew = (1 - rSp) * -6;
-                  rowEl.style.opacity = clamp01(rT * 2.8).toFixed(3);
-                  rowEl.style.transform = `translate3d(${slideX.toFixed(1)}px, 0, 0) skewX(${skew.toFixed(1)}deg)`;
+                  let tx = 0;
+                  let ty = 0;
+                  if (!isDesktop) {
+                    tx = (1 - rSp) * -45 + (isLit ? 6 : 0);
+                  } else if (cIdx === 0) {
+                    tx = (1 - rSp) * -75 + (isLit ? 14 : 0);
+                  } else if (cIdx === 1) {
+                    const side = rIdx < 2 ? -1 : 1;
+                    tx = (1 - rSp) * 75 * side + (isLit ? -8 * side : 0);
+                  } else if (cIdx === 2) {
+                    ty = (1 - rSp) * 55 + (isLit ? -6 : 0);
+                  } else {
+                    tx = (1 - rSp) * 75 - rIdx * 10 + (isLit ? -14 : 0);
+                  }
+
+                  const sc = isLit ? 1.025 : 0.985;
+                  rowEl.style.opacity = (
+                    clamp01(rT * 2.8) * (isLit ? 1 : 0.82)
+                  ).toFixed(3);
+                  rowEl.style.transform = `translate3d(${tx.toFixed(1)}px, ${ty.toFixed(1)}px, 0) scale(${sc})`;
                   rowEl.style.borderColor = isLit
-                    ? `${ch.accentHex}99`
+                    ? `${ch.accentHex}AA`
                     : "rgba(255,255,255,0.10)";
                   rowEl.style.backgroundColor = isLit
-                    ? "rgba(15, 23, 42, 0.78)"
-                    : "rgba(15, 23, 42, 0.44)";
+                    ? "rgba(15, 23, 42, 0.80)"
+                    : "rgba(15, 23, 42, 0.46)";
                   rowEl.style.boxShadow = isLit
-                    ? `0 14px 36px -8px ${ch.accentHex}33`
+                    ? `0 16px 38px -8px ${ch.accentHex}40`
                     : "0 8px 24px -10px rgba(0,0,0,0.35)";
                 }
                 if (barEl) {
-                  const bf = clamp01(rT * 1.2) * row.fill;
+                  const bf = clamp01(rT * 1.25) * row.fill;
                   barEl.style.transform = `scaleX(${bf.toFixed(3)})`;
                   barEl.style.opacity = isLit ? "1" : "0.45";
                 }
@@ -652,7 +666,7 @@ export function Act4SkillsPitch() {
         });
 
         // ====================================================================
-        // BEAT 5 (0.82 -> 1.00): WHITE CIRCULAR IRIS WIPE + "STAND OUT" FINALE
+        // BEAT 5 (0.835 -> 1.00): WHITE CIRCULAR IRIS WIPE + "STAND OUT"
         // ====================================================================
         if (stageFinaleRef.current) {
           const rad = irisP * 148;
@@ -669,20 +683,20 @@ export function Act4SkillsPitch() {
             finalePortraitRef.current.style.transform = `scale(${pScale.toFixed(3)})`;
           }
           if (finaleLine1Ref.current) {
-            const show1 = p > 0.87;
+            const show1 = p > 0.88;
             finaleLine1Ref.current.style.opacity = show1 ? "1" : "0.2";
             finaleLine1Ref.current.style.transform = show1
               ? "translate3d(0, 0, 0)"
               : "translate3d(0, 18px, 0)";
           }
           if (finaleLine2Ref.current) {
-            const show2 = p > 0.895;
+            const show2 = p > 0.905;
             finaleLine2Ref.current.style.opacity = show2 ? "1" : "0.2";
             finaleLine2Ref.current.style.transform = show2
               ? "translate3d(0, 0, 0)"
               : "translate3d(0, 18px, 0)";
           }
-          setStandOutDOM(p > 0.92);
+          setStandOutDOM(p > 0.925);
         } else {
           setStandOutDOM(false);
         }
@@ -735,16 +749,77 @@ export function Act4SkillsPitch() {
     skillsScrollRef.current.pointerY = ny;
   };
 
+  const renderSkillCard = (
+    ch: DisciplineChapter,
+    cIdx: number,
+    row: KineticSkillCard,
+    rIdx: number
+  ) => (
+    <div
+      key={row.code}
+      ref={(el) => {
+        if (!rowRefs.current[cIdx]) rowRefs.current[cIdx] = [];
+        rowRefs.current[cIdx][rIdx] = el;
+      }}
+      onPointerEnter={() => {
+        hoveredRowRef.current = rIdx;
+        skillsScrollRef.current.activeRow = rIdx;
+      }}
+      onPointerLeave={() => {
+        hoveredRowRef.current = null;
+      }}
+      className="group relative rounded-2xl border border-white/10 bg-slate-900/55 px-3.5 py-2 sm:px-4 sm:py-2.5 backdrop-blur-xl transition-[background-color,border-color,box-shadow] duration-200 will-change-transform"
+    >
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <span
+            className="shrink-0 rounded-lg px-2 py-0.5 font-mono text-[10px] font-extrabold tracking-wider text-[#07131C]"
+            style={{ backgroundColor: ch.accentHex }}
+          >
+            {row.code}
+          </span>
+          <span className="truncate font-display text-xs sm:text-[15px] font-bold text-white">
+            {row.title}
+          </span>
+        </div>
+        <span
+          className="shrink-0 rounded-lg border border-white/10 bg-white/[0.06] px-2 py-0.5 font-mono text-[9px] sm:text-[10px] font-bold tracking-wide"
+          style={{ color: ch.accentHex }}
+        >
+          {row.metric}
+        </span>
+      </div>
+
+      <p className="mt-1 font-sans text-[10.5px] sm:text-[11.5px] text-slate-300/85 line-clamp-1">
+        {row.spec}
+      </p>
+
+      <div className="mt-1.5 h-1.5 w-full rounded-full bg-white/10 overflow-hidden">
+        <span
+          ref={(el) => {
+            if (!barRefs.current[cIdx]) barRefs.current[cIdx] = [];
+            barRefs.current[cIdx][rIdx] = el;
+          }}
+          className="block h-full w-full origin-left rounded-full will-change-transform"
+          style={{
+            backgroundColor: ch.accentHex,
+            transform: "scaleX(0)",
+          }}
+        />
+      </div>
+    </div>
+  );
+
   return (
     <section
       id="act-4"
       ref={sectionRef}
       onPointerMove={handlePointerMove}
-      className="relative h-[640vh] w-full bg-[#F8FAFC]"
+      className="relative h-[760vh] w-full bg-[#F8FAFC]"
     >
       <div className="sticky top-0 h-[100dvh] w-full overflow-hidden">
         {/* ================================================================
-            ROUNDED-2XL TACTILE CHAPTER DOCK (VISIBLE ONLY IN SKILLS 01..04)
+            ROUNDED-2XL TACTILE CHAPTER DOCK (TOP-LEFT)
            ================================================================ */}
         <div
           ref={hudDockRef}
@@ -789,7 +864,6 @@ export function Act4SkillsPitch() {
         >
           <div className="mosaic-grid pointer-events-none absolute inset-0 opacity-50" />
 
-          {/* Subtle Counter-Gliding Kinetic Background Typography Streams */}
           <div
             ref={introMarqueeTopRef}
             aria-hidden="true"
@@ -805,7 +879,6 @@ export function Act4SkillsPitch() {
             280M SPANS • 120 FPS WEBGL • ZERO-HANDOFF PRODUCTION •
           </div>
 
-          {/* Outer Tactile Rounded-2xl Floating Telemetry Chips (Desktop Safe Corners) */}
           <div
             ref={introChipLeftRef}
             aria-hidden="true"
@@ -828,7 +901,6 @@ export function Act4SkillsPitch() {
           </div>
 
           <div className="relative z-10 flex flex-col items-center text-center max-w-4xl">
-            {/* Tactile Volt-Lime Squircle Kicker Badge */}
             <div
               ref={introKickerRef}
               className="rounded-xl bg-[#C6FF3D] px-4 py-1.5 shadow-[0_10px_28px_rgba(198,255,61,0.5)] ring-2 ring-[#07131C]/10 will-change-transform"
@@ -838,7 +910,6 @@ export function Act4SkillsPitch() {
               </span>
             </div>
 
-            {/* Layered 3D Chromatic Pop Counter ("45+") */}
             <div
               ref={numStageRef}
               className="relative mt-3 inline-flex items-center justify-center select-none will-change-transform"
@@ -865,7 +936,6 @@ export function Act4SkillsPitch() {
               </span>
             </div>
 
-            {/* Opposite-Velocity Whip Headlines */}
             <div
               ref={s0TopLineRef}
               className="mt-3 font-display text-2xl sm:text-5xl font-black uppercase tracking-tight text-[#07131C] will-change-transform"
@@ -879,7 +949,6 @@ export function Act4SkillsPitch() {
               {PORTFOLIO_DATA.skillsSection.primaryStatBottom}
             </div>
 
-            {/* Staggered Parabolic Spring-Wave of Squircle Tool Icons */}
             <div className="mt-7 flex flex-wrap items-center justify-center gap-3.5 sm:gap-4">
               {CORE_TOOLS.map((tool, idx) => (
                 <div
@@ -897,14 +966,14 @@ export function Act4SkillsPitch() {
         </div>
 
         {/* ================================================================
-            BEATS 1..4 BACKGROUND ATMOSPHERE & GIANT RACING RIBBONS
+            BEATS 1..4 3D ATMOSPHERE BACKDROPS
            ================================================================ */}
         {CHAPTERS.map((ch, idx) => {
           const gradients = [
-            "bg-[#090D16] bg-[radial-gradient(circle_at_72%_48%,rgba(245,158,11,0.22)_0%,rgba(67,20,7,0.38)_42%,#090D16_80%)]",
-            "bg-[#050C1A] bg-[radial-gradient(circle_at_72%_48%,rgba(56,189,248,0.22)_0%,rgba(29,78,216,0.32)_44%,#050C1A_82%)]",
-            "bg-[#0A0F24] bg-[radial-gradient(circle_at_72%_48%,rgba(198,255,61,0.16)_0%,rgba(124,58,237,0.28)_44%,#0A0F24_82%)]",
-            "bg-[#0D0716] bg-[radial-gradient(circle_at_72%_48%,rgba(255,107,74,0.22)_0%,rgba(147,51,234,0.28)_44%,#0D0716_82%)]",
+            "bg-[#090D16] bg-[radial-gradient(circle_at_55%_45%,rgba(245,158,11,0.24)_0%,rgba(67,20,7,0.4)_46%,#090D16_85%)]",
+            "bg-[#040B18] bg-[radial-gradient(circle_at_50%_50%,rgba(56,189,248,0.26)_0%,rgba(29,78,216,0.34)_46%,#040B18_85%)]",
+            "bg-[#0A0F24] bg-[radial-gradient(circle_at_50%_48%,rgba(198,255,61,0.16)_0%,rgba(124,58,237,0.3)_46%,#0A0F24_85%)]",
+            "bg-[#0D0716] bg-[radial-gradient(circle_at_55%_48%,rgba(255,107,74,0.24)_0%,rgba(147,51,234,0.3)_46%,#0D0716_85%)]",
           ];
           return (
             <div
@@ -912,35 +981,14 @@ export function Act4SkillsPitch() {
               ref={(el) => {
                 bgChapterRefs.current[idx] = el;
               }}
-              style={{ visibility: "hidden", zIndex: 14 + idx * 2 }}
+              style={{ visibility: "hidden", zIndex: 14 + idx }}
               className={`pointer-events-none absolute inset-0 overflow-hidden ${gradients[idx]}`}
-            >
-              <div className="blueprint-grid absolute inset-0 opacity-30" />
-
-              <div
-                ref={(el) => {
-                  ribbonTopRefs.current[idx] = el;
-                }}
-                aria-hidden="true"
-                className="absolute top-[13%] whitespace-nowrap font-display text-[15vw] sm:text-[10.5vw] font-black uppercase tracking-tighter text-white/[0.045] select-none will-change-transform"
-              >
-                {ch.ribbonTop}
-              </div>
-              <div
-                ref={(el) => {
-                  ribbonBotRefs.current[idx] = el;
-                }}
-                aria-hidden="true"
-                className="absolute bottom-[8%] whitespace-nowrap font-display text-[15vw] sm:text-[10.5vw] font-black uppercase tracking-tighter text-white/[0.045] select-none will-change-transform"
-              >
-                {ch.ribbonBot}
-              </div>
-            </div>
+            />
           );
         })}
 
         {/* ================================================================
-            REAL-TIME 60-120 FPS BEVELED 3D SCULPTURE STAGE (BEATS 1..4 ONLY)
+            FULL-VIEWPORT ACT-2-STYLE 3D CINEMA CAMERA STAGE
            ================================================================ */}
         <div
           ref={canvasLayerRef}
@@ -950,132 +998,212 @@ export function Act4SkillsPitch() {
           <Skills3DStage scrollRef={skillsScrollRef} active={inView} />
         </div>
 
-        {/* Bottom-Right Rounded-2xl 3D Digital Twin Badge (Desktop) */}
+        {/* Cinema Camera Cut Speed-Flash */}
         <div
-          ref={twinReadoutRef}
-          className="pointer-events-none hidden lg:flex absolute right-10 bottom-8 z-[44] flex-col items-end gap-0.5 rounded-2xl border border-white/12 bg-slate-950/60 px-4 py-2.5 text-right shadow-xl backdrop-blur-xl opacity-0"
+          ref={cutFlashRef}
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 z-[40] bg-white opacity-0 will-change-[opacity]"
+        />
+
+        {/* Top-Right Cinema Camera Telemetry Readout (Desktop) */}
+        <div
+          ref={camBadgeRef}
+          className="pointer-events-none hidden xl:flex absolute right-10 top-22 z-[48] items-center gap-2.5 rounded-2xl border border-white/12 bg-slate-950/65 px-4 py-2 shadow-xl backdrop-blur-xl opacity-0"
         >
+          <span className="h-2 w-2 animate-pulse rounded-full bg-[#C6FF3D]" />
           <span
-            ref={twinLabelSpanRef}
-            className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-[#C6FF3D]"
+            ref={camLabelSpanRef}
+            className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-[#F59E0B]"
           >
-            3D Twin • Active
-          </span>
-          <span className="font-mono text-[9px] uppercase tracking-[0.16em] text-slate-400">
-            Move cursor or hover cards to inspect 3D rig
+            CAM 01 • HELICOPTER SPIRAL
           </span>
         </div>
 
         {/* ================================================================
-            4 SEPARATED KINETIC FOREGROUND DISCIPLINE CHOREOGRAPHIES
-            (TACTILE ROUNDED-2XL CARDS MATCHING PORTFOLIO SQUIRCLE THEME!)
+            4 DISTINCT FOREGROUND HUD LAYOUTS & MOTION CHOREOGRAPHIES
            ================================================================ */}
-        {CHAPTERS.map((ch, cIdx) => (
-          <div
-            key={ch.id}
-            ref={(el) => {
-              fgChapterRefs.current[cIdx] = el;
-            }}
-            style={{ visibility: "hidden", opacity: 0 }}
-            className="pointer-events-none absolute inset-0 z-[42] mx-auto flex max-w-[1440px] flex-col justify-end lg:justify-center px-4 pb-5 pt-28 sm:px-12 lg:py-16 will-change-transform"
-          >
-            <div className="pointer-events-auto w-full lg:w-[49%] max-w-[600px]">
-              {/* Tactile Rounded-XL Eyebrow Kicker */}
-              <div className="inline-flex items-center gap-2 rounded-xl border border-white/12 bg-white/[0.06] px-3 py-1 backdrop-blur-md">
-                <span
-                  className="inline-block h-2 w-2 rounded-sm"
-                  style={{ backgroundColor: ch.accentHex }}
-                />
-                <span
-                  className="font-mono text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.2em]"
-                  style={{ color: ch.accentHex }}
-                >
-                  {ch.kicker}
-                </span>
-              </div>
+        {CHAPTERS.map((ch, cIdx) => {
+          // Each chapter gets its OWN Desktop spatial layout so no two feel alike!
+          const containerAlign =
+            cIdx === 0
+              ? "justify-end lg:justify-center lg:items-start"
+              : cIdx === 1
+                ? "justify-end lg:justify-between"
+                : cIdx === 2
+                  ? "justify-end"
+                  : "justify-end lg:justify-center lg:items-end";
 
-              {/* Per-Character 3D Whip-Slam Discipline Headline */}
-              <h3 className="mt-2 flex flex-wrap items-center font-display text-[clamp(2.35rem,7vw,5.1rem)] font-black leading-[0.9] tracking-tight text-white drop-shadow-[0_14px_34px_rgba(0,0,0,0.65)] select-none">
-                {ch.chars.map((char, charIdx) => (
-                  <span
-                    key={charIdx}
-                    ref={(el) => {
-                      if (!charRefs.current[cIdx]) charRefs.current[cIdx] = [];
-                      charRefs.current[cIdx][charIdx] = el;
-                    }}
-                    style={char === "." ? { color: ch.accentHex } : undefined}
-                    className="inline-block will-change-transform"
-                  >
-                    {char}
-                  </span>
-                ))}
-              </h3>
-
-              {/* 4 Tactile Rounded-2xl Kinetic Skill Cards */}
-              <div className="mt-3 sm:mt-4 flex flex-col gap-2 sm:gap-2.5">
-                {ch.rows.map((row, rIdx) => (
-                  <div
-                    key={row.code}
-                    ref={(el) => {
-                      if (!rowRefs.current[cIdx]) rowRefs.current[cIdx] = [];
-                      rowRefs.current[cIdx][rIdx] = el;
-                    }}
-                    onPointerEnter={() => {
-                      hoveredRowRef.current = rIdx;
-                      skillsScrollRef.current.activeRow = rIdx;
-                    }}
-                    onPointerLeave={() => {
-                      hoveredRowRef.current = null;
-                    }}
-                    className="group relative rounded-2xl border border-white/10 bg-slate-900/50 px-3.5 py-2 sm:px-4 sm:py-2.5 backdrop-blur-md transition-[background-color,border-color,box-shadow] duration-200 will-change-transform"
-                  >
-                    <div className="flex items-center justify-between gap-2.5">
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <span
-                          className="shrink-0 rounded-lg px-2 py-0.5 font-mono text-[10px] font-extrabold tracking-wider text-[#07131C]"
-                          style={{ backgroundColor: ch.accentHex }}
-                        >
-                          {row.code}
-                        </span>
-                        <span className="truncate font-display text-sm sm:text-[16.5px] font-bold text-white">
-                          {row.title}
-                        </span>
-                      </div>
-                      <span
-                        className="shrink-0 rounded-lg border border-white/10 bg-white/[0.06] px-2 py-0.5 font-mono text-[10px] sm:text-[11px] font-bold tracking-wide"
-                        style={{ color: ch.accentHex }}
-                      >
-                        {row.metric}
+          return (
+            <div
+              key={ch.id}
+              ref={(el) => {
+                fgChapterRefs.current[cIdx] = el;
+              }}
+              style={{ visibility: "hidden", opacity: 0 }}
+              className={`pointer-events-none absolute inset-0 z-[42] mx-auto flex max-w-[1440px] flex-col px-4 pb-5 pt-28 sm:px-10 lg:py-20 ${containerAlign}`}
+            >
+              {/* 01 CIVIL: Left-Perimeter Ascending Stack */}
+              {cIdx === 0 && (
+                <div className="pointer-events-auto w-full lg:w-[420px]">
+                  <div ref={(el) => { headerBlockRefs.current[0] = el; }} className="will-change-transform">
+                    <div className="inline-flex items-center gap-2 rounded-xl border border-white/12 bg-slate-950/55 px-3 py-1 backdrop-blur-md">
+                      <span className="h-2 w-2 rounded-sm" style={{ backgroundColor: ch.accentHex }} />
+                      <span className="font-mono text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: ch.accentHex }}>
+                        {ch.kicker}
                       </span>
                     </div>
+                    <h3 className="mt-1.5 flex flex-wrap items-center font-display text-[clamp(2.2rem,6vw,4.4rem)] font-black leading-[0.9] tracking-tight text-white drop-shadow-[0_14px_34px_rgba(0,0,0,0.7)] select-none">
+                      {ch.chars.map((char, charIdx) => (
+                        <span
+                          key={charIdx}
+                          ref={(el) => {
+                            if (!charRefs.current[0]) charRefs.current[0] = [];
+                            charRefs.current[0][charIdx] = el;
+                          }}
+                          style={char === "." ? { color: ch.accentHex } : undefined}
+                          className="inline-block will-change-transform"
+                        >
+                          {char}
+                        </span>
+                      ))}
+                    </h3>
+                  </div>
+                  <div
+                    ref={(el) => { cardsBlockRefs.current[0] = el; }}
+                    className="mt-3 flex flex-col gap-2 will-change-transform"
+                  >
+                    {ch.rows.map((row, rIdx) => renderSkillCard(ch, 0, row, rIdx))}
+                  </div>
+                </div>
+              )}
 
-                    <p className="mt-1 font-sans text-[11px] sm:text-xs text-slate-300/85 line-clamp-1">
-                      {row.spec}
-                    </p>
+              {/* 02 SOFTWARE: Split Left/Right FPV Tunnel Wing HUD! */}
+              {cIdx === 1 && (
+                <>
+                  <div
+                    ref={(el) => { headerBlockRefs.current[1] = el; }}
+                    className="pointer-events-auto lg:mt-14 lg:self-center lg:text-center will-change-transform"
+                  >
+                    <div className="inline-flex items-center gap-2 rounded-xl border border-white/12 bg-slate-950/55 px-3 py-1 backdrop-blur-md">
+                      <span className="h-2 w-2 rounded-sm" style={{ backgroundColor: ch.accentHex }} />
+                      <span className="font-mono text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: ch.accentHex }}>
+                        {ch.kicker}
+                      </span>
+                    </div>
+                    <h3 className="mt-1.5 flex flex-wrap lg:justify-center items-center font-display text-[clamp(2.2rem,5.8vw,4.2rem)] font-black leading-[0.9] tracking-tight text-white drop-shadow-[0_14px_34px_rgba(0,0,0,0.75)] select-none">
+                      {ch.chars.map((char, charIdx) => (
+                        <span
+                          key={charIdx}
+                          ref={(el) => {
+                            if (!charRefs.current[1]) charRefs.current[1] = [];
+                            charRefs.current[1][charIdx] = el;
+                          }}
+                          style={char === "." ? { color: ch.accentHex } : undefined}
+                          className="inline-block will-change-transform"
+                        >
+                          {char}
+                        </span>
+                      ))}
+                    </h3>
+                  </div>
 
-                    {/* Smooth Rounded-Full Precision Bar */}
-                    <div className="mt-1.5 h-1.5 w-full rounded-full bg-white/10 overflow-hidden">
-                      <span
-                        ref={(el) => {
-                          if (!barRefs.current[cIdx]) barRefs.current[cIdx] = [];
-                          barRefs.current[cIdx][rIdx] = el;
-                        }}
-                        className="block h-full w-full origin-left rounded-full will-change-transform"
-                        style={{
-                          backgroundColor: ch.accentHex,
-                          transform: "scaleX(0)",
-                        }}
-                      />
+                  <div
+                    ref={(el) => { cardsBlockRefs.current[1] = el; }}
+                    className="pointer-events-auto mt-3 lg:mt-0 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-2 lg:gap-8 w-full will-change-transform"
+                  >
+                    <div className="flex flex-col gap-2 w-full lg:w-[375px]">
+                      {ch.rows.slice(0, 2).map((row, idx) => renderSkillCard(ch, 1, row, idx))}
+                    </div>
+                    <div className="flex flex-col gap-2 w-full lg:w-[375px]">
+                      {ch.rows.slice(2, 4).map((row, idx) => renderSkillCard(ch, 1, row, idx + 2))}
                     </div>
                   </div>
-                ))}
-              </div>
+                </>
+              )}
+
+              {/* 03 DESIGN: Bottom Counter-Gliding 2x2 Bento Strip! */}
+              {cIdx === 2 && (
+                <div className="pointer-events-auto w-full">
+                  <div
+                    ref={(el) => { headerBlockRefs.current[2] = el; }}
+                    className="will-change-transform"
+                  >
+                    <div className="inline-flex items-center gap-2 rounded-xl border border-white/12 bg-slate-950/55 px-3 py-1 backdrop-blur-md">
+                      <span className="h-2 w-2 rounded-sm" style={{ backgroundColor: ch.accentHex }} />
+                      <span className="font-mono text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: ch.accentHex }}>
+                        {ch.kicker}
+                      </span>
+                    </div>
+                    <h3 className="mt-1.5 flex flex-wrap items-center font-display text-[clamp(2.2rem,5.8vw,4.2rem)] font-black leading-[0.9] tracking-tight text-white drop-shadow-[0_14px_34px_rgba(0,0,0,0.75)] select-none">
+                      {ch.chars.map((char, charIdx) => (
+                        <span
+                          key={charIdx}
+                          ref={(el) => {
+                            if (!charRefs.current[2]) charRefs.current[2] = [];
+                            charRefs.current[2][charIdx] = el;
+                          }}
+                          style={char === "." ? { color: ch.accentHex } : undefined}
+                          className="inline-block will-change-transform"
+                        >
+                          {char}
+                        </span>
+                      ))}
+                    </h3>
+                  </div>
+
+                  <div
+                    ref={(el) => { cardsBlockRefs.current[2] = el; }}
+                    className="mt-3 grid grid-cols-1 lg:grid-cols-2 gap-2 lg:gap-3 max-w-4xl will-change-transform"
+                  >
+                    {ch.rows.map((row, rIdx) => renderSkillCard(ch, 2, row, rIdx))}
+                  </div>
+                </div>
+              )}
+
+              {/* 04 OFF-CLOCK HOBBIES: Right-Perimeter Diagonal Tracklist Cascade! */}
+              {cIdx === 3 && (
+                <div className="pointer-events-auto w-full lg:w-[440px] lg:mt-10">
+                  <div
+                    ref={(el) => { headerBlockRefs.current[3] = el; }}
+                    className="lg:text-right flex flex-col lg:items-end will-change-transform"
+                  >
+                    <div className="inline-flex items-center gap-2 rounded-xl border border-white/12 bg-slate-950/55 px-3 py-1 backdrop-blur-md">
+                      <span className="h-2 w-2 rounded-sm" style={{ backgroundColor: ch.accentHex }} />
+                      <span className="font-mono text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: ch.accentHex }}>
+                        {ch.kicker}
+                      </span>
+                    </div>
+                    <h3 className="mt-1.5 flex flex-wrap lg:justify-end items-center font-display text-[clamp(2.2rem,5.8vw,4.2rem)] font-black leading-[0.9] tracking-tight text-white drop-shadow-[0_14px_34px_rgba(0,0,0,0.75)] select-none">
+                      {ch.chars.map((char, charIdx) => (
+                        <span
+                          key={charIdx}
+                          ref={(el) => {
+                            if (!charRefs.current[3]) charRefs.current[3] = [];
+                            charRefs.current[3][charIdx] = el;
+                          }}
+                          style={char === "." ? { color: ch.accentHex } : undefined}
+                          className="inline-block will-change-transform"
+                        >
+                          {char}
+                        </span>
+                      ))}
+                    </h3>
+                  </div>
+
+                  <div
+                    ref={(el) => { cardsBlockRefs.current[3] = el; }}
+                    className="mt-5 flex flex-col gap-2 will-change-transform"
+                  >
+                    {ch.rows.map((row, rIdx) => renderSkillCard(ch, 3, row, rIdx))}
+                  </div>
+                </div>
+              )}
             </div>
-          </div>
-        ))}
+          );
+        })}
 
         {/* ================================================================
-            BEAT 5 (0.82 -> 1.00): WHITE CIRCULAR IRIS WIPE + "STAND OUT"
+            BEAT 5 (0.835 -> 1.00): WHITE CIRCULAR IRIS WIPE + "STAND OUT"
            ================================================================ */}
         <div
           ref={stageFinaleRef}
@@ -1088,7 +1216,6 @@ export function Act4SkillsPitch() {
           className="absolute inset-0 z-[52] flex items-center justify-center bg-white text-[#07131C]"
         >
           <div className="relative mx-auto grid h-full w-full max-w-6xl grid-cols-1 items-center gap-4 sm:gap-8 px-4 sm:px-8 py-6 sm:py-12 md:grid-cols-12">
-            {/* LEFT: Circular Rotating Sky-Blue Sunburst + Illustrated Creator Portrait */}
             <div className="relative flex items-center justify-center md:col-span-5">
               <div
                 ref={finalePortraitRef}
@@ -1106,7 +1233,6 @@ export function Act4SkillsPitch() {
               </div>
             </div>
 
-            {/* RIGHT: Classic Side-by-Side Pitch Copy + Royal-Blue/Volt-Lime "STAND OUT" */}
             <div className="relative z-20 flex flex-col items-center text-center md:col-span-7 md:items-start md:text-left">
               <p
                 ref={finaleLine1Ref}
