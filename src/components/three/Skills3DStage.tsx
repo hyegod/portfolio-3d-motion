@@ -67,12 +67,12 @@ const CHAPTER_CAMERA_PATHS: ChapterCamKeyframe[][] = [
     { t: 0.74, pos: [-0.28, -0.18, 1.35], look: [0.0, 0.0, -2.2], roll: -0.14, fov: 57 },
     { t: 1.0, pos: [-2.35, 0.95, 3.45], look: [0.0, 0.0, -0.3], roll: 0.04, fov: 43 },
   ],
-  // 03 UI/UX & 3D: Left-to-Right S-Curve Cinema Dolly Slalom weaving past floating glass UI layers!
+  // 03 UI/UX & 3D: Smooth Left-to-Right S-Curve Cinema Dolly Slalom!
   [
-    { t: 0.0, pos: [-3.85, 0.28, 4.15], look: [0.25, 0.05, -0.2], roll: -0.08, fov: 41 },
-    { t: 0.36, pos: [-0.55, -0.52, 2.75], look: [0.35, 0.12, -0.5], roll: 0.07, fov: 47 },
-    { t: 0.7, pos: [3.15, 0.38, 3.25], look: [-0.25, 0.05, -0.4], roll: 0.09, fov: 44 },
-    { t: 1.0, pos: [0.45, 2.15, 4.05], look: [0.0, -0.05, -0.4], roll: -0.03, fov: 39 },
+    { t: 0.0, pos: [-3.55, 0.22, 4.35], look: [0.15, 0.05, -0.35], roll: -0.06, fov: 42 },
+    { t: 0.35, pos: [-0.85, 0.05, 3.65], look: [0.15, 0.08, -0.45], roll: 0.04, fov: 44 },
+    { t: 0.7, pos: [2.45, 0.35, 3.65], look: [-0.15, 0.05, -0.45], roll: 0.07, fov: 43 },
+    { t: 1.0, pos: [0.45, 1.85, 4.25], look: [0.0, 0.0, -0.45], roll: -0.02, fov: 40 },
   ],
   // 04 OFF-CLOCK HOBBIES: Low-angle macro guitar fretboard string-run -> turntable close-up -> stage pullback!
   [
@@ -136,6 +136,7 @@ function sampleCameraPath(
 
 /**
  * Multi-Style Act-2-Grade Cinema Camera & Studio Lighting Rig
+ * Evaluates C1-continuous Catmull-Rom 3D splines so camera motion never stutters at intermediate keyframes!
  */
 function SkillsCinemaRig({
   scrollRef,
@@ -145,9 +146,30 @@ function SkillsCinemaRig({
   const { camera, size } = useThree();
   const smoothPos = useMemo(() => new THREE.Vector3(-3.15, -1.28, 3.85), []);
   const smoothLook = useMemo(() => new THREE.Vector3(0.35, 0.15, 0), []);
+  const tempPos = useMemo(() => new THREE.Vector3(), []);
+  const tempLook = useMemo(() => new THREE.Vector3(), []);
   const smoothRoll = useRef(0.09);
   const smoothFov = useRef(50);
   const lastChapterRef = useRef(-1);
+
+  const chapterSplines = useMemo(
+    () =>
+      CHAPTER_CAMERA_PATHS.map((kfList) => ({
+        posSpline: new THREE.CatmullRomCurve3(
+          kfList.map((k) => new THREE.Vector3(...k.pos)),
+          false,
+          "catmullrom",
+          0.45
+        ),
+        lookSpline: new THREE.CatmullRomCurve3(
+          kfList.map((k) => new THREE.Vector3(...k.look)),
+          false,
+          "catmullrom",
+          0.45
+        ),
+      })),
+    []
+  );
 
   useFrame((_, delta) => {
     const dt = Math.min(0.05, delta);
@@ -160,14 +182,19 @@ function SkillsCinemaRig({
     const yLiftMobile = portraitFactor * -0.35;
     const fovBoost = portraitFactor * 8;
 
-    const sample = sampleCameraPath(CHAPTER_CAMERA_PATHS[chapterIdx], local);
-    const tx = sample.pos[0] + pointerX * 0.35;
-    const ty = sample.pos[1] + pointerY * -0.24 + yLiftMobile;
-    const tz = sample.pos[2] + zPullback;
+    const u = clamp01(local);
+    const { posSpline, lookSpline } = chapterSplines[chapterIdx];
+    posSpline.getPoint(u, tempPos);
+    lookSpline.getPoint(u, tempLook);
 
-    const lx = sample.look[0] + pointerX * 0.12;
-    const ly = sample.look[1] + yLiftMobile * 0.85;
-    const lz = sample.look[2];
+    const sample = sampleCameraPath(CHAPTER_CAMERA_PATHS[chapterIdx], u);
+    const tx = tempPos.x + pointerX * 0.35;
+    const ty = tempPos.y + pointerY * -0.24 + yLiftMobile;
+    const tz = tempPos.z + zPullback;
+
+    const lx = tempLook.x + pointerX * 0.12;
+    const ly = tempLook.y + yLiftMobile * 0.85;
+    const lz = tempLook.z;
 
     const tRoll = sample.roll + pointerX * -0.025;
     const tFov = sample.fov + fovBoost;
@@ -294,7 +321,7 @@ function CivilWorld3D({
 
       const mat = braceMatRefs.current[i];
       if (mat) {
-        const wave = 0.5 + 0.5 * Math.sin(t * 3.6 - i * 0.65 + activeRow * 0.9);
+        const wave = 0.5 + 0.5 * Math.sin(t * 3.6 - i * 0.65 + local * 2.8);
         tempColor.copy(colorLow).lerp(colorHigh, wave);
         mat.color.copy(tempColor);
         mat.emissive.copy(tempColor);
@@ -500,7 +527,7 @@ function SoftwareWorld3D({
 
   useFrame((state) => {
     const t = state.clock.elapsedTime;
-    const { progress: p, activeRow } = scrollRef.current;
+    const { progress: p } = scrollRef.current;
     const { chapterIdx, local } = getActiveSkillChapter(p);
 
     if (groupRef.current) {
@@ -508,8 +535,8 @@ function SoftwareWorld3D({
       if (chapterIdx !== 1) return;
     }
 
-    // Open wide tunnel corridor as FPV camera rockets through the matrix!
-    const explode = 0.85 + Math.sin(local * Math.PI * 0.88) * 0.68 + activeRow * 0.04;
+    // Open wide tunnel corridor smoothly as FPV camera rockets through the matrix!
+    const explode = 0.88 + Math.sin(local * Math.PI * 0.88) * 0.72;
 
     if (coreRef.current) {
       coreRef.current.rotation.y = -t * 1.6;
@@ -654,25 +681,26 @@ function DesignWorld3D({
   );
 
   const { curve, ribbonGeo } = useMemo(() => {
+    // Routed cleanly in the open Z-corridors between cards (z = 1.15, 0.25, -0.85, -1.85) — zero mesh clipping!
     const c = new THREE.CatmullRomCurve3(
       [
-        new THREE.Vector3(-2.6, -0.65, 1.6),
-        new THREE.Vector3(-1.1, 0.72, 0.9),
-        new THREE.Vector3(0.95, -0.58, 0.1),
-        new THREE.Vector3(-0.85, 0.68, -0.9),
-        new THREE.Vector3(1.85, -0.25, -2.0),
+        new THREE.Vector3(-2.65, -0.55, 1.58),
+        new THREE.Vector3(-0.15, 0.78, 0.72),
+        new THREE.Vector3(0.15, -0.62, -0.32),
+        new THREE.Vector3(-0.1, 0.75, -1.35),
+        new THREE.Vector3(2.25, -0.35, -2.25),
       ],
       false,
       "catmullrom",
       0.5
     );
-    const geo = new THREE.TubeGeometry(c, 96, 0.058, 20, false);
+    const geo = new THREE.TubeGeometry(c, 96, 0.052, 20, false);
     return { curve: c, ribbonGeo: geo };
   }, []);
 
   useFrame((state) => {
     const t = state.clock.elapsedTime;
-    const { progress: p, activeRow } = scrollRef.current;
+    const { progress: p } = scrollRef.current;
     const { chapterIdx, local } = getActiveSkillChapter(p);
 
     if (groupRef.current) {
@@ -684,11 +712,12 @@ function DesignWorld3D({
       const pl = planeRefs.current[i];
       if (!pl) continue;
       const [ax, ay, az, rotY] = cardAnchors[i];
-      const floatY =
-        ay + Math.sin(t * 2.0 + i * 1.1) * 0.08 + (activeRow === i ? 0.14 : 0);
+      // 100% smooth continuous scroll + breathing motion (ZERO discrete step jumps!)
+      const scrollGlideY = (local - 0.5) * (i % 2 === 0 ? 0.18 : -0.18);
+      const floatY = ay + scrollGlideY + Math.sin(t * 1.7 + i * 1.1) * 0.055;
       pl.position.set(ax, floatY, az);
-      pl.rotation.y = rotY + (local - 0.5) * 0.25;
-      pl.rotation.z = Math.sin(t * 1.3 + i) * 0.025;
+      pl.rotation.y = rotY + (local - 0.5) * 0.26;
+      pl.rotation.z = Math.sin(t * 1.2 + i) * 0.02;
     }
 
     for (let k = 0; k < 6; k++) {
@@ -709,7 +738,7 @@ function DesignWorld3D({
       <gridHelper args={[18, 24, "#A855F7", "#151936"]} position={[0, -1.85, -0.5]} />
       <Sparkles count={50} scale={[9, 5, 8]} size={2.2} speed={0.4} color="#C6FF3D" />
 
-      {/* 4 Staggered Spatial Rounded-2xl Frosted Glass UI Screens */}
+      {/* 4 Staggered Spatial Rounded-2xl Specular UI Screens (depthWrite prevents Z-sort pop!) */}
       {[0, 1, 2, 3].map((idx) => (
         <group
           key={idx}
@@ -720,10 +749,8 @@ function DesignWorld3D({
           <RoundedBox args={[2.1, 1.36, 0.055]} radius={0.14} smoothness={4}>
             <meshPhysicalMaterial
               color="#141E3B"
-              transparent
-              opacity={0.82}
-              metalness={0.3}
-              roughness={0.14}
+              metalness={0.35}
+              roughness={0.15}
               clearcoat={1}
               clearcoatRoughness={0.1}
             />
