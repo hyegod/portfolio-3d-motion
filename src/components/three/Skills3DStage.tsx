@@ -952,26 +952,35 @@ function HobbiesWorld3D({
         })}
       </group>
 
-      {/* Hero Walnut 3D Vinyl Turntable Platter */}
+      {/* Hero Walnut 3D Vinyl Turntable Platter (Sleek Plinth + Visible Spinning Record & Tonearm!) */}
       <group
         ref={turntableRef}
-        position={[1.38, 0.48, 0.42]}
-        rotation={[0.42, -0.38, 0.12]}
+        position={[1.28, 0.36, 0.25]}
+        rotation={[0.52, -0.32, 0.1]}
       >
-        <RoundedBox args={[1.12, 0.15, 1.12]} radius={0.15} smoothness={4}>
-          <meshStandardMaterial color="#5C3A21" metalness={0.35} roughness={0.4} />
+        <RoundedBox args={[1.16, 0.14, 1.16]} radius={0.048} smoothness={4}>
+          <meshStandardMaterial color="#5C3A21" metalness={0.35} roughness={0.38} />
         </RoundedBox>
-        <mesh ref={vinylDiscRef} position={[0, 0.09, 0]}>
-          <cylinderGeometry args={[0.45, 0.45, 0.028, 32]} />
-          <meshStandardMaterial color="#09090B" metalness={0.85} roughness={0.16} />
+        <mesh ref={vinylDiscRef} position={[-0.05, 0.088, 0]}>
+          <cylinderGeometry args={[0.45, 0.45, 0.024, 36]} />
+          <meshStandardMaterial color="#09090B" metalness={0.88} roughness={0.14} />
         </mesh>
-        <mesh position={[0, 0.106, 0]}>
-          <cylinderGeometry args={[0.14, 0.14, 0.03, 24]} />
+        <mesh position={[-0.05, 0.103, 0]}>
+          <cylinderGeometry args={[0.15, 0.15, 0.026, 24]} />
           <meshStandardMaterial
             color="#FF6B4A"
             emissive="#FF6B4A"
-            emissiveIntensity={0.6}
+            emissiveIntensity={0.65}
           />
+        </mesh>
+        {/* Brushed Silver Tonearm */}
+        <mesh position={[0.42, 0.12, -0.34]}>
+          <cylinderGeometry args={[0.065, 0.065, 0.06, 16]} />
+          <meshStandardMaterial color="#E2E8F0" metalness={0.95} roughness={0.12} />
+        </mesh>
+        <mesh position={[0.31, 0.135, -0.02]} rotation={[Math.PI / 2, 0, 0.34]}>
+          <cylinderGeometry args={[0.014, 0.014, 0.68, 10]} />
+          <meshStandardMaterial color="#E2E8F0" metalness={0.95} roughness={0.12} />
         </mesh>
       </group>
     </group>

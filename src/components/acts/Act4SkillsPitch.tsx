@@ -25,27 +25,27 @@ const CORE_TOOLS: ToolId[] = [
   "figma",
 ];
 
-interface KineticSkillCard {
-  code: string;
+interface SpotlightCapability {
+  idx: string;
+  shortLabel: string;
+  heroStat: string;
   title: string;
   spec: string;
-  metric: string;
-  fill: number;
 }
 
 interface DisciplineChapter {
   id: "civil" | "software" | "design" | "hobbies";
   num: string;
   shortTab: string;
-  kicker: string;
-  headline: string;
-  chars: string[];
+  tapeSticker: string;
+  titleBold: string;
+  titleItalic: string;
   accentHex: string;
-  camLabel: string;
+  tools: ToolId[];
   startP: number;
   endP: number;
   jumpRatio: number;
-  rows: KineticSkillCard[];
+  beats: SpotlightCapability[];
 }
 
 const CHAPTERS: DisciplineChapter[] = [
@@ -53,42 +53,42 @@ const CHAPTERS: DisciplineChapter[] = [
     id: "civil",
     num: "01",
     shortTab: "01 Civil",
-    kicker: "01 • Civil & Structural Engineering",
-    headline: "CIVIL.",
-    chars: "CIVIL.".split(""),
+    tapeSticker: "01 × STRUCTURAL",
+    titleBold: "Civil",
+    titleItalic: "& Structural.",
     accentHex: "#F59E0B",
-    camLabel: "CAM 01 • HELICOPTER SPIRAL → CRANE JIB",
+    tools: ["autocad", "revit"],
     startP: 0.115,
     endP: 0.315,
-    jumpRatio: 0.21,
-    rows: [
+    jumpRatio: 0.16,
+    beats: [
       {
-        code: "CIV-01",
+        idx: "01",
+        shortLabel: "Bridge FEA",
+        heroStat: "280m+ Span",
         title: "Long-Span Bridge & Arch FEA",
-        spec: "ETABS • SAP2000 • Nonlinear Cable & P-Delta",
-        metric: "280m+ Span",
-        fill: 0.96,
+        spec: "ETABS  •  SAP2000  •  NONLINEAR STAY-CABLE",
       },
       {
-        code: "CIV-02",
+        idx: "02",
+        shortLabel: "Seismic Core",
+        heroStat: "42 Stories",
         title: "High-Rise Seismic Core & Diagrid",
-        spec: "Modal Response Spectrum • SNI 1726 & ACI 318",
-        metric: "42 Stories",
-        fill: 0.94,
+        spec: "MODAL SPECTRUM  •  SNI 1726  •  ACI 318",
       },
       {
-        code: "CIV-03",
-        title: "BIM LOD 400 & Rebar Coordination",
-        spec: "Autodesk Revit • Automated Clash & Bar Schedules",
-        metric: "Zero-Clash",
-        fill: 0.95,
+        idx: "03",
+        shortLabel: "Revit BIM",
+        heroStat: "LOD 400",
+        title: "BIM & Rebar Clash Coordination",
+        spec: "AUTODESK REVIT  •  ZERO-CLASH BAR SCHEDULES",
       },
       {
-        code: "CIV-04",
-        title: "Corridor & Earthwork Infrastructure",
-        spec: "AutoCAD • Civil 3D Alignments & Cut-Fill Modeling",
-        metric: "18.4 km",
-        fill: 0.91,
+        idx: "04",
+        shortLabel: "Civil 3D",
+        heroStat: "18.4 km",
+        title: "Corridor & Site Infrastructure",
+        spec: "AUTOCAD  •  CIVIL 3D  •  CUT-FILL ALIGNMENTS",
       },
     ],
   },
@@ -96,42 +96,42 @@ const CHAPTERS: DisciplineChapter[] = [
     id: "software",
     num: "02",
     shortTab: "02 Software",
-    kicker: "02 • Full-Stack & Computational Software",
-    headline: "SOFTWARE.",
-    chars: "SOFTWARE.".split(""),
+    tapeSticker: "02 × FULL-STACK",
+    titleBold: "Software",
+    titleItalic: "& Solvers.",
     accentHex: "#38BDF8",
-    camLabel: "CAM 02 • FPV Z-TUNNEL DIVE THROUGH CORE",
+    tools: ["typescript", "python"],
     startP: 0.315,
     endP: 0.51,
-    jumpRatio: 0.41,
-    rows: [
+    jumpRatio: 0.36,
+    beats: [
       {
-        code: "SWE-01",
+        idx: "01",
+        shortLabel: "Full-Stack TS",
+        heroStat: "Next.js 16",
         title: "Full-Stack TypeScript Architecture",
-        spec: "Next.js 16 • React 19 • Node • Scalable APIs",
-        metric: "Production",
-        fill: 0.96,
+        spec: "REACT 19  •  STRICT TS  •  SCALABLE NODE APIS",
       },
       {
-        code: "SWE-02",
+        idx: "02",
+        shortLabel: "Python Solvers",
+        heroStat: "< 18ms API",
         title: "Computational Structural Solvers",
-        spec: "Python • FastAPI • NumPy/SciPy Matrix Engines",
-        metric: "< 18ms API",
-        fill: 0.94,
+        spec: "PYTHON  •  FASTAPI  •  NUMPY / SCIPY MATRICES",
       },
       {
-        code: "SWE-03",
+        idx: "03",
+        shortLabel: "WebGL 120fps",
+        heroStat: "120 FPS",
         title: "Real-Time 3D & WebGL Engines",
-        spec: "Three.js • React Three Fiber • Custom GLSL",
-        metric: "120 FPS",
-        fill: 0.95,
+        spec: "THREE.JS  •  REACT THREE FIBER  •  GLSL SHADERS",
       },
       {
-        code: "SWE-04",
-        title: "BIM & CAD Pipeline Automation",
-        spec: "Revit API • pyRevit • IFC-to-WebGL Streaming",
-        metric: "-75% Time",
-        fill: 0.92,
+        idx: "04",
+        shortLabel: "BIM Pipeline",
+        heroStat: "-75% Time",
+        title: "BIM-to-Web Pipeline Automation",
+        spec: "REVIT API  •  PYREVIT  •  IFC MESH STREAMING",
       },
     ],
   },
@@ -139,42 +139,42 @@ const CHAPTERS: DisciplineChapter[] = [
     id: "design",
     num: "03",
     shortTab: "03 UI/UX & 3D",
-    kicker: "03 • UI/UX Systems & Kinetic 3D Motion",
-    headline: "DESIGN.",
-    chars: "DESIGN.".split(""),
+    tapeSticker: "03 × INTERACTIVE",
+    titleBold: "UI/UX",
+    titleItalic: "& 3D Motion.",
     accentHex: "#C6FF3D",
-    camLabel: "CAM 03 • LATERAL S-CURVE DOLLY SLALOM",
+    tools: ["figma"],
     startP: 0.51,
     endP: 0.705,
-    jumpRatio: 0.6,
-    rows: [
+    jumpRatio: 0.56,
+    beats: [
       {
-        code: "UXD-01",
-        title: "Design Systems & Token Architecture",
-        spec: "Figma Variables • Multi-Brand Kits • WCAG AA",
-        metric: "80+ Tokens",
-        fill: 0.95,
+        idx: "01",
+        shortLabel: "Figma Tokens",
+        heroStat: "80+ Tokens",
+        title: "Design Systems & Component Kits",
+        spec: "FIGMA VARIABLES  •  MULTI-BRAND  •  WCAG AA",
       },
       {
-        code: "UXD-02",
+        idx: "02",
+        shortLabel: "GSAP Motion",
+        heroStat: "60–120 FPS",
         title: "Scroll & Kinetic Motion Direction",
-        spec: "GSAP ScrollTrigger • Lenis Physics • Bezier Curves",
-        metric: "60-120 FPS",
-        fill: 0.96,
+        spec: "GSAP SCROLLTRIGGER  •  LENIS  •  BEZIER PHYSICS",
       },
       {
-        code: "UXD-03",
+        idx: "03",
+        shortLabel: "Spatial 3D UI",
+        heroStat: "WebGL2",
         title: "Spatial 3D & Refractive Interfaces",
-        spec: "Procedural 3D Geometry • Studio Lighting • Shaders",
-        metric: "WebGL2",
-        fill: 0.93,
+        spec: "PROCEDURAL 3D  •  STUDIO LIGHTING  •  GLASS IOR",
       },
       {
-        code: "UXD-04",
-        title: "Zero-Handoff Design-to-Production",
-        spec: "Direct Figma Prototype → Live Engineered Build",
-        metric: "2x Faster",
-        fill: 0.97,
+        idx: "04",
+        shortLabel: "Design-to-Code",
+        heroStat: "2× Faster",
+        title: "Zero-Handoff Design to Production",
+        spec: "FIGMA PROTOTYPE  →  ENGINEERED LIVE BUILD",
       },
     ],
   },
@@ -182,42 +182,42 @@ const CHAPTERS: DisciplineChapter[] = [
     id: "hobbies",
     num: "04",
     shortTab: "04 Hobbies",
-    kicker: "04 • Off-Clock Hobbies & Creative Fuel",
-    headline: "OFF-CLOCK.",
-    chars: "OFF-CLOCK.".split(""),
+    tapeSticker: "04 × OFF-CLOCK",
+    titleBold: "Riffs, Synth",
+    titleItalic: "& Roast.",
     accentHex: "#FF6B4A",
-    camLabel: "CAM 04 • FRETBOARD STRING-RUN → TURNTABLE",
+    tools: ["music"],
     startP: 0.705,
     endP: 0.85,
-    jumpRatio: 0.77,
-    rows: [
+    jumpRatio: 0.74,
+    beats: [
       {
-        code: "TRK-01",
-        title: "Electric Guitar & Riff Sessions",
-        spec: "Neo-soul Maj9 chord voicings, tone crafting & improv",
-        metric: "Maj9 • Fender",
-        fill: 0.95,
+        idx: "01",
+        shortLabel: "Maj9 Guitar",
+        heroStat: "Maj9 Riffs",
+        title: "Electric Guitar & Late-Night Sessions",
+        spec: "NEO-SOUL VOICINGS  •  PEDALBOARD TONE CRAFT",
       },
       {
-        code: "TRK-02",
+        idx: "02",
+        shortLabel: "112 BPM Synth",
+        heroStat: "112 BPM",
         title: "Analog Synth & DAW Beatmaking",
-        spec: "112 BPM instrumental synth layering & drum grooves",
-        metric: "112 BPM",
-        fill: 0.92,
+        spec: "INSTRUMENTAL LAYERING  •  DRUM GROOVE DESIGN",
       },
       {
-        code: "TRK-03",
+        idx: "03",
+        shortLabel: "V60 & Espresso",
+        heroStat: "93°C • 1:15",
         title: "Specialty V60 & Espresso Dialing",
-        spec: "Single-origin 1:15 pour-over & morning ristretto ritual",
-        metric: "93°C • 1:15",
-        fill: 0.94,
+        spec: "SINGLE-ORIGIN POUR-OVER  •  MORNING RISTRETTO",
       },
       {
-        code: "TRK-04",
+        idx: "04",
+        shortLabel: "Urban Sketch",
+        heroStat: "0.1mm Ink",
         title: "Urban Architectural Sketching",
-        spec: "Fine-liner structural perspective studies of bridges & cities",
-        metric: "0.1mm Ink",
-        fill: 0.9,
+        spec: "FINE-LINER PERSPECTIVE  •  BRIDGES & TRUSSES",
       },
     ],
   },
@@ -247,8 +247,9 @@ const STAND_LIT = [
 ];
 
 /**
- * Act 4 — 3D Cinema Camera Flythrough Showreel (760vh)
- * Every discipline has its OWN distinct Act-2-style 3D Camera Movement AND its OWN distinct HUD motion!
+ * Act 4 — Cardless 3D Cinema Flythrough & Frameless Kinetic Super-Titles (760vh)
+ * Zero SaaS/CV progress-bar cards! Every discipline uses unobstructed 3D Cinema Camera
+ * Choreography paired with colossal, frameless editorial typography & tilted tape stickers.
  */
 export function Act4SkillsPitch() {
   const sectionRef = useRef<HTMLElement>(null);
@@ -260,16 +261,12 @@ export function Act4SkillsPitch() {
     pointerY: 0,
     activeRow: 0,
   });
-  const hoveredRowRef = useRef<number | null>(null);
 
-  // Rounded-2xl Dock Switcher, 3D Canvas, Camera Telemetry & Cut Flash refs
-  const hudDockRef = useRef<HTMLDivElement>(null);
+  // Minimal Chapter Switcher, 3D Canvas & Cut Flash refs
+  const hudNavRef = useRef<HTMLDivElement>(null);
   const tabBtnRefs = useRef<(HTMLButtonElement | null)[]>([]);
-  const tabFillRefs = useRef<(HTMLSpanElement | null)[]>([]);
   const canvasLayerRef = useRef<HTMLDivElement>(null);
   const cutFlashRef = useRef<HTMLDivElement>(null);
-  const camBadgeRef = useRef<HTMLDivElement>(null);
-  const camLabelSpanRef = useRef<HTMLSpanElement>(null);
 
   // Beat 0: Dynamic Kinetic 45+ Intro refs
   const bg0Ref = useRef<HTMLDivElement>(null);
@@ -286,14 +283,14 @@ export function Act4SkillsPitch() {
   const introChipLeftRef = useRef<HTMLDivElement>(null);
   const introChipRightRef = useRef<HTMLDivElement>(null);
 
-  // Beats 1..4: Separated 3D + Distinct Foreground HUD Choreography refs
+  // Beats 1..4: Frameless Editorial Headers + Spotlight Super-Titles + Minimal Beat Ticks
   const bgChapterRefs = useRef<(HTMLDivElement | null)[]>([]);
   const fgChapterRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const headerBlockRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const cardsBlockRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const charRefs = useRef<(HTMLSpanElement | null)[][]>([[], [], [], []]);
-  const rowRefs = useRef<(HTMLDivElement | null)[][]>([[], [], [], []]);
-  const barRefs = useRef<(HTMLSpanElement | null)[][]>([[], [], [], []]);
+  const headerRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const spotlightWrapRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const beatSlideRefs = useRef<(HTMLDivElement | null)[][]>([[], [], [], []]);
+  const beatTickRefs = useRef<(HTMLButtonElement | null)[][]>([[], [], [], []]);
+  const beatPillRefs = useRef<(HTMLSpanElement | null)[][]>([[], [], [], []]);
 
   // Beat 5: Classic White Circular Iris Wipe + "STAND OUT" Finale refs
   const stageFinaleRef = useRef<HTMLDivElement>(null);
@@ -340,7 +337,6 @@ export function Act4SkillsPitch() {
     );
     observer.observe(section);
 
-    let lastCamText = "";
     let lastLitTab = -1;
 
     const ctx = gsap.context(() => {
@@ -450,7 +446,7 @@ export function Act4SkillsPitch() {
         const irisP = clamp01((p - 0.835) / 0.105);
         const foundryVis =
           clamp01((p - 0.11) / 0.03) * (irisP >= 0.98 ? 0 : 1);
-        const dockVis =
+        const navVis =
           clamp01((p - 0.11) / 0.03) * (1 - clamp01((p - 0.825) / 0.025));
 
         if (canvasLayerRef.current) {
@@ -458,23 +454,19 @@ export function Act4SkillsPitch() {
           canvasLayerRef.current.style.visibility =
             foundryVis > 0.005 ? "visible" : "hidden";
         }
-        if (hudDockRef.current) {
-          hudDockRef.current.style.opacity = dockVis.toFixed(3);
-          hudDockRef.current.style.visibility =
-            dockVis > 0.005 ? "visible" : "hidden";
-        }
-        if (camBadgeRef.current) {
-          camBadgeRef.current.style.opacity = dockVis.toFixed(3);
+        if (hudNavRef.current) {
+          hudNavRef.current.style.opacity = navVis.toFixed(3);
+          hudNavRef.current.style.visibility =
+            navVis > 0.005 ? "visible" : "hidden";
         }
 
-        // Subtle cinema lens speed-flash right at chapter camera cuts (0.315, 0.51, 0.705)
         if (cutFlashRef.current) {
           const cuts = [0.315, 0.51, 0.705];
           let flash = 0;
           for (const cp of cuts) {
             const dist = Math.abs(p - cp);
             if (dist < 0.018) {
-              flash = Math.max(flash, (1 - dist / 0.018) * 0.55);
+              flash = Math.max(flash, (1 - dist / 0.018) * 0.5);
             }
           }
           cutFlashRef.current.style.opacity = flash.toFixed(3);
@@ -485,32 +477,22 @@ export function Act4SkillsPitch() {
 
         if (activeChIdx !== lastLitTab) {
           lastLitTab = activeChIdx;
-          CHAPTERS.forEach((_, idx) => {
+          CHAPTERS.forEach((ch, idx) => {
             const btn = tabBtnRefs.current[idx];
             if (!btn) return;
             if (idx === activeChIdx) {
-              btn.style.backgroundColor = "rgba(255,255,255,0.14)";
-              btn.style.color = "#FFFFFF";
+              btn.style.backgroundColor = ch.accentHex;
+              btn.style.color = "#07131C";
+              btn.style.opacity = "1";
+              btn.style.transform = "scale(1.04)";
             } else {
               btn.style.backgroundColor = "transparent";
-              btn.style.color = "rgba(226,232,240,0.65)";
+              btn.style.color = "#FFFFFF";
+              btn.style.opacity = "0.52";
+              btn.style.transform = "scale(1)";
             }
           });
         }
-
-        const nextCam = CHAPTERS[activeChIdx].camLabel;
-        if (nextCam !== lastCamText && camLabelSpanRef.current) {
-          lastCamText = nextCam;
-          camLabelSpanRef.current.textContent = nextCam;
-          camLabelSpanRef.current.style.color = CHAPTERS[activeChIdx].accentHex;
-        }
-
-        CHAPTERS.forEach((ch, idx) => {
-          const fillEl = tabFillRefs.current[idx];
-          if (!fillEl) return;
-          const f = clamp01((p - ch.startP) / (ch.endP - ch.startP));
-          fillEl.style.transform = `scaleX(${Math.max(0.08, f).toFixed(3)})`;
-        });
 
         const s0Fade = clamp01((p - 0.1) / 0.035);
         if (bg0Ref.current) {
@@ -522,7 +504,7 @@ export function Act4SkillsPitch() {
         const isDesktop = window.innerWidth >= 1024;
 
         // ====================================================================
-        // BEATS 1..4: 4 DISTINCT CAMERA + HUD CHOREOGRAPHIES
+        // BEATS 1..4: CARDLESS CINEMA SUPER-TITLES + 4 DISTINCT CAMERA FLIGHTS
         // ====================================================================
         CHAPTERS.forEach((ch, cIdx) => {
           const isCurrent =
@@ -537,8 +519,8 @@ export function Act4SkillsPitch() {
           const local = clamp01((p - ch.startP) / (ch.endP - ch.startP));
           const bgEl = bgChapterRefs.current[cIdx];
           const fgEl = fgChapterRefs.current[cIdx];
-          const headerEl = headerBlockRefs.current[cIdx];
-          const cardsEl = cardsBlockRefs.current[cIdx];
+          const headerEl = headerRefs.current[cIdx];
+          const spotEl = spotlightWrapRefs.current[cIdx];
 
           if (bgEl) {
             if (!isCurrent) {
@@ -559,8 +541,8 @@ export function Act4SkillsPitch() {
               cIdx === 3
                 ? 1 - clamp01((irisP - 0.25) / 0.5)
                 : Math.min(
-                    clamp01(local * 7),
-                    clamp01((1 - local) * 7.5 + 0.15)
+                    clamp01(local * 8),
+                    clamp01((1 - local) * 8 + 0.12)
                   );
             const fgOp = isCurrent ? fadeEdge : 0;
 
@@ -571,96 +553,73 @@ export function Act4SkillsPitch() {
               fgEl.style.visibility = "visible";
               fgEl.style.opacity = fgOp.toFixed(3);
 
-              // DISTINCT PER-CHAPTER SPATIAL HUD PARALLAX SYNCED TO THE 3D CAMERA!
-              if (isDesktop && headerEl && cardsEl) {
+              // Distinct spatial motion for each chapter's frameless typography!
+              if (isDesktop && headerEl && spotEl) {
                 if (cIdx === 0) {
-                  // 01 Civil: Counter-glide vertically as helicopter spirals up!
-                  headerEl.style.transform = `translate3d(0, ${((0.5 - local) * 46).toFixed(1)}px, 0)`;
-                  cardsEl.style.transform = `translate3d(0, ${((0.5 - local) * 28).toFixed(1)}px, 0)`;
+                  headerEl.style.transform = `translate3d(0, ${((0.5 - local) * 34).toFixed(1)}px, 0)`;
+                  spotEl.style.transform = `translate3d(0, ${((0.5 - local) * -28).toFixed(1)}px, 0)`;
                 } else if (cIdx === 1) {
-                  // 02 Software: Wing-HUD spreads outward as FPV camera dives into the center tunnel!
-                  const tunnelPush = Math.sin(local * Math.PI) * 22;
-                  headerEl.style.transform = `translate3d(0, ${(-tunnelPush * 0.5).toFixed(1)}px, 0) scale(${(1 + Math.sin(local * Math.PI) * 0.04).toFixed(3)})`;
-                  cardsEl.style.transform = `translate3d(0, ${(tunnelPush * 0.35).toFixed(1)}px, 0)`;
+                  const zPush = Math.sin(local * Math.PI) * 18;
+                  headerEl.style.transform = `translate3d(${(zPush).toFixed(1)}px, 0, 0)`;
+                  spotEl.style.transform = `translate3d(${(-zPush).toFixed(1)}px, 0, 0)`;
                 } else if (cIdx === 2) {
-                  // 03 Design: Bottom Bento glides horizontally opposite the S-curve lateral dolly!
-                  headerEl.style.transform = `translate3d(${((local - 0.5) * 60).toFixed(1)}px, 0, 0)`;
-                  cardsEl.style.transform = `translate3d(${((0.5 - local) * 75).toFixed(1)}px, 0, 0)`;
+                  headerEl.style.transform = `translate3d(${((local - 0.5) * 55).toFixed(1)}px, 0, 0)`;
+                  spotEl.style.transform = `translate3d(${((0.5 - local) * 65).toFixed(1)}px, 0, 0)`;
                 } else {
-                  // 04 Hobbies: Right-side diagonal cascade glides upward with the fretboard string-run!
-                  headerEl.style.transform = `translate3d(${((0.5 - local) * -35).toFixed(1)}px, ${((0.5 - local) * 32).toFixed(1)}px, 0)`;
-                  cardsEl.style.transform = `translate3d(0, ${((0.5 - local) * 32).toFixed(1)}px, 0)`;
+                  headerEl.style.transform = `translate3d(0, ${((0.5 - local) * 32).toFixed(1)}px, 0)`;
+                  spotEl.style.transform = `translate3d(0, ${((0.5 - local) * -32).toFixed(1)}px, 0)`;
                 }
-              } else if (headerEl && cardsEl) {
+              } else if (headerEl && spotEl) {
                 headerEl.style.transform = "none";
-                cardsEl.style.transform = "none";
+                spotEl.style.transform = "none";
               }
 
-              // Per-character whip-slam on discipline headline
-              const chars = ch.chars;
-              for (let i = 0; i < chars.length; i++) {
-                const cSpan = charRefs.current[cIdx]?.[i];
-                if (!cSpan) continue;
-                const cT = clamp01((local * 2.2 - i * 0.04) / 0.35);
-                const sp = easeOutBack(cT);
-                const dropY = (1 - sp) * (i % 2 === 0 ? -42 : 42);
-                const sk = (1 - sp) * -14;
-                cSpan.style.opacity = clamp01(cT * 3.2).toFixed(3);
-                cSpan.style.transform = `translate3d(0, ${dropY.toFixed(1)}px, 0) skewX(${sk.toFixed(1)}deg)`;
-              }
-
-              const scannedIdx =
-                hoveredRowRef.current !== null
-                  ? hoveredRowRef.current
-                  : Math.min(3, Math.floor(clamp01(local * 1.08) * 4));
+              // Continuous analog scroll-drum across the 4 frameless Spotlight Super-Titles (0.0 -> 3.0)
+              const beatFloat = clamp01(local * 1.02) * 3;
+              const activeBeat = Math.min(3, Math.round(beatFloat));
               if (activeChIdx === cIdx) {
-                skillsScrollRef.current.activeRow = scannedIdx;
+                skillsScrollRef.current.activeRow = activeBeat;
               }
 
-              ch.rows.forEach((row, rIdx) => {
-                const rowEl = rowRefs.current[cIdx]?.[rIdx];
-                const barEl = barRefs.current[cIdx]?.[rIdx];
-                const rT = clamp01((local * 2.1 - 0.04 - rIdx * 0.06) / 0.32);
-                const rSp = easeOutBack(rT);
-                const isLit = rIdx === scannedIdx;
+              for (let bIdx = 0; bIdx < 4; bIdx++) {
+                const slide = beatSlideRefs.current[cIdx]?.[bIdx];
+                const tick = beatTickRefs.current[cIdx]?.[bIdx];
+                const pill = beatPillRefs.current[cIdx]?.[bIdx];
 
-                if (rowEl) {
-                  let tx = 0;
-                  let ty = 0;
-                  if (!isDesktop) {
-                    tx = (1 - rSp) * -45 + (isLit ? 6 : 0);
-                  } else if (cIdx === 0) {
-                    tx = (1 - rSp) * -75 + (isLit ? 14 : 0);
-                  } else if (cIdx === 1) {
-                    const side = rIdx < 2 ? -1 : 1;
-                    tx = (1 - rSp) * 75 * side + (isLit ? -8 * side : 0);
-                  } else if (cIdx === 2) {
-                    ty = (1 - rSp) * 55 + (isLit ? -6 : 0);
+                const d = bIdx - beatFloat;
+                const absD = Math.abs(d);
+
+                if (slide) {
+                  if (absD >= 0.54) {
+                    slide.style.opacity = "0";
+                    slide.style.visibility = "hidden";
                   } else {
-                    tx = (1 - rSp) * 75 - rIdx * 10 + (isLit ? -14 : 0);
+                    const norm =
+                      absD <= 0.28 ? 1 : 1 - (absD - 0.28) / 0.26;
+                    const eased = norm * norm * (3 - 2 * norm);
+                    const yShift = absD <= 0.16 ? 0 : d * 48;
+                    const skew = absD <= 0.16 ? 0 : d * -10;
+                    const sc = 0.94 + eased * 0.06;
+                    slide.style.visibility = "visible";
+                    slide.style.opacity = eased.toFixed(3);
+                    slide.style.transform = `translate3d(0, ${yShift.toFixed(1)}px, 0) skewX(${skew.toFixed(1)}deg) scale(${sc.toFixed(3)})`;
                   }
+                }
 
-                  const sc = isLit ? 1.025 : 0.985;
-                  rowEl.style.opacity = (
-                    clamp01(rT * 2.8) * (isLit ? 1 : 0.82)
-                  ).toFixed(3);
-                  rowEl.style.transform = `translate3d(${tx.toFixed(1)}px, ${ty.toFixed(1)}px, 0) scale(${sc})`;
-                  rowEl.style.borderColor = isLit
-                    ? `${ch.accentHex}AA`
-                    : "rgba(255,255,255,0.10)";
-                  rowEl.style.backgroundColor = isLit
-                    ? "rgba(15, 23, 42, 0.80)"
-                    : "rgba(15, 23, 42, 0.46)";
-                  rowEl.style.boxShadow = isLit
-                    ? `0 16px 38px -8px ${ch.accentHex}40`
-                    : "0 8px 24px -10px rgba(0,0,0,0.35)";
+                const isBeatActive = bIdx === activeBeat;
+                if (tick) {
+                  tick.style.opacity = isBeatActive ? "1" : "0.38";
+                  tick.style.transform = isBeatActive
+                    ? "translate3d(0, -2px, 0)"
+                    : "translate3d(0, 0, 0)";
                 }
-                if (barEl) {
-                  const bf = clamp01(rT * 1.25) * row.fill;
-                  barEl.style.transform = `scaleX(${bf.toFixed(3)})`;
-                  barEl.style.opacity = isLit ? "1" : "0.45";
+                if (pill) {
+                  pill.style.backgroundColor = isBeatActive
+                    ? ch.accentHex
+                    : "rgba(255,255,255,0.14)";
+                  pill.style.color = isBeatActive ? "#07131C" : "#FFFFFF";
                 }
-              });
+              }
             }
           }
         });
@@ -749,67 +708,6 @@ export function Act4SkillsPitch() {
     skillsScrollRef.current.pointerY = ny;
   };
 
-  const renderSkillCard = (
-    ch: DisciplineChapter,
-    cIdx: number,
-    row: KineticSkillCard,
-    rIdx: number
-  ) => (
-    <div
-      key={row.code}
-      ref={(el) => {
-        if (!rowRefs.current[cIdx]) rowRefs.current[cIdx] = [];
-        rowRefs.current[cIdx][rIdx] = el;
-      }}
-      onPointerEnter={() => {
-        hoveredRowRef.current = rIdx;
-        skillsScrollRef.current.activeRow = rIdx;
-      }}
-      onPointerLeave={() => {
-        hoveredRowRef.current = null;
-      }}
-      className="group relative rounded-2xl border border-white/10 bg-slate-900/55 px-3.5 py-2 sm:px-4 sm:py-2.5 backdrop-blur-xl transition-[background-color,border-color,box-shadow] duration-200 will-change-transform"
-    >
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 min-w-0">
-          <span
-            className="shrink-0 rounded-lg px-2 py-0.5 font-mono text-[10px] font-extrabold tracking-wider text-[#07131C]"
-            style={{ backgroundColor: ch.accentHex }}
-          >
-            {row.code}
-          </span>
-          <span className="truncate font-display text-xs sm:text-[15px] font-bold text-white">
-            {row.title}
-          </span>
-        </div>
-        <span
-          className="shrink-0 rounded-lg border border-white/10 bg-white/[0.06] px-2 py-0.5 font-mono text-[9px] sm:text-[10px] font-bold tracking-wide"
-          style={{ color: ch.accentHex }}
-        >
-          {row.metric}
-        </span>
-      </div>
-
-      <p className="mt-1 font-sans text-[10.5px] sm:text-[11.5px] text-slate-300/85 line-clamp-1">
-        {row.spec}
-      </p>
-
-      <div className="mt-1.5 h-1.5 w-full rounded-full bg-white/10 overflow-hidden">
-        <span
-          ref={(el) => {
-            if (!barRefs.current[cIdx]) barRefs.current[cIdx] = [];
-            barRefs.current[cIdx][rIdx] = el;
-          }}
-          className="block h-full w-full origin-left rounded-full will-change-transform"
-          style={{
-            backgroundColor: ch.accentHex,
-            transform: "scaleX(0)",
-          }}
-        />
-      </div>
-    </div>
-  );
-
   return (
     <section
       id="act-4"
@@ -819,12 +717,12 @@ export function Act4SkillsPitch() {
     >
       <div className="sticky top-0 h-[100dvh] w-full overflow-hidden">
         {/* ================================================================
-            ROUNDED-2XL TACTILE CHAPTER DOCK (TOP-LEFT)
+            SLEEK MINIMAL CHAPTER PILLS (TOP-LEFT — ZERO HEAVY CARD BOX!)
            ================================================================ */}
         <div
-          ref={hudDockRef}
+          ref={hudNavRef}
           style={{ opacity: 0, visibility: "hidden" }}
-          className="pointer-events-auto absolute left-4 top-20 sm:left-10 sm:top-22 z-[48] inline-flex items-center gap-1 rounded-2xl border border-white/12 bg-slate-950/65 p-1.5 shadow-[0_16px_40px_rgba(0,0,0,0.4)] backdrop-blur-xl"
+          className="pointer-events-auto absolute left-4 top-20 sm:left-10 sm:top-22 z-[48] flex flex-wrap items-center gap-1.5 sm:gap-2"
         >
           {CHAPTERS.map((ch, idx) => (
             <button
@@ -834,23 +732,9 @@ export function Act4SkillsPitch() {
               }}
               type="button"
               onClick={() => jumpToRatio(ch.jumpRatio)}
-              className="group flex flex-col items-start rounded-xl px-2.5 py-1.5 sm:px-3.5 sm:py-1.5 text-left transition-all duration-200 cursor-pointer"
+              className="rounded-xl px-3 py-1 font-mono text-[10px] sm:text-[11px] font-extrabold tracking-wider transition-all duration-200 cursor-pointer"
             >
-              <span className="font-mono text-[9px] sm:text-[10px] font-bold tracking-wider whitespace-nowrap">
-                {ch.shortTab}
-              </span>
-              <span className="mt-1 relative h-1 w-full rounded-full bg-white/15 overflow-hidden">
-                <span
-                  ref={(el) => {
-                    tabFillRefs.current[idx] = el;
-                  }}
-                  className="absolute inset-0 origin-left rounded-full will-change-transform"
-                  style={{
-                    backgroundColor: ch.accentHex,
-                    transform: "scaleX(0.08)",
-                  }}
-                />
-              </span>
+              {ch.shortTab}
             </button>
           ))}
         </div>
@@ -988,7 +872,7 @@ export function Act4SkillsPitch() {
         })}
 
         {/* ================================================================
-            FULL-VIEWPORT ACT-2-STYLE 3D CINEMA CAMERA STAGE
+            UNOBSTRUCTED ACT-2-STYLE 3D CINEMA CAMERA STAGE
            ================================================================ */}
         <div
           ref={canvasLayerRef}
@@ -998,6 +882,12 @@ export function Act4SkillsPitch() {
           <Skills3DStage scrollRef={skillsScrollRef} active={inView} />
         </div>
 
+        {/* Soft Bottom Vignette Only for Crisp White Typography Contrast (Zero Boxes!) */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 bottom-0 z-[36] h-[44dvh] bg-gradient-to-t from-black/75 via-black/30 to-transparent"
+        />
+
         {/* Cinema Camera Cut Speed-Flash */}
         <div
           ref={cutFlashRef}
@@ -1005,33 +895,17 @@ export function Act4SkillsPitch() {
           className="pointer-events-none absolute inset-0 z-[40] bg-white opacity-0 will-change-[opacity]"
         />
 
-        {/* Top-Right Cinema Camera Telemetry Readout (Desktop) */}
-        <div
-          ref={camBadgeRef}
-          className="pointer-events-none hidden xl:flex absolute right-10 top-22 z-[48] items-center gap-2.5 rounded-2xl border border-white/12 bg-slate-950/65 px-4 py-2 shadow-xl backdrop-blur-xl opacity-0"
-        >
-          <span className="h-2 w-2 animate-pulse rounded-full bg-[#C6FF3D]" />
-          <span
-            ref={camLabelSpanRef}
-            className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-[#F59E0B]"
-          >
-            CAM 01 • HELICOPTER SPIRAL
-          </span>
-        </div>
-
         {/* ================================================================
-            4 DISTINCT FOREGROUND HUD LAYOUTS & MOTION CHOREOGRAPHIES
+            4 CARDLESS FRAMELESS KINETIC SUPER-TITLE CHOREOGRAPHIES
            ================================================================ */}
         {CHAPTERS.map((ch, cIdx) => {
-          // Each chapter gets its OWN Desktop spatial layout so no two feel alike!
-          const containerAlign =
-            cIdx === 0
-              ? "justify-end lg:justify-center lg:items-start"
-              : cIdx === 1
-                ? "justify-end lg:justify-between"
-                : cIdx === 2
-                  ? "justify-end"
-                  : "justify-end lg:justify-center lg:items-end";
+          const isRightAligned = cIdx === 3;
+          const headerPos =
+            cIdx === 1
+              ? "lg:items-end lg:text-right lg:self-end"
+              : isRightAligned
+                ? "lg:items-end lg:text-right lg:self-end"
+                : "items-start text-left";
 
           return (
             <div
@@ -1040,164 +914,119 @@ export function Act4SkillsPitch() {
                 fgChapterRefs.current[cIdx] = el;
               }}
               style={{ visibility: "hidden", opacity: 0 }}
-              className={`pointer-events-none absolute inset-0 z-[42] mx-auto flex max-w-[1440px] flex-col px-4 pb-5 pt-28 sm:px-10 lg:py-20 ${containerAlign}`}
+              className="pointer-events-none absolute inset-0 z-[42] mx-auto flex max-w-[1440px] flex-col justify-between px-5 pb-7 pt-32 sm:px-12 sm:pb-10 lg:pt-32"
             >
-              {/* 01 CIVIL: Left-Perimeter Ascending Stack */}
-              {cIdx === 0 && (
-                <div className="pointer-events-auto w-full lg:w-[420px]">
-                  <div ref={(el) => { headerBlockRefs.current[0] = el; }} className="will-change-transform">
-                    <div className="inline-flex items-center gap-2 rounded-xl border border-white/12 bg-slate-950/55 px-3 py-1 backdrop-blur-md">
-                      <span className="h-2 w-2 rounded-sm" style={{ backgroundColor: ch.accentHex }} />
-                      <span className="font-mono text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: ch.accentHex }}>
-                        {ch.kicker}
-                      </span>
-                    </div>
-                    <h3 className="mt-1.5 flex flex-wrap items-center font-display text-[clamp(2.2rem,6vw,4.4rem)] font-black leading-[0.9] tracking-tight text-white drop-shadow-[0_14px_34px_rgba(0,0,0,0.7)] select-none">
-                      {ch.chars.map((char, charIdx) => (
-                        <span
-                          key={charIdx}
-                          ref={(el) => {
-                            if (!charRefs.current[0]) charRefs.current[0] = [];
-                            charRefs.current[0][charIdx] = el;
-                          }}
-                          style={char === "." ? { color: ch.accentHex } : undefined}
-                          className="inline-block will-change-transform"
-                        >
-                          {char}
-                        </span>
-                      ))}
-                    </h3>
-                  </div>
-                  <div
-                    ref={(el) => { cardsBlockRefs.current[0] = el; }}
-                    className="mt-3 flex flex-col gap-2 will-change-transform"
+              {/* TOP EDITORIAL DISCIPLINE LOCKUP (FRAMELESS + TILTED TAPE STICKER + SQUIRCLE ICONS!) */}
+              <div
+                ref={(el) => {
+                  headerRefs.current[cIdx] = el;
+                }}
+                className={`flex flex-col ${headerPos} will-change-transform`}
+              >
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <span
+                    className="-rotate-2 rounded-lg px-3 py-1 font-mono text-[10px] sm:text-[11px] font-black uppercase tracking-[0.2em] text-[#07131C] shadow-lg"
+                    style={{ backgroundColor: ch.accentHex }}
                   >
-                    {ch.rows.map((row, rIdx) => renderSkillCard(ch, 0, row, rIdx))}
+                    {ch.tapeSticker}
+                  </span>
+                  <div className="flex items-center gap-1.5">
+                    {ch.tools.map((tId) => (
+                      <ToolBadge key={tId} tool={tId} size="sm" />
+                    ))}
                   </div>
                 </div>
-              )}
 
-              {/* 02 SOFTWARE: Split Left/Right FPV Tunnel Wing HUD! */}
-              {cIdx === 1 && (
-                <>
-                  <div
-                    ref={(el) => { headerBlockRefs.current[1] = el; }}
-                    className="pointer-events-auto lg:mt-14 lg:self-center lg:text-center will-change-transform"
+                <h3 className="mt-2 font-display text-[clamp(2.2rem,5.5vw,4.4rem)] font-black leading-[0.95] tracking-tight text-white drop-shadow-[0_14px_34px_rgba(0,0,0,0.85)] select-none">
+                  {ch.titleBold}{" "}
+                  <span
+                    className="font-serif-editorial font-normal italic"
+                    style={{ color: ch.accentHex }}
                   >
-                    <div className="inline-flex items-center gap-2 rounded-xl border border-white/12 bg-slate-950/55 px-3 py-1 backdrop-blur-md">
-                      <span className="h-2 w-2 rounded-sm" style={{ backgroundColor: ch.accentHex }} />
-                      <span className="font-mono text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: ch.accentHex }}>
-                        {ch.kicker}
+                    {ch.titleItalic}
+                  </span>
+                </h3>
+              </div>
+
+              {/* BOTTOM FRAMELESS KINETIC SUPER-TITLE + MINIMAL 01-04 BEAT RAIL (ZERO CARDS!) */}
+              <div
+                ref={(el) => {
+                  spotlightWrapRefs.current[cIdx] = el;
+                }}
+                className={`flex flex-col gap-5 ${
+                  isRightAligned
+                    ? "lg:items-end lg:text-right"
+                    : cIdx === 2
+                      ? "lg:flex-row-reverse lg:items-end lg:justify-between"
+                      : "lg:flex-row lg:items-end lg:justify-between"
+                } w-full will-change-transform`}
+              >
+                {/* Colossal Untruncated Kinetic Super-Title Slot */}
+                <div className="relative h-[132px] sm:h-[158px] w-full max-w-2xl">
+                  {ch.beats.map((beat, bIdx) => (
+                    <div
+                      key={beat.idx}
+                      ref={(el) => {
+                        if (!beatSlideRefs.current[cIdx])
+                          beatSlideRefs.current[cIdx] = [];
+                        beatSlideRefs.current[cIdx][bIdx] = el;
+                      }}
+                      style={{ opacity: bIdx === 0 ? 1 : 0 }}
+                      className={`absolute inset-x-0 bottom-0 flex flex-col ${
+                        isRightAligned ? "lg:items-end" : "items-start"
+                      } will-change-transform`}
+                    >
+                      <span
+                        className="font-display text-[clamp(2.3rem,6.2vw,4.6rem)] font-black leading-[0.92] tracking-tight drop-shadow-[0_12px_28px_rgba(0,0,0,0.8)]"
+                        style={{ color: ch.accentHex }}
+                      >
+                        {beat.heroStat}
                       </span>
+                      <h4 className="mt-1 font-display text-[clamp(1.25rem,3vw,2.25rem)] font-extrabold leading-tight tracking-tight text-white drop-shadow-[0_8px_22px_rgba(0,0,0,0.9)]">
+                        {beat.title}
+                      </h4>
+                      <p className="mt-1.5 font-mono text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em] text-slate-300 drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)]">
+                        {beat.spec}
+                      </p>
                     </div>
-                    <h3 className="mt-1.5 flex flex-wrap lg:justify-center items-center font-display text-[clamp(2.2rem,5.8vw,4.2rem)] font-black leading-[0.9] tracking-tight text-white drop-shadow-[0_14px_34px_rgba(0,0,0,0.75)] select-none">
-                      {ch.chars.map((char, charIdx) => (
-                        <span
-                          key={charIdx}
-                          ref={(el) => {
-                            if (!charRefs.current[1]) charRefs.current[1] = [];
-                            charRefs.current[1][charIdx] = el;
-                          }}
-                          style={char === "." ? { color: ch.accentHex } : undefined}
-                          className="inline-block will-change-transform"
-                        >
-                          {char}
-                        </span>
-                      ))}
-                    </h3>
-                  </div>
-
-                  <div
-                    ref={(el) => { cardsBlockRefs.current[1] = el; }}
-                    className="pointer-events-auto mt-3 lg:mt-0 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-2 lg:gap-8 w-full will-change-transform"
-                  >
-                    <div className="flex flex-col gap-2 w-full lg:w-[375px]">
-                      {ch.rows.slice(0, 2).map((row, idx) => renderSkillCard(ch, 1, row, idx))}
-                    </div>
-                    <div className="flex flex-col gap-2 w-full lg:w-[375px]">
-                      {ch.rows.slice(2, 4).map((row, idx) => renderSkillCard(ch, 1, row, idx + 2))}
-                    </div>
-                  </div>
-                </>
-              )}
-
-              {/* 03 DESIGN: Bottom Counter-Gliding 2x2 Bento Strip! */}
-              {cIdx === 2 && (
-                <div className="pointer-events-auto w-full">
-                  <div
-                    ref={(el) => { headerBlockRefs.current[2] = el; }}
-                    className="will-change-transform"
-                  >
-                    <div className="inline-flex items-center gap-2 rounded-xl border border-white/12 bg-slate-950/55 px-3 py-1 backdrop-blur-md">
-                      <span className="h-2 w-2 rounded-sm" style={{ backgroundColor: ch.accentHex }} />
-                      <span className="font-mono text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: ch.accentHex }}>
-                        {ch.kicker}
-                      </span>
-                    </div>
-                    <h3 className="mt-1.5 flex flex-wrap items-center font-display text-[clamp(2.2rem,5.8vw,4.2rem)] font-black leading-[0.9] tracking-tight text-white drop-shadow-[0_14px_34px_rgba(0,0,0,0.75)] select-none">
-                      {ch.chars.map((char, charIdx) => (
-                        <span
-                          key={charIdx}
-                          ref={(el) => {
-                            if (!charRefs.current[2]) charRefs.current[2] = [];
-                            charRefs.current[2][charIdx] = el;
-                          }}
-                          style={char === "." ? { color: ch.accentHex } : undefined}
-                          className="inline-block will-change-transform"
-                        >
-                          {char}
-                        </span>
-                      ))}
-                    </h3>
-                  </div>
-
-                  <div
-                    ref={(el) => { cardsBlockRefs.current[2] = el; }}
-                    className="mt-3 grid grid-cols-1 lg:grid-cols-2 gap-2 lg:gap-3 max-w-4xl will-change-transform"
-                  >
-                    {ch.rows.map((row, rIdx) => renderSkillCard(ch, 2, row, rIdx))}
-                  </div>
+                  ))}
                 </div>
-              )}
 
-              {/* 04 OFF-CLOCK HOBBIES: Right-Perimeter Diagonal Tracklist Cascade! */}
-              {cIdx === 3 && (
-                <div className="pointer-events-auto w-full lg:w-[440px] lg:mt-10">
-                  <div
-                    ref={(el) => { headerBlockRefs.current[3] = el; }}
-                    className="lg:text-right flex flex-col lg:items-end will-change-transform"
-                  >
-                    <div className="inline-flex items-center gap-2 rounded-xl border border-white/12 bg-slate-950/55 px-3 py-1 backdrop-blur-md">
-                      <span className="h-2 w-2 rounded-sm" style={{ backgroundColor: ch.accentHex }} />
-                      <span className="font-mono text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: ch.accentHex }}>
-                        {ch.kicker}
-                      </span>
-                    </div>
-                    <h3 className="mt-1.5 flex flex-wrap lg:justify-end items-center font-display text-[clamp(2.2rem,5.8vw,4.2rem)] font-black leading-[0.9] tracking-tight text-white drop-shadow-[0_14px_34px_rgba(0,0,0,0.75)] select-none">
-                      {ch.chars.map((char, charIdx) => (
+                {/* Minimal Frameless 01-04 Beat Switcher (Pure Typography, Zero Card Borders!) */}
+                <div className="pointer-events-auto flex flex-wrap items-center gap-3 sm:gap-5">
+                  {ch.beats.map((beat, bIdx) => {
+                    const targetP =
+                      ch.startP + (bIdx / 3) * (ch.endP - ch.startP - 0.02);
+                    return (
+                      <button
+                        key={beat.idx}
+                        ref={(el) => {
+                          if (!beatTickRefs.current[cIdx])
+                            beatTickRefs.current[cIdx] = [];
+                          beatTickRefs.current[cIdx][bIdx] = el;
+                        }}
+                        type="button"
+                        onClick={() => jumpToRatio(targetP)}
+                        className="group flex items-center gap-2 text-left transition-all duration-200 cursor-pointer"
+                      >
                         <span
-                          key={charIdx}
                           ref={(el) => {
-                            if (!charRefs.current[3]) charRefs.current[3] = [];
-                            charRefs.current[3][charIdx] = el;
+                            if (!beatPillRefs.current[cIdx])
+                              beatPillRefs.current[cIdx] = [];
+                            beatPillRefs.current[cIdx][bIdx] = el;
                           }}
-                          style={char === "." ? { color: ch.accentHex } : undefined}
-                          className="inline-block will-change-transform"
+                          className="rounded-md px-1.5 py-0.5 font-mono text-[10px] font-black tracking-wider transition-colors"
                         >
-                          {char}
+                          {beat.idx}
                         </span>
-                      ))}
-                    </h3>
-                  </div>
-
-                  <div
-                    ref={(el) => { cardsBlockRefs.current[3] = el; }}
-                    className="mt-5 flex flex-col gap-2 will-change-transform"
-                  >
-                    {ch.rows.map((row, rIdx) => renderSkillCard(ch, 3, row, rIdx))}
-                  </div>
+                        <span className="font-sans text-xs sm:text-sm font-semibold text-white drop-shadow-[0_4px_10px_rgba(0,0,0,0.85)]">
+                          {beat.shortLabel}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
-              )}
+              </div>
             </div>
           );
         })}
