@@ -1,11 +1,9 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef } from "react";
+import React, { useMemo, useRef } from "react";
 import * as THREE from "three";
-import { useFrame } from "@react-three/fiber";
-import { RoundedBox } from "@react-three/drei";
+import { useFrame, useThree } from "@react-three/fiber";
 import type { Studio3DScrollState } from "@/context/ShowreelContext";
-import { PORTFOLIO_DATA } from "@/data/portfolio";
 
 interface DeskEnvironmentProps {
   scrollRef: React.MutableRefObject<Studio3DScrollState>;
@@ -16,7 +14,7 @@ function clamp01(v: number) {
 }
 
 function easeOutBack(x: number) {
-  const c1 = 1.70158;
+  const c1 = 1.65;
   const c3 = c1 + 1;
   return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2);
 }
@@ -25,249 +23,421 @@ function easeInOutCubic(x: number) {
   return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
 }
 
-/** Smooth rounded stadium/pill shape helper (zero harsh 90-deg corners!) */
-function createPillShape(width: number, depth: number): THREE.Shape {
-  const s = new THREE.Shape();
-  const r = Math.min(width, depth) * 0.48;
-  const hw = width / 2;
-  const hd = depth / 2;
-  s.moveTo(-hw + r, -hd);
-  s.lineTo(hw - r, -hd);
-  s.quadraticCurveTo(hw, -hd, hw, -hd + r);
-  s.lineTo(hw, hd - r);
-  s.quadraticCurveTo(hw, hd, hw - r, hd);
-  s.lineTo(-hw + r, hd);
-  s.quadraticCurveTo(-hw, hd, -hw, hd - r);
-  s.lineTo(-hw, -hd + r);
-  s.quadraticCurveTo(-hw, -hd, -hw + r, -hd);
-  return s;
-}
+const UP_VEC = new THREE.Vector3(0, 1, 0);
 
-function createLaptopScreenTexture(): THREE.CanvasTexture {
+/**
+ * High-DPI Procedural CAD Polar Compass & Structural Azimuth Dial Texture (1024x1024)
+ */
+function createCompassDialTexture(): THREE.CanvasTexture {
   const canvas = document.createElement("canvas");
   canvas.width = 1024;
-  canvas.height = 640;
+  canvas.height = 1024;
   const ctx = canvas.getContext("2d")!;
 
-  const bg = ctx.createLinearGradient(0, 0, 1024, 640);
-  bg.addColorStop(0, "#0A1628");
-  bg.addColorStop(0.5, "#163570");
-  bg.addColorStop(1, "#0284C7");
+  const cx = 512;
+  const cy = 512;
+
+  // Radial obsidian-titanium surface gradient
+  const bg = ctx.createRadialGradient(cx, cy, 40, cx, cy, 512);
+  bg.addColorStop(0, "#0F2238");
+  bg.addColorStop(0.55, "#091524");
+  bg.addColorStop(1, "#050B14");
   ctx.fillStyle = bg;
-  ctx.fillRect(0, 0, 1024, 640);
+  ctx.fillRect(0, 0, 1024, 1024);
 
-  // Curved parabolic bridge elevation diagram on screen
-  ctx.strokeStyle = "#38BDF8";
-  ctx.lineWidth = 4;
-  ctx.beginPath();
-  ctx.moveTo(85, 445);
-  ctx.quadraticCurveTo(280, 250, 475, 445);
-  ctx.stroke();
-
-  ctx.strokeStyle = "rgba(198,255,61,0.8)";
-  ctx.lineWidth = 2.5;
-  ctx.beginPath();
-  ctx.moveTo(75, 445);
-  ctx.lineTo(485, 445);
-  ctx.stroke();
-
-  for (let x = 135; x <= 425; x += 36) {
-    const u = (x - 280) / 195;
-    const archY = 445 - (1 - u * u) * 98;
-    ctx.strokeStyle = "rgba(186,230,253,0.75)";
-    ctx.lineWidth = 1.5;
+  // Concentric elevation & polar grid circles
+  const radii = [120, 210, 300, 385, 455, 488];
+  radii.forEach((r, idx) => {
     ctx.beginPath();
-    ctx.moveTo(x, archY);
-    ctx.lineTo(x, 445);
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.strokeStyle =
+      idx === 4
+        ? "rgba(198, 255, 61, 0.55)"
+        : idx % 2 === 0
+          ? "rgba(56, 189, 248, 0.38)"
+          : "rgba(148, 163, 184, 0.18)";
+    ctx.lineWidth = idx === 4 ? 3 : 1.8;
+    if (idx === 2) ctx.setLineDash([8, 10]);
+    else ctx.setLineDash([]);
+    ctx.stroke();
+  });
+  ctx.setLineDash([]);
+
+  // Radial azimuth degree ticks (72 subdivisions = every 5 deg)
+  for (let i = 0; i < 72; i++) {
+    const ang = (i / 72) * Math.PI * 2;
+    const isMajor = i % 6 === 0;
+    const isCardinal = i % 18 === 0;
+    const rInner = isCardinal ? 425 : isMajor ? 442 : 462;
+    const rOuter = 484;
+
+    ctx.beginPath();
+    ctx.moveTo(cx + Math.cos(ang) * rInner, cy + Math.sin(ang) * rInner);
+    ctx.lineTo(cx + Math.cos(ang) * rOuter, cy + Math.sin(ang) * rOuter);
+    ctx.strokeStyle = isCardinal
+      ? "#C6FF3D"
+      : isMajor
+        ? "rgba(56, 189, 248, 0.75)"
+        : "rgba(148, 163, 184, 0.35)";
+    ctx.lineWidth = isCardinal ? 4 : isMajor ? 2.2 : 1.2;
     ctx.stroke();
   }
 
-  // Right Code Panel (rounded pill window)
-  ctx.fillStyle = "rgba(7,15,28,0.78)";
+  // Subtle crosshairs
+  ctx.strokeStyle = "rgba(56, 189, 248, 0.22)";
+  ctx.lineWidth = 1.5;
   ctx.beginPath();
-  ctx.roundRect(535, 305, 415, 190, 26);
-  ctx.fill();
-  ctx.font = "600 22px monospace";
-  ctx.textAlign = "left";
-  ctx.fillStyle = "#38BDF8";
-  ctx.fillText("const arch = solveSpan(280);", 565, 362);
-  ctx.fillStyle = "#C6FF3D";
-  ctx.fillText("export const drift = 0.009;", 565, 404);
-  ctx.fillStyle = "#C084FC";
-  ctx.fillText("streamTwin('curved-bim');", 565, 446);
+  ctx.moveTo(cx - 420, cy);
+  ctx.lineTo(cx + 420, cy);
+  ctx.moveTo(cx, cy - 420);
+  ctx.lineTo(cx, cy + 420);
+  ctx.stroke();
 
-  ctx.fillStyle = "#FFFFFF";
+  // Engineering cardinal labels
+  ctx.font = "700 22px monospace";
+  ctx.fillStyle = "rgba(198, 255, 61, 0.85)";
   ctx.textAlign = "center";
-  ctx.font = "800 108px system-ui, -apple-system, sans-serif";
-  ctx.fillText(PORTFOLIO_DATA.studio3D.laptopTime, 512, 195);
+  ctx.fillText("000° // STRUCTURAL FEA", cx, 96);
+  ctx.fillText("180° // DIGITAL TWIN", cx, 942);
 
-  ctx.font = "700 24px monospace";
-  ctx.fillStyle = "#C6FF3D";
-  ctx.fillText(PORTFOLIO_DATA.studio3D.laptopDate, 512, 242);
+  ctx.save();
+  ctx.translate(932, cy);
+  ctx.rotate(Math.PI / 2);
+  ctx.fillStyle = "rgba(56, 189, 248, 0.85)";
+  ctx.fillText("090° // FULL-STACK", 0, 0);
+  ctx.restore();
 
-  // Frosted pill dock
-  ctx.fillStyle = "rgba(255,255,255,0.22)";
-  ctx.beginPath();
-  ctx.roundRect(338, 542, 348, 56, 28);
-  ctx.fill();
-  const dockColors = ["#EF4444", "#2563EB", "#0284C7", "#FACC15", "#A855F7"];
-  dockColors.forEach((col, i) => {
-    ctx.fillStyle = col;
-    ctx.beginPath();
-    ctx.arc(386 + i * 62, 570, 17, 0, Math.PI * 2);
-    ctx.fill();
-  });
+  ctx.save();
+  ctx.translate(92, cy);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillStyle = "rgba(56, 189, 248, 0.85)";
+  ctx.fillText("270° // 3D MOTION", 0, 0);
+  ctx.restore();
 
   const tex = new THREE.CanvasTexture(canvas);
   tex.colorSpace = THREE.SRGBColorSpace;
+  tex.anisotropy = 8;
   return tex;
 }
 
-function createClockFaceTexture(): THREE.CanvasTexture {
+/**
+ * Curved Holographic HUD Arc Texture (Civil FEA Mode vs Software Solver Mode)
+ */
+function createHologramHudTexture(variant: "fea" | "code"): THREE.CanvasTexture {
   const canvas = document.createElement("canvas");
-  canvas.width = 256;
-  canvas.height = 256;
+  canvas.width = 768;
+  canvas.height = 320;
   const ctx = canvas.getContext("2d")!;
 
-  ctx.fillStyle = "#F8FAFC";
+  ctx.clearRect(0, 0, 768, 320);
+
+  // Translucent curved glass pill background
+  const grad = ctx.createLinearGradient(0, 0, 768, 320);
+  grad.addColorStop(0, "rgba(8, 25, 44, 0.86)");
+  grad.addColorStop(1, "rgba(12, 38, 66, 0.72)");
+  ctx.fillStyle = grad;
   ctx.beginPath();
-  ctx.arc(128, 128, 124, 0, Math.PI * 2);
+  ctx.roundRect(14, 14, 740, 292, 44);
   ctx.fill();
 
-  for (let i = 0; i < 12; i++) {
-    const angle = (i / 12) * Math.PI * 2;
-    const isMajor = i % 3 === 0;
-    const r = 100;
-    ctx.fillStyle = isMajor ? "#0F172A" : "#94A3B8";
+  // Glowing rim border
+  ctx.strokeStyle =
+    variant === "fea" ? "rgba(56, 189, 248, 0.85)" : "rgba(198, 255, 61, 0.85)";
+  ctx.lineWidth = 4;
+  ctx.stroke();
+
+  if (variant === "fea") {
+    // Header
+    ctx.fillStyle = "#38BDF8";
+    ctx.font = "700 22px monospace";
+    ctx.fillText("LIVE TWIN // SPAN 280M TIED-ARCH FEA", 54, 68);
+
+    // Parabolic arch stress contour diagram
+    ctx.strokeStyle = "#C6FF3D";
+    ctx.lineWidth = 5;
     ctx.beginPath();
-    ctx.arc(
-      128 + Math.cos(angle) * r,
-      128 + Math.sin(angle) * r,
-      isMajor ? 6 : 3,
-      0,
-      Math.PI * 2
-    );
-    ctx.fill();
+    ctx.moveTo(64, 232);
+    ctx.quadraticCurveTo(255, 76, 446, 232);
+    ctx.stroke();
+
+    ctx.strokeStyle = "#38BDF8";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(52, 232);
+    ctx.lineTo(458, 232);
+    ctx.stroke();
+
+    for (let x = 104; x <= 406; x += 34) {
+      const u = (x - 255) / 191;
+      const yTop = 232 - (1 - u * u) * 78;
+      ctx.strokeStyle = "rgba(186, 230, 253, 0.75)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x, yTop);
+      ctx.lineTo(x, 232);
+      ctx.stroke();
+    }
+
+    // Telemetry metrics on right
+    ctx.fillStyle = "#FFFFFF";
+    ctx.font = "800 38px system-ui, sans-serif";
+    ctx.fillText("99.4%", 505, 138);
+    ctx.fillStyle = "#94A3B8";
+    ctx.font = "600 19px monospace";
+    ctx.fillText("LOAD EFFICIENCY", 505, 168);
+    ctx.fillStyle = "#C6FF3D";
+    ctx.fillText("DRIFT < 0.008 H", 505, 212);
+    ctx.fillStyle = "#38BDF8";
+    ctx.fillText("MODAL f1: 0.42Hz", 505, 246);
+  } else {
+    // Software / Computational Solver HUD
+    ctx.fillStyle = "#C6FF3D";
+    ctx.font = "700 22px monospace";
+    ctx.fillText("SOLVER ENGINE // TYPESCRIPT × PYTHON", 54, 68);
+
+    ctx.font = "600 24px monospace";
+    ctx.fillStyle = "#38BDF8";
+    ctx.fillText("const twin = solveArchFEA({", 54, 126);
+    ctx.fillStyle = "#F8FAFC";
+    ctx.fillText("  spanMeters: 280, cables: 28,", 54, 166);
+    ctx.fillStyle = "#C6FF3D";
+    ctx.fillText("  seismicZone: 'SNI-1726',", 54, 206);
+    ctx.fillStyle = "#C084FC";
+    ctx.fillText("}); // 120 FPS WebGL Stream", 54, 246);
   }
 
   const tex = new THREE.CanvasTexture(canvas);
   tex.colorSpace = THREE.SRGBColorSpace;
+  tex.anisotropy = 4;
   return tex;
 }
 
-/**
- * Curved Fluted Wooden Architectural Arc Backdrop (Instanced Cylinders — 0 Boxy Slats!)
- */
-function CurvedFlutedBackdrop() {
-  const instRef = useRef<THREE.InstancedMesh>(null);
-  const count = 23;
-
-  useEffect(() => {
-    if (!instRef.current) return;
-    const dummy = new THREE.Object3D();
-    for (let i = 0; i < count; i++) {
-      const u = i / (count - 1) - 0.5; // -0.5 .. +0.5
-      const angle = u * 1.15;
-      const radius = 4.6;
-      const x = Math.sin(angle) * radius;
-      const z = -Math.cos(angle) * radius + 2.65;
-      dummy.position.set(x, 1.55, z);
-      dummy.rotation.set(0, -angle, 0);
-      dummy.updateMatrix();
-      instRef.current.setMatrixAt(i, dummy.matrix);
-    }
-    instRef.current.instanceMatrix.needsUpdate = true;
-  }, []);
-
-  return (
-    <group>
-      {/* Smooth curved studio cyclorama wall behind flutes */}
-      <mesh position={[0, 1.5, 2.7]} rotation={[0, Math.PI, 0]}>
-        <cylinderGeometry args={[4.85, 4.85, 7.2, 48, 1, true, -1.05, 2.1]} />
-        <meshStandardMaterial color="#182230" roughness={0.85} side={THREE.DoubleSide} />
-      </mesh>
-      {/* 23 Smooth Cylindrical Walnut Architectural Flutes (1 Draw Call!) */}
-      <instancedMesh ref={instRef} args={[undefined, undefined, count]}>
-        <cylinderGeometry args={[0.075, 0.075, 5.8, 12]} />
-        <meshStandardMaterial color="#8B5A2B" roughness={0.48} metalness={0.08} />
-      </instancedMesh>
-    </group>
-  );
+interface CableSpec {
+  pos: THREE.Vector3;
+  quat: THREE.Quaternion;
+  len: number;
 }
 
 /**
- * Signature Civil Engineering Sculpture (ZERO Boxes!):
- * Calatrava-inspired Curved Parabolic Arch Bridge Scale Model on Circular Travertine Pebble Base
+ * Centerpiece Sculpture: Twin-Arch Calatrava Suspension Bridge + Flowing Deck Energy Pulses
+ * 100% Curved Parametric Tubes & Lathe Piers — ZERO Boxy Primitives!
  */
-function CalatravaArchModel() {
-  const { archGeo, deckGeo, hangers } = useMemo(() => {
-    // Sweeping inclined parabolic steel arch
-    const archPts: THREE.Vector3[] = [];
-    for (let i = 0; i <= 24; i++) {
-      const u = i / 24;
-      const x = (u - 0.5) * 0.92;
-      const y = 0.07 + (1 - Math.pow((u - 0.5) * 2, 2)) * 0.46;
-      const z = Math.sin(u * Math.PI) * -0.09;
-      archPts.push(new THREE.Vector3(x, y, z));
-    }
-    const archCurve = new THREE.CatmullRomCurve3(archPts);
+function TwinArchBridgeCore() {
+  const pulseRefs = useRef<(THREE.Mesh | null)[]>([]);
 
-    // Subtle S-curved deck ribbon
+  const {
+    archAGeo,
+    archBGeo,
+    deckGeo,
+    railFrontGeo,
+    railBackGeo,
+    pierGeo,
+    crossStruts,
+    cables,
+    deckCurve,
+  } = useMemo(() => {
+    // Twin inclined basket-handle parabolic arches
+    const ptsA: THREE.Vector3[] = [];
+    const ptsB: THREE.Vector3[] = [];
+    const steps = 36;
+    for (let i = 0; i <= steps; i++) {
+      const u = i / steps;
+      const sym = (u - 0.5) * 2; // -1 .. +1
+      const parabola = 1 - sym * sym;
+      const x = sym * 1.68;
+      const y = 0.14 + parabola * 1.24;
+      // Arches start wide apart at piers (z = ±0.34) and pinch gracefully toward crown (z = ±0.09)
+      const zSpread = THREE.MathUtils.lerp(0.34, 0.085, parabola);
+      ptsA.push(new THREE.Vector3(x, y, zSpread));
+      ptsB.push(new THREE.Vector3(x, y, -zSpread));
+    }
+    const curveA = new THREE.CatmullRomCurve3(ptsA);
+    const curveB = new THREE.CatmullRomCurve3(ptsB);
+
+    // Sweeping cambered highway deck curve
     const deckPts: THREE.Vector3[] = [];
-    for (let i = 0; i <= 20; i++) {
-      const u = i / 20;
-      const x = (u - 0.5) * 0.98;
-      const y = 0.14 + Math.sin(u * Math.PI) * 0.04;
-      const z = Math.sin(u * Math.PI) * 0.06;
-      deckPts.push(new THREE.Vector3(x, y, z));
+    const railFPts: THREE.Vector3[] = [];
+    const railBPts: THREE.Vector3[] = [];
+    for (let i = 0; i <= 28; i++) {
+      const u = i / 28;
+      const sym = (u - 0.5) * 2;
+      const camber = 1 - sym * sym;
+      const x = sym * 1.85;
+      const y = 0.34 + camber * 0.18;
+      deckPts.push(new THREE.Vector3(x, y, 0));
+      railFPts.push(new THREE.Vector3(x, y + 0.015, 0.19));
+      railBPts.push(new THREE.Vector3(x, y + 0.015, -0.19));
     }
-    const deckCurve = new THREE.CatmullRomCurve3(deckPts);
+    const dCurve = new THREE.CatmullRomCurve3(deckPts);
+    const rFCurve = new THREE.CatmullRomCurve3(railFPts);
+    const rBCurve = new THREE.CatmullRomCurve3(railBPts);
 
-    // Delicate vertical/angled suspension cables
-    const cableList: { pos: [number, number, number]; len: number; rotX: number }[] = [];
-    for (let i = 2; i <= 10; i++) {
-      const u = i / 12;
-      const aPt = archCurve.getPoint(u);
-      const dPt = deckCurve.getPoint(u);
-      const mid = aPt.clone().add(dPt).multiplyScalar(0.5);
-      const diff = aPt.clone().sub(dPt);
-      const len = diff.length();
-      const rotX = Math.atan2(diff.z, diff.y);
-      cableList.push({ pos: [mid.x, mid.y, mid.z], len, rotX });
+    // 26 Mathematically Exact Diagonal Stay-Cables (13 per arch)
+    const cableList: CableSpec[] = [];
+    for (let i = 2; i <= 14; i++) {
+      const u = i / 16;
+      // Front arch to front deck edge
+      const aTop = curveA.getPointAt(u);
+      const aBot = rFCurve.getPointAt(u);
+      const diffA = aTop.clone().sub(aBot);
+      const quatA = new THREE.Quaternion().setFromUnitVectors(
+        UP_VEC,
+        diffA.clone().normalize()
+      );
+      cableList.push({
+        pos: aBot.clone().add(aTop).multiplyScalar(0.5),
+        quat: quatA,
+        len: diffA.length(),
+      });
+
+      // Back arch to back deck edge
+      const bTop = curveB.getPointAt(u);
+      const bBot = rBCurve.getPointAt(u);
+      const diffB = bTop.clone().sub(bBot);
+      const quatB = new THREE.Quaternion().setFromUnitVectors(
+        UP_VEC,
+        diffB.clone().normalize()
+      );
+      cableList.push({
+        pos: bBot.clone().add(bTop).multiplyScalar(0.5),
+        quat: quatB,
+        len: diffB.length(),
+      });
     }
+
+    // 5 Crown transverse wind-bracing struts linking Arch A & Arch B
+    const struts: CableSpec[] = [];
+    for (const u of [0.34, 0.42, 0.5, 0.58, 0.66]) {
+      const pA = curveA.getPointAt(u);
+      const pB = curveB.getPointAt(u);
+      const diff = pA.clone().sub(pB);
+      const quat = new THREE.Quaternion().setFromUnitVectors(
+        UP_VEC,
+        diff.clone().normalize()
+      );
+      struts.push({
+        pos: pA.clone().add(pB).multiplyScalar(0.5),
+        quat,
+        len: diff.length(),
+      });
+    }
+
+    // Sculpted Lathe Pier Foundation
+    const pierProfile = [
+      new THREE.Vector2(0, 0),
+      new THREE.Vector2(0.18, 0),
+      new THREE.Vector2(0.14, 0.12),
+      new THREE.Vector2(0.09, 0.28),
+      new THREE.Vector2(0.12, 0.36),
+      new THREE.Vector2(0, 0.36),
+    ];
 
     return {
-      archGeo: new THREE.TubeGeometry(archCurve, 32, 0.022, 10, false),
-      deckGeo: new THREE.TubeGeometry(deckCurve, 28, 0.018, 8, false),
-      hangers: cableList,
+      archAGeo: new THREE.TubeGeometry(curveA, 64, 0.032, 14, false),
+      archBGeo: new THREE.TubeGeometry(curveB, 64, 0.032, 14, false),
+      deckGeo: new THREE.TubeGeometry(dCurve, 48, 0.038, 12, false),
+      railFrontGeo: new THREE.TubeGeometry(rFCurve, 48, 0.012, 8, false),
+      railBackGeo: new THREE.TubeGeometry(rBCurve, 48, 0.012, 8, false),
+      pierGeo: new THREE.LatheGeometry(pierProfile, 24),
+      crossStruts: struts,
+      cables: cableList,
+      deckCurve: dCurve,
     };
   }, []);
 
+  const tmpPulsePos = useMemo(() => new THREE.Vector3(), []);
+
+  useFrame(({ clock }) => {
+    const t = clock.getElapsedTime();
+    for (let i = 0; i < 6; i++) {
+      const mesh = pulseRefs.current[i];
+      if (!mesh) continue;
+      const u = (t * 0.22 + i / 6) % 1;
+      deckCurve.getPointAt(u, tmpPulsePos);
+      mesh.position.set(
+        tmpPulsePos.x,
+        tmpPulsePos.y + 0.032,
+        i % 2 === 0 ? 0.08 : -0.08
+      );
+    }
+  });
+
   return (
     <group>
-      {/* Smooth Elliptical Travertine Pebble Plinth */}
-      <mesh position={[0, 0.035, 0]} scale={[1.38, 1, 0.72]}>
-        <cylinderGeometry args={[0.38, 0.42, 0.07, 32]} />
-        <meshStandardMaterial color="#E2E8F0" roughness={0.42} metalness={0.12} />
+      {/* Twin Sculpted Elliptical Abutment Piers */}
+      <mesh geometry={pierGeo} position={[-1.62, 0.02, 0]} scale={[1.1, 1, 2.2]}>
+        <meshStandardMaterial color="#CBD5E1" metalness={0.65} roughness={0.28} />
       </mesh>
-      {/* Subtle Glowing Cyan Datum Ring */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.072, 0]} scale={[1.36, 0.7, 1]}>
-        <ringGeometry args={[0.33, 0.36, 40]} />
-        <meshStandardMaterial color="#38BDF8" emissive="#38BDF8" emissiveIntensity={0.8} />
+      <mesh geometry={pierGeo} position={[1.62, 0.02, 0]} scale={[1.1, 1, 2.2]}>
+        <meshStandardMaterial color="#CBD5E1" metalness={0.65} roughness={0.28} />
       </mesh>
-      {/* Sweeping White Calatrava Arch */}
-      <mesh geometry={archGeo}>
-        <meshStandardMaterial color="#F8FAFC" roughness={0.22} metalness={0.45} />
+
+      {/* Twin Sweeping Alabaster-Titanium Parabolic Arches */}
+      <mesh geometry={archAGeo} castShadow>
+        <meshStandardMaterial color="#F8FAFC" metalness={0.55} roughness={0.18} />
       </mesh>
-      {/* Curved Bridge Deck Ribbon */}
-      <mesh geometry={deckGeo}>
-        <meshStandardMaterial color="#1E293B" roughness={0.3} metalness={0.75} />
+      <mesh geometry={archBGeo} castShadow>
+        <meshStandardMaterial color="#F8FAFC" metalness={0.55} roughness={0.18} />
       </mesh>
-      {/* Delicate Glowing Tension Hangers */}
-      {hangers.map((h, i) => (
-        <mesh key={i} position={h.pos} rotation={[h.rotX, 0, 0]}>
-          <cylinderGeometry args={[0.005, 0.005, h.len, 6]} />
-          <meshStandardMaterial color="#7DD3FC" emissive="#38BDF8" emissiveIntensity={0.75} />
+
+      {/* Crown Transverse Bracing Struts */}
+      {crossStruts.map((s, i) => (
+        <mesh key={i} position={s.pos} quaternion={s.quat}>
+          <cylinderGeometry args={[0.012, 0.012, s.len, 8]} />
+          <meshStandardMaterial
+            color="#FDE047"
+            emissive="#CA8A04"
+            emissiveIntensity={0.45}
+            metalness={0.85}
+            roughness={0.2}
+          />
+        </mesh>
+      ))}
+
+      {/* Aerodynamic Brushed-Titanium Twin Deck Girder Spines + Glowing Edge Rails (True Normals!) */}
+      <mesh geometry={deckGeo} position={[0, 0, 0.075]} castShadow receiveShadow>
+        <meshStandardMaterial color="#64748B" metalness={0.78} roughness={0.24} />
+      </mesh>
+      <mesh geometry={deckGeo} position={[0, 0, -0.075]} castShadow receiveShadow>
+        <meshStandardMaterial color="#64748B" metalness={0.78} roughness={0.24} />
+      </mesh>
+      <mesh geometry={railFrontGeo}>
+        <meshStandardMaterial
+          color="#38BDF8"
+          emissive="#38BDF8"
+          emissiveIntensity={1.15}
+        />
+      </mesh>
+      <mesh geometry={railBackGeo}>
+        <meshStandardMaterial
+          color="#C6FF3D"
+          emissive="#C6FF3D"
+          emissiveIntensity={1.05}
+        />
+      </mesh>
+
+      {/* 26 Luminous Optical-Fiber Stay Cables */}
+      {cables.map((c, idx) => (
+        <mesh key={idx} position={c.pos} quaternion={c.quat}>
+          <cylinderGeometry args={[0.0045, 0.0045, c.len, 6]} />
+          <meshStandardMaterial
+            color="#BAE6FD"
+            emissive={idx % 4 === 0 ? "#C6FF3D" : "#38BDF8"}
+            emissiveIntensity={0.95}
+          />
+        </mesh>
+      ))}
+
+      {/* Live Flowing Data / Load Telemetry Pulses Gliding Across the Span */}
+      {[0, 1, 2, 3, 4, 5].map((i) => (
+        <mesh
+          key={i}
+          ref={(el) => {
+            pulseRefs.current[i] = el;
+          }}
+        >
+          <sphereGeometry args={[0.024, 12, 12]} />
+          <meshBasicMaterial color={i % 2 === 0 ? "#C6FF3D" : "#38BDF8"} />
         </mesh>
       ))}
     </group>
@@ -275,465 +445,475 @@ function CalatravaArchModel() {
 }
 
 /**
- * Signature Software × Design Sculpture (ZERO Boxes!):
- * Smooth Floating Metallic Torus-Knot Gyroscope over Circular Brushed Dock
+ * Curved Cylindrical Holographic BIM / Code Lens (Open Cylinder Arc — ZERO Flat Boxes!)
  */
-function ParametricKnotSculpture() {
-  const knotRef = useRef<THREE.Mesh>(null);
-  useFrame(({ clock }) => {
-    if (!knotRef.current) return;
-    const t = clock.getElapsedTime();
-    knotRef.current.rotation.y = t * 0.65;
-    knotRef.current.rotation.x = Math.sin(t * 0.9) * 0.35;
-  });
+function CurvedHologramArc({
+  texture,
+  accent,
+}: {
+  texture: THREE.CanvasTexture;
+  accent: string;
+}) {
+  const { arcGeo, rimTopGeo, rimBotGeo } = useMemo(() => {
+    const r = 2.35;
+    const h = 0.64;
+    const thetaLen = 0.62;
+    const thetaStart = -thetaLen / 2;
 
-  return (
-    <group>
-      {/* Smooth Circular Dark Anodized Base */}
-      <mesh position={[0, 0.03, 0]}>
-        <cylinderGeometry args={[0.26, 0.29, 0.06, 32]} />
-        <meshStandardMaterial color="#1E293B" roughness={0.32} metalness={0.68} />
-      </mesh>
-      {/* Glowing Lime Orbit Ring on Dock */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.064, 0]}>
-        <ringGeometry args={[0.18, 0.21, 36]} />
-        <meshStandardMaterial color="#C6FF3D" emissive="#C6FF3D" emissiveIntensity={1.1} />
-      </mesh>
-      {/* Levitating Organic Torus-Knot Sculpture */}
-      <mesh ref={knotRef} position={[0, 0.34, 0]}>
-        <torusKnotGeometry args={[0.16, 0.044, 72, 16]} />
-        <meshStandardMaterial
-          color="#38BDF8"
-          emissive="#0284C7"
-          emissiveIntensity={0.35}
-          metalness={0.82}
-          roughness={0.14}
-        />
-      </mesh>
-    </group>
-  );
-}
+    const topPts: THREE.Vector3[] = [];
+    const botPts: THREE.Vector3[] = [];
+    for (let i = 0; i <= 20; i++) {
+      const a = thetaStart + (i / 20) * thetaLen;
+      const x = Math.sin(a) * r;
+      const z = Math.cos(a) * r;
+      topPts.push(new THREE.Vector3(x, h / 2, z));
+      botPts.push(new THREE.Vector3(x, -h / 2, z));
+    }
 
-/** Smooth Arched Bauhaus / Flos Spherical Orb Lamp (ZERO sharp joints!) */
-function CurvedOrbLamp() {
-  const stemGeo = useMemo(() => {
-    const curve = new THREE.CatmullRomCurve3([
-      new THREE.Vector3(0, 0.06, 0),
-      new THREE.Vector3(-0.14, 0.45, -0.04),
-      new THREE.Vector3(-0.02, 0.88, 0.02),
-      new THREE.Vector3(0.24, 0.96, 0.08),
-    ]);
-    return new THREE.TubeGeometry(curve, 28, 0.02, 10, false);
+    return {
+      arcGeo: new THREE.CylinderGeometry(
+        r,
+        r,
+        h,
+        32,
+        1,
+        true,
+        thetaStart,
+        thetaLen
+      ),
+      rimTopGeo: new THREE.TubeGeometry(
+        new THREE.CatmullRomCurve3(topPts),
+        24,
+        0.007,
+        8,
+        false
+      ),
+      rimBotGeo: new THREE.TubeGeometry(
+        new THREE.CatmullRomCurve3(botPts),
+        24,
+        0.007,
+        8,
+        false
+      ),
+    };
   }, []);
 
+  // Shift local z by -2.35 so the arc's center sits cleanly at local [0, 0, 0]
   return (
-    <group>
-      <mesh position={[0, 0.04, 0]}>
-        <cylinderGeometry args={[0.19, 0.23, 0.08, 28]} />
-        <meshStandardMaterial color="#1D4ED8" roughness={0.28} metalness={0.45} />
-      </mesh>
-      <mesh geometry={stemGeo}>
-        <meshStandardMaterial color="#93C5FD" metalness={0.78} roughness={0.2} />
-      </mesh>
-      {/* Frosted Glowing Glass Sphere Shade */}
-      <mesh position={[0.28, 0.92, 0.09]}>
-        <sphereGeometry args={[0.15, 24, 24]} />
-        <meshStandardMaterial
-          color="#FFFBEB"
-          emissive="#FEF08A"
-          emissiveIntensity={1.35}
-          roughness={0.2}
+    <group position={[0, 0, -2.35]}>
+      <mesh geometry={arcGeo}>
+        <meshBasicMaterial
+          map={texture}
+          transparent
+          opacity={0.92}
+          side={THREE.DoubleSide}
+          depthWrite={false}
         />
       </mesh>
-    </group>
-  );
-}
-
-/** Organic Ceramic Planter with Curved Succulent Fronds */
-function OrganicPlanter({ scale = 1 }: { scale?: number }) {
-  const potGeo = useMemo(() => {
-    const pts = [
-      new THREE.Vector2(0.0, 0),
-      new THREE.Vector2(0.14, 0),
-      new THREE.Vector2(0.21, 0.14),
-      new THREE.Vector2(0.22, 0.3),
-      new THREE.Vector2(0.18, 0.39),
-    ];
-    return new THREE.LatheGeometry(pts, 24);
-  }, []);
-
-  const leafAngles = [0, 1.05, 2.1, 3.15, 4.2, 5.25];
-  return (
-    <group scale={scale}>
-      <mesh geometry={potGeo}>
-        <meshStandardMaterial color="#F1F5F9" roughness={0.4} />
+      <mesh geometry={rimTopGeo}>
+        <meshBasicMaterial color={accent} />
       </mesh>
-      <mesh position={[0, 0.37, 0]}>
-        <cylinderGeometry args={[0.17, 0.17, 0.04, 20]} />
-        <meshStandardMaterial color="#3E2723" roughness={0.9} />
+      <mesh geometry={rimBotGeo}>
+        <meshBasicMaterial color={accent} />
       </mesh>
-      {leafAngles.map((ang, i) => (
-        <group
-          key={i}
-          position={[0, 0.38, 0]}
-          rotation={[0.45 + (i % 2) * 0.18, ang, 0]}
-        >
-          <mesh position={[0, 0.22, 0.08]} scale={[0.11, 0.3, 0.03]}>
-            <sphereGeometry args={[1, 12, 12]} />
-            <meshStandardMaterial
-              color={i % 2 === 0 ? "#22C55E" : "#15803D"}
-              roughness={0.35}
-            />
-          </mesh>
-        </group>
-      ))}
     </group>
   );
 }
 
 /**
- * 100% Sculptural Non-Boxy 3D Creator Studio (ZERO Kotak-Kotak!)
- * Curved oval walnut pebble desk, rounded pill desk mat, beveled unibody laptop,
- * Calatrava curved suspension arch bridge sculpture, metallic torus-knot gyroscope,
- * Bauhaus arched orb lamp, fluted curved backdrop, and dreamy Zero-G sky clouds.
+ * 100% Non-Boxy Kinetic Architectural Astrolabe & Digital Twin Core
+ * Replaces the old desk & laptop with a museum-grade Civil × Software 3D centerpiece!
  */
 export function DeskEnvironment({ scrollRef }: DeskEnvironmentProps) {
-  const roomGroupRef = useRef<THREE.Group>(null);
-  const deskGroupRef = useRef<THREE.Group>(null);
-  const matRef = useRef<THREE.Mesh>(null);
-  const laptopGroupRef = useRef<THREE.Group>(null);
-  const laptopLidRef = useRef<THREE.Group>(null);
-  const clockRef = useRef<THREE.Group>(null);
-  const hourHandRef = useRef<THREE.Mesh>(null);
-  const minuteHandRef = useRef<THREE.Mesh>(null);
-  const knotRef = useRef<THREE.Group>(null);
-  const lampRef = useRef<THREE.Group>(null);
-  const archRef = useRef<THREE.Group>(null);
-  const cupRef = useRef<THREE.Group>(null);
-  const plantRightRef = useRef<THREE.Group>(null);
+  const { size } = useThree();
+  const domeGroupRef = useRef<THREE.Group>(null);
+  const domeWireRef = useRef<THREE.Mesh>(null);
+  const plinthGroupRef = useRef<THREE.Group>(null);
+  const vernierRingRef = useRef<THREE.Mesh>(null);
+  const bridgeWrapRef = useRef<THREE.Group>(null);
+
+  const gimbalGroupRef = useRef<THREE.Group>(null);
+  const gimbalOuterRef = useRef<THREE.Group>(null);
+  const gimbalMidRef = useRef<THREE.Group>(null);
+  const gimbalInnerRef = useRef<THREE.Mesh>(null);
+
+  const hudLeftRef = useRef<THREE.Group>(null);
+  const hudRightRef = useRef<THREE.Group>(null);
+
+  const satLeftRef = useRef<THREE.Group>(null);
+  const satRightRef = useRef<THREE.Group>(null);
+  const satKnotMeshRef = useRef<THREE.Mesh>(null);
   const cloudsRef = useRef<THREE.Group>(null);
 
-  const screenTex = useMemo(() => createLaptopScreenTexture(), []);
-  const clockTex = useMemo(() => createClockFaceTexture(), []);
+  const compassTex = useMemo(() => createCompassDialTexture(), []);
+  const feaHudTex = useMemo(() => createHologramHudTexture("fea"), []);
+  const codeHudTex = useMemo(() => createHologramHudTexture("code"), []);
 
-  // Curved Sculpted Pebble Tabletop & Pill-Shaped Desk Mat Geometries (ZERO sharp boxes!)
-  const { deskTopGeo, matPillGeo } = useMemo(() => {
-    const deskShape = createPillShape(5.5, 2.25);
-    const dGeo = new THREE.ExtrudeGeometry(deskShape, {
-      depth: 0.08,
-      bevelEnabled: true,
-      bevelThickness: 0.035,
-      bevelSize: 0.04,
-      bevelSegments: 5,
-    });
-    dGeo.rotateX(Math.PI / 2);
-
-    const matShape = createPillShape(2.55, 1.12);
-    const mGeo = new THREE.ExtrudeGeometry(matShape, {
-      depth: 0.012,
-      bevelEnabled: true,
-      bevelThickness: 0.005,
-      bevelSize: 0.008,
-      bevelSegments: 3,
-    });
-    mGeo.rotateX(Math.PI / 2);
-
-    return { deskTopGeo: dGeo, matPillGeo: mGeo };
+  // Sculpted Multi-Tiered Circular Turntable Plinth (LatheGeometry — Zero Corners!)
+  const plinthGeo = useMemo(() => {
+    const pts = [
+      new THREE.Vector2(0, -0.22),
+      new THREE.Vector2(1.45, -0.22),
+      new THREE.Vector2(1.88, -0.14),
+      new THREE.Vector2(2.24, -0.03),
+      new THREE.Vector2(2.28, 0.04),
+      new THREE.Vector2(2.16, 0.11),
+      new THREE.Vector2(0, 0.11),
+    ];
+    return new THREE.LatheGeometry(pts, 64);
   }, []);
 
   useFrame(({ clock }) => {
     const t = clock.getElapsedTime();
     const p = scrollRef.current.progress;
 
-    const assembleMat = clamp01(p / 0.14);
-    const assembleLaptop = clamp01((p - 0.03) / 0.16);
-    const assembleProps = clamp01((p - 0.07) / 0.17);
+    const assemblePlinth = clamp01(p / 0.14);
+    const assembleBridge = clamp01((p - 0.02) / 0.18);
+    const assembleOrbit = clamp01((p - 0.06) / 0.2);
 
-    const roomDrop = easeInOutCubic(clamp01((p - 0.52) / 0.13));
+    const skyTransition = easeInOutCubic(clamp01((p - 0.52) / 0.16));
     const zeroG = easeInOutCubic(clamp01((p - 0.54) / 0.18));
-    const heroFrame = easeInOutCubic(clamp01((p - 0.72) / 0.15));
+    const heroFrame = easeInOutCubic(clamp01((p - 0.71) / 0.15));
 
-    if (roomGroupRef.current) {
-      roomGroupRef.current.position.z = -roomDrop * 12;
-      roomGroupRef.current.position.y = -roomDrop * 8;
-      roomGroupRef.current.visible = roomDrop < 0.85;
+    // 1. Geodesic Architectural Planetarium Dome & Horizon Rings
+    if (domeGroupRef.current) {
+      domeGroupRef.current.position.y = -skyTransition * 5.5;
+      domeGroupRef.current.visible = skyTransition < 0.92;
+    }
+    if (domeWireRef.current) {
+      domeWireRef.current.rotation.y = t * 0.035 + p * 0.5;
     }
 
-    if (deskGroupRef.current) {
-      deskGroupRef.current.position.y = -roomDrop * 6.5;
-      deskGroupRef.current.rotation.x = roomDrop * 0.32;
-      deskGroupRef.current.visible = roomDrop < 0.88;
+    // 2. Sculpted Circular CAD Compass Plinth
+    if (plinthGroupRef.current) {
+      const pSpring = Math.max(0.01, easeOutBack(assemblePlinth));
+      plinthGroupRef.current.scale.set(pSpring, pSpring, pSpring);
+      plinthGroupRef.current.position.y =
+        -0.02 - skyTransition * 3.8 + (1 - pSpring) * -0.6;
+      plinthGroupRef.current.rotation.y = p * 0.65;
+      plinthGroupRef.current.visible = skyTransition < 0.9;
+    }
+    if (vernierRingRef.current) {
+      vernierRingRef.current.rotation.z = -t * 0.18 - p * 2.4;
     }
 
-    if (matRef.current) {
-      const matBounce = easeOutBack(assembleMat);
-      matRef.current.scale.set(matBounce, 1, matBounce);
-      matRef.current.position.set(
+    // 3. Central Twin-Arch Calatrava Bridge Digital Twin
+    if (bridgeWrapRef.current) {
+      const bSpring = Math.max(0.01, easeOutBack(assembleBridge));
+      const hoverY = Math.sin(t * 1.5) * 0.035 * zeroG;
+      // During Finale (p > 0.71), gently lower & recede bridge so 3D text has 100% clean sky contrast!
+      const finaleDropY = heroFrame * -0.95;
+      const finalePushZ = heroFrame * -1.35;
+      const finaleScale = 1 - heroFrame * 0.22;
+
+      bridgeWrapRef.current.scale.setScalar(bSpring * finaleScale);
+      bridgeWrapRef.current.position.set(
         0,
-        0.022 + (1 - matBounce) * 0.42 - zeroG * 0.75 + Math.sin(t * 1.4) * 0.03 * zeroG,
-        0.16 + zeroG * 0.25
+        0.08 + (1 - bSpring) * 0.55 + zeroG * 0.34 + hoverY + finaleDropY,
+        finalePushZ
       );
-      matRef.current.rotation.set(
-        zeroG * 0.24 + Math.sin(t * 1.1) * 0.03 * zeroG,
-        zeroG * -0.1,
-        zeroG * 0.05
+      bridgeWrapRef.current.rotation.set(
+        zeroG * 0.05 * (1 - heroFrame),
+        Math.sin(t * 0.45) * 0.08 * zeroG * (1 - heroFrame),
+        0
       );
     }
 
-    if (laptopGroupRef.current && laptopLidRef.current) {
-      const drop = easeOutBack(assembleLaptop);
-      const floatY = Math.sin(t * 1.6) * 0.03 * zeroG * (1 - heroFrame * 0.7);
-      laptopGroupRef.current.position.set(
+    // 4. Three Equatorial-Inclined Orbital Halo Rings (Hovering Cleanly Above Plinth!)
+    const aspect = size.width / Math.max(1, size.height);
+    const isPortrait = aspect < 0.85;
+    const gimbalFadeOut = 1 - clamp01((p - 0.68) / 0.08);
+
+    if (gimbalGroupRef.current) {
+      const gSpring = Math.max(0.001, easeOutBack(assembleOrbit) * gimbalFadeOut);
+      gimbalGroupRef.current.visible = gSpring > 0.02;
+      gimbalGroupRef.current.scale.setScalar(gSpring);
+      gimbalGroupRef.current.position.set(
         0,
-        0.04 + (1 - drop) * 1.35 + zeroG * 0.56 + floatY,
-        -0.05 - heroFrame * 0.35
+        0.74 + zeroG * 0.22 + Math.sin(t * 1.2) * 0.02,
+        0
       );
-      laptopGroupRef.current.rotation.set(
-        (1 - drop) * -0.35 + zeroG * 0.04 * (1 - heroFrame),
-        (1 - drop) * 0.4 + Math.cos(t * 0.9) * 0.02 * zeroG * (1 - heroFrame),
-        Math.sin(t * 1.3) * 0.015 * zeroG * (1 - heroFrame)
+    }
+    if (gimbalOuterRef.current) {
+      gimbalOuterRef.current.rotation.set(
+        Math.PI / 2 + 0.16 + Math.sin(t * 0.45) * 0.04,
+        0,
+        t * 0.22 + p * 2.2
       );
-      laptopLidRef.current.rotation.x = THREE.MathUtils.lerp(
-        Math.PI * 0.49,
-        -0.15,
-        clamp01((p - 0.04) / 0.16)
+    }
+    if (gimbalMidRef.current) {
+      gimbalMidRef.current.rotation.set(
+        Math.PI / 2 - 0.18 + Math.cos(t * 0.5) * 0.04,
+        0.12,
+        -t * 0.3 - p * 2.6
+      );
+    }
+    if (gimbalInnerRef.current) {
+      gimbalInnerRef.current.rotation.set(
+        Math.PI / 2 + 0.08,
+        -0.1,
+        t * 0.36 + p * 1.8
       );
     }
 
-    if (clockRef.current) {
-      const cScale = Math.max(0.001, easeOutBack(assembleProps));
-      clockRef.current.scale.setScalar(cScale);
-      clockRef.current.position.set(
-        0 + zeroG * -1.45,
-        1.88 + zeroG * 0.95,
-        -1.65 - zeroG * 0.8
+    // 5. Curved Cylindrical Holographic BIM & Code HUD Lenses (Aspect-Aware for Mobile!)
+    const hudFadeOut = 1 - clamp01((p - 0.64) / 0.09);
+    const hudScaleMult = isPortrait ? 0.68 : 1.0;
+    const hudX = isPortrait ? 1.12 : 1.82;
+    const hudY = isPortrait ? 1.48 : 1.18;
+
+    if (hudLeftRef.current) {
+      const hScale = Math.max(0.001, easeOutBack(assembleOrbit) * hudFadeOut * hudScaleMult);
+      hudLeftRef.current.visible = hScale > 0.02;
+      hudLeftRef.current.scale.setScalar(hScale);
+      hudLeftRef.current.position.set(
+        -hudX - zeroG * 0.35,
+        hudY + Math.sin(t * 1.6) * 0.04,
+        0.48
       );
-      clockRef.current.rotation.z = zeroG * 0.28;
+      hudLeftRef.current.rotation.set(0, 0.44 + Math.sin(t * 0.8) * 0.04, 0);
     }
-    if (hourHandRef.current && minuteHandRef.current) {
-      const spinBoost = p * 20;
-      minuteHandRef.current.rotation.z = -t * 1.6 - spinBoost;
-      hourHandRef.current.rotation.z = -t * 0.25 - spinBoost * 0.15;
+    if (hudRightRef.current) {
+      const hScale = Math.max(0.001, easeOutBack(assembleOrbit) * hudFadeOut * hudScaleMult);
+      hudRightRef.current.visible = hScale > 0.02;
+      hudRightRef.current.scale.setScalar(hScale);
+      hudRightRef.current.position.set(
+        hudX + zeroG * 0.35,
+        hudY + Math.cos(t * 1.5) * 0.04,
+        0.48
+      );
+      hudRightRef.current.rotation.set(0, -0.44 + Math.cos(t * 0.8) * 0.04, 0);
     }
 
-    // Right Sculpture: Floating Parametric Torus-Knot Gyroscope
-    if (knotRef.current) {
-      const rScale = Math.max(0.001, easeOutBack(assembleProps));
-      knotRef.current.scale.setScalar(rScale);
-      knotRef.current.position.set(
-        1.55 + zeroG * 0.42 + heroFrame * 0.28,
-        0.02 + zeroG * 0.76 + Math.sin(t * 1.8 + 1) * 0.06 * zeroG,
-        0.22 + zeroG * 0.12
+    // 6. Orbital Geodesic & Parametric Torus-Knot Satellites
+    const satX = isPortrait ? 1.72 : 2.35;
+    if (satLeftRef.current) {
+      const sScale = Math.max(0.001, easeOutBack(assembleOrbit) * (isPortrait ? 0.82 : 1));
+      satLeftRef.current.scale.setScalar(sScale * (1 - heroFrame * 0.25));
+      satLeftRef.current.position.set(
+        -satX - heroFrame * 0.65,
+        0.68 + zeroG * 0.65 + Math.sin(t * 1.7) * 0.06,
+        0.18 - heroFrame * 0.3
       );
-      knotRef.current.rotation.set(zeroG * 0.2, -0.25 + zeroG * 0.4, zeroG * 0.15);
+      satLeftRef.current.rotation.set(t * 0.45, t * 0.6, 0);
     }
-
-    // Far-Left: Arched Bauhaus Orb Lamp
-    if (lampRef.current) {
-      const lScale = Math.max(0.001, easeOutBack(assembleProps));
-      lampRef.current.scale.setScalar(lScale);
-      lampRef.current.position.set(
-        -2.18 - zeroG * 0.25,
-        0.02 + zeroG * 1.18 + Math.sin(t * 1.4 + 2) * 0.05 * zeroG,
-        -0.25 + zeroG * 0.2
-      );
-      lampRef.current.rotation.set(zeroG * 0.18, 0.35 - zeroG * 0.16, -zeroG * 0.3);
-    }
-
-    // Mid-Left: Calatrava Curved Parabolic Arch Bridge Model
-    if (archRef.current) {
-      const mScale = Math.max(0.001, easeOutBack(assembleProps));
-      archRef.current.scale.setScalar(mScale * (1 + heroFrame * 0.08));
-      archRef.current.position.set(
-        -1.45 - zeroG * 0.45 - heroFrame * 0.25,
-        0.02 + zeroG * 0.68 + Math.sin(t * 1.7) * 0.05 * zeroG,
-        0.24 + zeroG * 0.22
-      );
-      archRef.current.rotation.set(
-        zeroG * 0.15,
-        0.35 + zeroG * (t * 0.3),
-        zeroG * -0.12
+    if (satRightRef.current) {
+      const sScale = Math.max(0.001, easeOutBack(assembleOrbit) * (isPortrait ? 0.82 : 1));
+      satRightRef.current.scale.setScalar(sScale * (1 - heroFrame * 0.25));
+      satRightRef.current.position.set(
+        satX + heroFrame * 0.65,
+        0.68 + zeroG * 0.65 + Math.cos(t * 1.6) * 0.06,
+        0.18 - heroFrame * 0.3
       );
     }
-
-    // Front-Left: Curved Ceramic Espresso Cup
-    if (cupRef.current) {
-      const gScale = Math.max(0.001, easeOutBack(assembleProps));
-      cupRef.current.scale.setScalar(gScale);
-      cupRef.current.position.set(
-        -0.88 - zeroG * 0.92,
-        0.11 + zeroG * 0.08 + Math.sin(t * 1.7 + 3) * 0.05 * zeroG,
-        0.66 + zeroG * 0.12
-      );
-      cupRef.current.rotation.set(zeroG * 0.28, 0, zeroG * -0.35);
+    if (satKnotMeshRef.current) {
+      satKnotMeshRef.current.rotation.set(t * 0.55, t * 0.8, 0);
     }
 
-    // Far-Right: Organic Lathe Ceramic Planter
-    if (plantRightRef.current) {
-      plantRightRef.current.position.set(
-        2.18 - heroFrame * 0.12,
-        0.02 + zeroG * 1.12 + Math.sin(t * 1.5 + 0.5) * 0.05 * zeroG,
-        -0.24 + zeroG * 0.32
-      );
-      plantRightRef.current.rotation.set(zeroG * 0.18, -0.5 + zeroG * 0.25, zeroG * 0.2);
-    }
-
+    // 7. Luminous Stratosphere Clouds during Zero-G & Liquid-Glass Finale
     if (cloudsRef.current) {
-      cloudsRef.current.visible = zeroG > 0.08;
-      const cs = THREE.MathUtils.lerp(0.2, 1.05, zeroG);
+      cloudsRef.current.visible = zeroG > 0.06;
+      const cs = THREE.MathUtils.lerp(0.3, 1.05, zeroG);
       cloudsRef.current.scale.setScalar(cs);
-      cloudsRef.current.position.x = Math.sin(t * 0.18) * 0.35;
-      cloudsRef.current.position.y = 0.65 + zeroG * 0.35;
+      cloudsRef.current.position.x = Math.sin(t * 0.16) * 0.32;
+      cloudsRef.current.position.y = 0.55 + zeroG * 0.3;
     }
   });
 
   return (
     <group>
-      {/* Curved Fluted Architectural Studio Backdrop (Zero Boxy Walls!) */}
-      <group ref={roomGroupRef}>
-        <CurvedFlutedBackdrop />
-        {/* Smooth Circular Studio Floor Rug */}
-        <mesh position={[0, -1.04, 0.3]} rotation={[-Math.PI / 2, 0, 0]}>
-          <circleGeometry args={[7.5, 48]} />
-          <meshStandardMaterial color="#252F3D" roughness={0.85} />
+      {/* === ARCHITECTURAL PLANETARIUM DOME & CONCENTRIC HORIZON === */}
+      <group ref={domeGroupRef}>
+        <mesh ref={domeWireRef} position={[0, 1.2, 0]}>
+          <icosahedronGeometry args={[9.2, 2]} />
+          <meshBasicMaterial
+            color="#38BDF8"
+            wireframe
+            transparent
+            opacity={0.075}
+          />
         </mesh>
-      </group>
 
-      {/* Curved Sculpted Pebble Walnut Studio Table (Zero Rectangular Box!) */}
-      <group ref={deskGroupRef}>
-        <mesh geometry={deskTopGeo} position={[0, 0.01, 0.08]} castShadow receiveShadow>
-          <meshStandardMaterial color="#C8A27A" roughness={0.44} metalness={0.08} />
+        {/* Smooth Circular Obsidian Studio Floor */}
+        <mesh position={[0, -0.24, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+          <circleGeometry args={[9.5, 64]} />
+          <meshStandardMaterial color="#091320" roughness={0.78} metalness={0.22} />
         </mesh>
-        {/* Sleek Tapered Cylindrical Legs */}
-        {[
-          [-2.0, -0.56, -0.55, 0.12, 0.1],
-          [2.0, -0.56, -0.55, -0.12, 0.1],
-          [-2.0, -0.56, 0.72, 0.12, -0.1],
-          [2.0, -0.56, 0.72, -0.12, -0.1],
-        ].map(([x, y, z, rz, rx], i) => (
-          <mesh key={i} position={[x, y, z]} rotation={[rx, 0, rz]}>
-            <cylinderGeometry args={[0.048, 0.03, 1.08, 16]} />
-            <meshStandardMaterial color="#8F6741" roughness={0.5} />
+
+        {/* Subtle Glowing Horizon Datum Rings */}
+        {[2.85, 4.1, 5.6].map((r, idx) => (
+          <mesh
+            key={idx}
+            position={[0, -0.232, 0]}
+            rotation={[-Math.PI / 2, 0, 0]}
+          >
+            <ringGeometry args={[r, r + 0.018, 72]} />
+            <meshBasicMaterial
+              color={idx === 0 ? "#C6FF3D" : "#38BDF8"}
+              transparent
+              opacity={0.26 - idx * 0.06}
+            />
           </mesh>
         ))}
       </group>
 
-      {/* Rounded Pill-Shaped Architectural CAD Desk Mat */}
-      <mesh ref={matRef} geometry={matPillGeo} position={[0, 0.022, 0.16]}>
-        <meshStandardMaterial color="#1D4ED8" roughness={0.58} metalness={0.12} />
-      </mesh>
+      {/* === SCULPTED CIRCULAR TITANIUM & GOLD COMPASS PLINTH === */}
+      <group ref={plinthGroupRef}>
+        <mesh geometry={plinthGeo} receiveShadow>
+          <meshStandardMaterial
+            color="#111C2D"
+            metalness={0.82}
+            roughness={0.24}
+          />
+        </mesh>
 
-      {/* Sculpted Beveled Unibody Laptop (RoundedBox — Zero Sharp Box Corners!) */}
-      <group ref={laptopGroupRef} position={[0, 0.04, -0.05]}>
-        <RoundedBox args={[1.4, 0.052, 0.96]} radius={0.024} smoothness={4} position={[0, 0.022, 0.05]}>
-          <meshStandardMaterial color="#CBD5E1" metalness={0.8} roughness={0.2} />
-        </RoundedBox>
-        <RoundedBox args={[1.18, 0.012, 0.44]} radius={0.005} smoothness={2} position={[0, 0.048, -0.05]}>
-          <meshStandardMaterial color="#1E293B" roughness={0.5} />
-        </RoundedBox>
+        {/* High-DPI Procedural CAD Azimuth Compass Surface */}
+        <mesh position={[0, 0.114, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+          <circleGeometry args={[2.14, 64]} />
+          <meshStandardMaterial
+            map={compassTex}
+            emissive="#38BDF8"
+            emissiveMap={compassTex}
+            emissiveIntensity={0.38}
+            roughness={0.32}
+            metalness={0.35}
+          />
+        </mesh>
 
-        <group ref={laptopLidRef} position={[0, 0.044, -0.41]}>
-          <RoundedBox args={[1.4, 0.94, 0.036]} radius={0.016} smoothness={4} position={[0, 0.46, 0]}>
-            <meshStandardMaterial color="#E2E8F0" metalness={0.82} roughness={0.18} />
-          </RoundedBox>
-          <mesh position={[0, 0.46, 0.02]}>
-            <planeGeometry args={[1.31, 0.85]} />
-            <meshStandardMaterial color="#09090B" roughness={0.2} />
-          </mesh>
-          <mesh position={[0, 0.46, 0.024]}>
-            <planeGeometry args={[1.24, 0.77]} />
+        {/* Rotating Brushed Champagne-Gold Bezel Torus (Flat in XZ Plane!) */}
+        <mesh ref={vernierRingRef} position={[0, 0.095, 0]} rotation={[Math.PI / 2, 0, 0]}>
+          <torusGeometry args={[2.22, 0.026, 16, 96]} />
+          <meshStandardMaterial
+            color="#FDE047"
+            emissive="#CA8A04"
+            emissiveIntensity={0.3}
+            metalness={0.9}
+            roughness={0.16}
+          />
+        </mesh>
+      </group>
+
+      {/* === CENTERPIECE: TWIN-ARCH CALATRAVA SUSPENSION BRIDGE === */}
+      <group ref={bridgeWrapRef}>
+        <TwinArchBridgeCore />
+      </group>
+
+      {/* === THREE INTERLOCKING GYROSCOPIC ASTROLABE GIMBAL RINGS === */}
+      <group ref={gimbalGroupRef} position={[0, 0.86, 0]}>
+        <group ref={gimbalOuterRef}>
+          <mesh>
+            <torusGeometry args={[2.32, 0.015, 16, 96]} />
             <meshStandardMaterial
-              map={screenTex}
-              emissive="#60A5FA"
-              emissiveMap={screenTex}
-              emissiveIntensity={0.48}
-              roughness={0.15}
+              color="#FDE047"
+              emissive="#CA8A04"
+              emissiveIntensity={0.35}
+              metalness={0.88}
+              roughness={0.18}
+            />
+          </mesh>
+          {/* 4 Glowing Cardinal Nodes on Outer Gimbal */}
+          {[0, Math.PI / 2, Math.PI, (Math.PI * 3) / 2].map((ang, idx) => (
+            <mesh
+              key={idx}
+              position={[Math.cos(ang) * 2.32, Math.sin(ang) * 2.32, 0]}
+            >
+              <sphereGeometry args={[0.042, 14, 14]} />
+              <meshBasicMaterial color={idx % 2 === 0 ? "#C6FF3D" : "#38BDF8"} />
+            </mesh>
+          ))}
+        </group>
+
+        <group ref={gimbalMidRef}>
+          <mesh>
+            <torusGeometry args={[2.02, 0.012, 16, 96]} />
+            <meshStandardMaterial
+              color="#38BDF8"
+              emissive="#0284C7"
+              emissiveIntensity={0.65}
+              metalness={0.78}
+              roughness={0.2}
             />
           </mesh>
         </group>
-      </group>
 
-      {/* Sculpted Circular Wall Chronometer */}
-      <group ref={clockRef} position={[0, 1.88, -1.65]}>
-        <mesh rotation={[Math.PI / 2, 0, 0]}>
-          <torusGeometry args={[0.41, 0.042, 16, 40]} />
-          <meshStandardMaterial color="#1E293B" roughness={0.28} metalness={0.55} />
-        </mesh>
-        <mesh position={[0, 0, 0.01]}>
-          <circleGeometry args={[0.39, 36]} />
-          <meshStandardMaterial map={clockTex} roughness={0.4} />
-        </mesh>
-        <mesh ref={hourHandRef} position={[0, 0, 0.03]}>
-          <capsuleGeometry args={[0.014, 0.16, 4, 8]} />
-          <meshStandardMaterial color="#0F172A" />
-        </mesh>
-        <mesh ref={minuteHandRef} position={[0, 0, 0.04]}>
-          <capsuleGeometry args={[0.01, 0.25, 4, 8]} />
-          <meshStandardMaterial color="#2563EB" />
+        <mesh ref={gimbalInnerRef}>
+          <torusGeometry args={[1.76, 0.009, 12, 84]} />
+          <meshStandardMaterial
+            color="#C6FF3D"
+            emissive="#84CC16"
+            emissiveIntensity={0.75}
+            metalness={0.7}
+            roughness={0.22}
+          />
         </mesh>
       </group>
 
-      {/* Right Desk Sculpture: Levitating Parametric Torus-Knot */}
-      <group ref={knotRef} position={[1.55, 0.02, 0.22]} rotation={[0, -0.25, 0]}>
-        <ParametricKnotSculpture />
+      {/* === CURVED CYLINDRICAL HOLOGRAPHIC BIM & CODE HUD ARCS === */}
+      <group ref={hudLeftRef}>
+        <CurvedHologramArc texture={feaHudTex} accent="#38BDF8" />
+      </group>
+      <group ref={hudRightRef}>
+        <CurvedHologramArc texture={codeHudTex} accent="#C6FF3D" />
       </group>
 
-      {/* Far-Left: Arched Bauhaus Orb Lamp */}
-      <group ref={lampRef} position={[-2.18, 0.02, -0.25]} rotation={[0, 0.35, 0]}>
-        <CurvedOrbLamp />
-      </group>
-
-      {/* Mid-Left: Calatrava Curved Parabolic Arch Bridge Scale Model */}
-      <group ref={archRef} position={[-1.45, 0.02, 0.24]} rotation={[0, 0.35, 0]}>
-        <CalatravaArchModel />
-      </group>
-
-      {/* Front-Left: Smooth Rounded Ceramic Cup & Saucer */}
-      <group ref={cupRef} position={[-0.88, 0.11, 0.66]}>
-        <mesh position={[0, -0.09, 0]}>
-          <cylinderGeometry args={[0.14, 0.1, 0.025, 24]} />
-          <meshStandardMaterial color="#F8FAFC" roughness={0.25} />
+      {/* === ORBITAL SATELLITE SCULPTURES (LEFT GEODESIC & RIGHT TORUS-KNOT) === */}
+      <group ref={satLeftRef} position={[-2.55, 0.65, 0.15]}>
+        <mesh>
+          <icosahedronGeometry args={[0.26, 1]} />
+          <meshStandardMaterial
+            color="#FDE047"
+            emissive="#CA8A04"
+            emissiveIntensity={0.4}
+            metalness={0.85}
+            roughness={0.2}
+            wireframe
+          />
         </mesh>
         <mesh>
-          <cylinderGeometry args={[0.1, 0.075, 0.17, 24]} />
-          <meshStandardMaterial color="#FFFFFF" roughness={0.22} />
-        </mesh>
-        <mesh position={[0, 0.06, 0]}>
-          <cylinderGeometry args={[0.088, 0.088, 0.02, 20]} />
-          <meshStandardMaterial color="#7C2D12" roughness={0.2} />
-        </mesh>
-        <mesh position={[0.105, 0.01, 0]} rotation={[0, 0, -0.15]}>
-          <torusGeometry args={[0.042, 0.012, 10, 20]} />
-          <meshStandardMaterial color="#F8FAFC" roughness={0.25} />
+          <sphereGeometry args={[0.13, 20, 20]} />
+          <meshStandardMaterial
+            color="#38BDF8"
+            emissive="#0284C7"
+            emissiveIntensity={0.95}
+            roughness={0.15}
+          />
         </mesh>
       </group>
 
-      {/* Far-Right: Organic Lathe Ceramic Planter */}
-      <group ref={plantRightRef} position={[2.18, 0.02, -0.24]}>
-        <OrganicPlanter scale={1.12} />
+      <group ref={satRightRef} position={[2.55, 0.65, 0.15]}>
+        <mesh ref={satKnotMeshRef}>
+          <torusKnotGeometry args={[0.19, 0.046, 84, 18]} />
+          <meshStandardMaterial
+            color="#C084FC"
+            emissive="#7E22CE"
+            emissiveIntensity={0.45}
+            metalness={0.86}
+            roughness={0.14}
+          />
+        </mesh>
       </group>
 
-      {/* Dreamy Zero-Gravity Volumetric Clouds */}
-      <group ref={cloudsRef} visible={false} position={[0, 1.0, -4.5]}>
+      {/* === LUMINOUS ZERO-GRAVITY STRATOSPHERE CLOUDS === */}
+      <group ref={cloudsRef} visible={false} position={[0, 1.0, -4.6]}>
         {[
-          [-3.4, 1.2, -1.2, 1.3],
-          [3.1, 1.4, -1.0, 1.35],
-          [-0.4, 2.3, -2.4, 1.5],
-          [1.6, -1.0, -1.8, 1.15],
-          [-2.5, -1.1, -2.0, 1.1],
+          [-3.5, 1.25, -1.2, 1.3],
+          [3.2, 1.4, -1.0, 1.35],
+          [-0.4, 2.35, -2.5, 1.5],
+          [1.8, -1.05, -1.8, 1.15],
+          [-2.5, -1.15, -2.0, 1.1],
         ].map(([x, y, z, s], idx) => (
           <group key={idx} position={[x, y, z]} scale={s}>
             <mesh>
-              <sphereGeometry args={[0.85, 14, 14]} />
-              <meshStandardMaterial color="#FFFFFF" roughness={0.95} />
+              <sphereGeometry args={[0.85, 16, 16]} />
+              <meshStandardMaterial color="#FFFFFF" roughness={0.92} />
             </mesh>
             <mesh position={[0.62, -0.16, 0.1]}>
-              <sphereGeometry args={[0.6, 12, 12]} />
-              <meshStandardMaterial color="#F8FAFC" roughness={0.95} />
+              <sphereGeometry args={[0.6, 14, 14]} />
+              <meshStandardMaterial color="#F8FAFC" roughness={0.92} />
             </mesh>
             <mesh position={[-0.58, -0.2, -0.05]}>
-              <sphereGeometry args={[0.56, 12, 12]} />
-              <meshStandardMaterial color="#F1F5F9" roughness={0.95} />
+              <sphereGeometry args={[0.56, 14, 14]} />
+              <meshStandardMaterial color="#F1F5F9" roughness={0.92} />
             </mesh>
           </group>
         ))}

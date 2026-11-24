@@ -64,28 +64,28 @@ export function LiquidGlassBar({ scrollRef }: LiquidGlassBarProps) {
   return (
     <group ref={groupRef} visible={false}>
       <mesh rotation={[0, 0, Math.PI / 2]}>
-        <capsuleGeometry args={[0.26, 2.55, 16, 32]} />
+        <capsuleGeometry args={[0.25, 2.32, 16, 32]} />
         <MeshTransmissionMaterial
           backside={false}
           samples={4}
-          resolution={256}
+          resolution={512}
           transmission={0.96}
-          thickness={0.22}
-          roughness={0.03}
-          ior={1.09}
-          chromaticAberration={0.07}
-          anisotropy={0.18}
-          distortion={0.045}
-          distortionScale={0.25}
-          temporalDistortion={0.12}
+          thickness={0.2}
+          roughness={0.02}
+          ior={1.08}
+          chromaticAberration={0.055}
+          anisotropy={0.15}
+          distortion={0.03}
+          distortionScale={0.22}
+          temporalDistortion={0.1}
           color="#F5EEFF"
           attenuationColor="#A855F7"
-          attenuationDistance={3.2}
+          attenuationDistance={3.4}
         />
       </mesh>
 
       <mesh ref={rimRef} scale={[1.03, 1.012, 0.4]}>
-        <capsuleGeometry args={[0.265, 2.57, 8, 24]} />
+        <capsuleGeometry args={[0.255, 2.34, 8, 24]} />
         <meshBasicMaterial
           color="#C084FC"
           transparent

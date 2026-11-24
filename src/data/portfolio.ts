@@ -66,13 +66,13 @@ export const PORTFOLIO_DATA = {
   },
 
   studio3D: {
-    deskMatLabel: "AXIS._ // CIVIL & SOFTWARE",
-    laptopTime: "14:45",
-    laptopDate: "ETABS • NEXT.JS • CAD",
+    deskMatLabel: "AXIS._ // DIGITAL TWIN CORE",
+    laptopTime: "280M",
+    laptopDate: "FEA • NEXT.JS • WEBGL",
     editorialTopLeft:
-      "Every bridge span and every distributed codebase starts on the same drafting desk — balancing load paths, clean architecture, and visual clarity before a single beam or pixel ships.",
+      "Every long-span arch and every distributed codebase obeys the same law — clean load paths, mathematical precision, and zero wasted mass.",
     editorialBottomRight:
-      "From finite-element structural engineering and BIM automation to full-stack TypeScript apps and interactive 3D interfaces.",
+      "From finite-element structural twins and BIM solvers to 120 FPS TypeScript & WebGL interfaces.",
     floatingLeftLabel: "Structures",
     floatingRightLabel: "Software",
     heroGlassHeadline: "BUILD. CODE. CREATE.",

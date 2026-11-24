@@ -28,32 +28,32 @@ interface CameraKeyframe {
 }
 
 /**
- * All-Platform Responsive Cinema Camera Rig
- * Dynamically adapts camera Z-distance & FOV to viewport aspect ratio so small phones (320px-390px),
- * portrait tablets (768x1024), and desktop widescreens (1440px+) all frame the entire 3D studio
- * AND full horizontal "BUILD. CODE. CREATE." without ever clipping left/right edges!
+ * Cinema Camera Choreography for the Architectural Astrolabe & Twin-Arch Bridge:
+ * 0.00 - 0.20: Sweeping 3/4 orbital reveal of the CAD Compass Plinth & Bridge Core
+ * 0.20 - 0.50: Dynamic chase angle watching the Aero-Glider thread through the Bridge Span
+ * 0.50 - 0.70: Zero-G Stratosphere ascension framed by gyroscopic gimbal rings
+ * 0.72 - 1.00: Crystal-clear Liquid Glass refraction over 3D "BUILD. CODE. CREATE."
  */
 const KEYFRAMES: CameraKeyframe[] = [
-  { p: 0.0, pos: [-3.3, 1.55, 5.45], lookAt: [0.0, 0.78, 0.0], roll: 0.06, fov: 48 },
-  { p: 0.22, pos: [1.35, 1.68, 5.25], lookAt: [0.0, 0.75, 0.0], roll: -0.03, fov: 41 },
-  { p: 0.36, pos: [1.35, 3.9, 2.35], lookAt: [0.15, 0.18, 0.16], roll: -0.26, fov: 53 },
-  { p: 0.48, pos: [-1.6, 0.96, 2.85], lookAt: [0.08, 0.75, 0.2], roll: 0.1, fov: 36 },
-  { p: 0.58, pos: [0.2, 1.18, 3.7], lookAt: [0.0, 0.92, 0.0], roll: -0.05, fov: 46 },
-  { p: 0.7, pos: [0.22, 1.38, 4.95], lookAt: [0.0, 1.07, 0.15], roll: -0.04, fov: 48 },
-  { p: 0.82, pos: [-0.36, 1.07, 3.55], lookAt: [-0.06, 1.07, 0.84], roll: 0.02, fov: 38 },
-  { p: 1.0, pos: [0.0, 1.07, 4.2], lookAt: [0.0, 1.07, 0.84], roll: 0.0, fov: 36 },
+  { p: 0.0, pos: [-3.35, 1.72, 5.55], lookAt: [0.0, 0.82, 0.0], roll: 0.04, fov: 46 },
+  { p: 0.2, pos: [1.55, 1.52, 5.15], lookAt: [0.0, 0.84, 0.0], roll: -0.04, fov: 42 },
+  { p: 0.36, pos: [-2.35, 1.18, 2.95], lookAt: [0.3, 0.86, 0.0], roll: 0.12, fov: 47 },
+  { p: 0.5, pos: [1.85, 1.62, 3.45], lookAt: [0.0, 0.88, 0.0], roll: -0.09, fov: 44 },
+  { p: 0.62, pos: [0.0, 1.22, 4.65], lookAt: [0.0, 0.96, 0.0], roll: 0.0, fov: 46 },
+  { p: 0.78, pos: [-0.24, 1.07, 4.15], lookAt: [0.0, 1.07, 0.84], roll: 0.02, fov: 38 },
+  { p: 1.0, pos: [0.0, 1.07, 4.48], lookAt: [0.0, 1.07, 0.84], roll: 0.0, fov: 36 },
 ];
 
 export function SceneRigAndFX({ scrollRef }: SceneRigAndFXProps) {
   const { camera, scene, size } = useThree();
   const targetPos = useMemo(() => new THREE.Vector3(), []);
   const targetLook = useMemo(() => new THREE.Vector3(), []);
-  const smoothLook = useMemo(() => new THREE.Vector3(0, 0.78, 0), []);
-  const studioColor = useMemo(() => new THREE.Color("#141E2B"), []);
-  const skyColor = useMemo(() => new THREE.Color("#7EC8FF"), []);
-  const currentBg = useMemo(() => new THREE.Color("#141E2B"), []);
+  const smoothLook = useMemo(() => new THREE.Vector3(0, 0.82, 0), []);
+  const studioColor = useMemo(() => new THREE.Color("#07111E"), []);
+  const skyColor = useMemo(() => new THREE.Color("#1E6FD9"), []);
+  const currentBg = useMemo(() => new THREE.Color("#07111E"), []);
   const smoothRollRef = useRef(0);
-  const smoothFovRef = useRef(44);
+  const smoothFovRef = useRef(46);
   const shadowGroupRef = useRef<THREE.Group>(null);
 
   useFrame((_, delta) => {
@@ -63,7 +63,7 @@ export function SceneRigAndFX({ scrollRef }: SceneRigAndFXProps) {
     // Aspect-aware pullback for portrait phones (0.46) & portrait tablets (0.75)
     const aspect = size.width / Math.max(1, size.height);
     const portraitFactor = clamp01((1.28 - aspect) / 0.82);
-    const zBoost = portraitFactor * 2.95;
+    const zBoost = portraitFactor * 3.55;
     const fovBoost = portraitFactor * 11;
 
     let a = KEYFRAMES[0];
@@ -80,8 +80,8 @@ export function SceneRigAndFX({ scrollRef }: SceneRigAndFXProps) {
     const parallaxFactor = (1 - smoothstep(0.72, 0.84, p)) * (1 - portraitFactor * 0.65);
 
     targetPos.set(
-      THREE.MathUtils.lerp(a.pos[0], b.pos[0], segT) + mouseX * 0.22 * parallaxFactor,
-      THREE.MathUtils.lerp(a.pos[1], b.pos[1], segT) + mouseY * 0.13 * parallaxFactor,
+      THREE.MathUtils.lerp(a.pos[0], b.pos[0], segT) + mouseX * 0.24 * parallaxFactor,
+      THREE.MathUtils.lerp(a.pos[1], b.pos[1], segT) + mouseY * 0.14 * parallaxFactor,
       THREE.MathUtils.lerp(a.pos[2], b.pos[2], segT) + zBoost
     );
     targetLook.set(
@@ -115,7 +115,7 @@ export function SceneRigAndFX({ scrollRef }: SceneRigAndFXProps) {
     camera.lookAt(smoothLook);
     camera.rotateZ(smoothRollRef.current);
 
-    const skyMix = smoothstep(0.52, 0.66, p);
+    const skyMix = smoothstep(0.52, 0.68, p);
     currentBg.copy(studioColor).lerp(skyColor, skyMix);
     scene.background = currentBg;
 
@@ -126,55 +126,55 @@ export function SceneRigAndFX({ scrollRef }: SceneRigAndFXProps) {
 
   return (
     <>
-      <ambientLight intensity={0.78} color="#FFF8EB" />
-      <hemisphereLight args={["#BAE6FD", "#78350F", 0.85]} />
-      <directionalLight position={[5.5, 7.5, 4.5]} intensity={2.45} color="#FFF3D6" />
-      <directionalLight position={[-5, 3.5, 2]} intensity={0.95} color="#93C5FD" />
+      <ambientLight intensity={0.72} color="#E0F2FE" />
+      <hemisphereLight args={["#BAE6FD", "#0F172A", 0.9]} />
+      <directionalLight position={[5.5, 7.5, 4.5]} intensity={2.5} color="#FFF7E6" />
+      <directionalLight position={[-5.5, 3.5, 2.5]} intensity={1.25} color="#38BDF8" />
 
       <Environment resolution={128} frames={1}>
         <Lightformer
           form="rect"
-          intensity={2.8}
-          color="#FFF7E6"
+          intensity={3.0}
+          color="#FFFBEB"
           scale={[8, 4, 1]}
           position={[4, 5, 4]}
-          target={[0, 0, 0]}
+          target={[0, 0.8, 0]}
         />
         <Lightformer
           form="ring"
-          intensity={1.9}
-          color="#7DD3FC"
+          intensity={2.4}
+          color="#38BDF8"
           scale={6}
           position={[-5, 3, 2]}
-          target={[0, 0, 0]}
+          target={[0, 0.8, 0]}
         />
         <Lightformer
           form="rect"
-          intensity={1.6}
-          color="#C084FC"
+          intensity={1.8}
+          color="#C6FF3D"
           scale={[6, 2, 1]}
           position={[0, -3, 3]}
-          target={[0, 0, 0]}
+          target={[0, 0.8, 0]}
         />
       </Environment>
 
       <Sparkles
-        count={48}
-        scale={[7.5, 4.2, 5.2]}
-        position={[0, 1.3, 0.2]}
-        size={2.5}
-        speed={0.4}
-        opacity={0.55}
-        color="#FFFBEB"
+        count={56}
+        scale={[7.8, 4.4, 5.5]}
+        position={[0, 1.35, 0.2]}
+        size={2.4}
+        speed={0.38}
+        opacity={0.6}
+        color="#E0F2FE"
       />
 
       <group ref={shadowGroupRef}>
         <ContactShadows
-          position={[0, 0.008, 0.1]}
-          opacity={0.34}
-          scale={6.4}
-          blur={2.0}
-          far={2.2}
+          position={[0, -0.235, 0]}
+          opacity={0.45}
+          scale={8.2}
+          blur={2.2}
+          far={2.6}
           frames={1}
         />
       </group>

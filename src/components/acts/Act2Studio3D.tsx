@@ -14,11 +14,11 @@ const StudioSceneCanvas = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex h-full w-full items-center justify-center bg-[#1F2937]">
+      <div className="flex h-full w-full items-center justify-center bg-[#07111E]">
         <div className="flex flex-col items-center gap-3">
           <span className="h-9 w-9 animate-spin rounded-full border-2 border-white/20 border-t-[#C6FF3D]" />
           <span className="font-mono text-[11px] uppercase tracking-[0.25em] text-white/60">
-            Loading 3D Engineering Desk...
+            Initializing 3D Digital Twin Core...
           </span>
         </div>
       </div>
@@ -70,26 +70,26 @@ export function Act2Studio3D() {
           const p = self.progress;
           studio3DRef.current.progress = p;
 
-          // 1. Editorial captions glide cleanly in/out during desk assembly
+          // 1. Editorial telemetry captions glide cleanly in/out during Digital Twin reveal
           if (editorialRef.current) {
             const edOp =
-              p > 0.04 && p < 0.28
-                ? Math.min(1, (p - 0.04) * 14, (0.28 - p) * 14)
+              p > 0.04 && p < 0.3
+                ? Math.min(1, (p - 0.04) * 14, (0.3 - p) * 14)
                 : 0;
             editorialRef.current.style.opacity = edOp.toFixed(3);
-            editorialRef.current.style.transform = `translate3d(0, ${((1 - edOp) * 16).toFixed(1)}px, 0)`;
+            editorialRef.current.style.transform = `translate3d(0, ${((1 - edOp) * 14).toFixed(1)}px, 0)`;
           }
 
-          // 2. Kinetic Zero-G Labels sweep inward from opposite sides & scale dynamically
+          // 2. Kinetic Zero-G Labels sweep inward safely within all screen widths
           if (zeroGLabelsRef.current && leftLabelRef.current && rightLabelRef.current) {
             const zgOp =
-              p > 0.57 && p < 0.75
-                ? Math.min(1, (p - 0.57) * 18, (0.75 - p) * 18)
+              p > 0.56 && p < 0.74
+                ? Math.min(1, (p - 0.56) * 18, (0.74 - p) * 18)
                 : 0;
-            const local = Math.max(0, Math.min(1, (p - 0.57) / 0.18));
+            const local = Math.max(0, Math.min(1, (p - 0.56) / 0.18));
             zeroGLabelsRef.current.style.opacity = zgOp.toFixed(3);
-            leftLabelRef.current.style.transform = `translate3d(${(-60 + local * 80).toFixed(1)}px, ${(Math.sin(local * Math.PI) * -14).toFixed(1)}px, 0) rotate(-7deg) scale(${(0.85 + local * 0.25).toFixed(3)})`;
-            rightLabelRef.current.style.transform = `translate3d(${(60 - local * 80).toFixed(1)}px, ${(Math.sin(local * Math.PI) * 14).toFixed(1)}px, 0) rotate(7deg) scale(${(0.85 + local * 0.25).toFixed(3)})`;
+            leftLabelRef.current.style.transform = `translate3d(${(-22 + local * 34).toFixed(1)}px, ${(Math.sin(local * Math.PI) * -12).toFixed(1)}px, 0) rotate(-6deg) scale(${(0.88 + local * 0.2).toFixed(3)})`;
+            rightLabelRef.current.style.transform = `translate3d(${(22 - local * 34).toFixed(1)}px, ${(Math.sin(local * Math.PI) * 12).toFixed(1)}px, 0) rotate(6deg) scale(${(0.88 + local * 0.2).toFixed(3)})`;
           }
 
           // 3. Entry & exit lens flashes
@@ -115,42 +115,53 @@ export function Act2Studio3D() {
     <section
       id="act-2"
       ref={sectionRef}
-      className="relative h-[430vh] w-full bg-[#141E2B]"
+      className="relative h-[430vh] w-full bg-[#07111E]"
     >
       <div className="sticky top-0 h-[100dvh] w-full overflow-hidden">
-        {/* === SINGLE REAL-TIME R3F WEBGL CANVAS (WITH TRUE 3D REFRACTED TEXT!) === */}
+        {/* === SINGLE REAL-TIME R3F WEBGL CANVAS (ASTROLABE TWIN + LIQUID GLASS!) === */}
         <StudioSceneCanvas scrollRef={studio3DRef} active={inView} />
 
         {/* Screen-reader accessible mirror of the real 3D WebGL headline */}
         <h2 className="sr-only">{PORTFOLIO_DATA.studio3D.heroGlassHeadline}</h2>
 
-        {/* === EDITORIAL STORYTELLING COPY OVERLAY === */}
+        {/* === SAFE-AREA EDITORIAL TELEMETRY OVERLAY === */}
         <div
           ref={editorialRef}
-          className="pointer-events-none absolute inset-0 z-10 flex flex-col justify-between px-4 py-[11dvh] sm:px-12 opacity-0 will-change-transform"
+          className="pointer-events-none absolute inset-0 z-10 mx-auto flex max-w-[1440px] flex-col justify-between px-6 py-[9.5dvh] sm:px-14 opacity-0 will-change-transform"
         >
-          <p className="max-w-[260px] sm:max-w-md font-sans text-[11px] sm:text-xs leading-relaxed text-white/90 drop-shadow-[0_2px_10px_rgba(0,0,0,0.75)]">
-            {PORTFOLIO_DATA.studio3D.editorialTopLeft}
-          </p>
-          <p className="ml-auto max-w-[260px] sm:max-w-md text-right font-sans text-[11px] sm:text-xs leading-relaxed text-white/90 drop-shadow-[0_2px_10px_rgba(0,0,0,0.75)]">
-            {PORTFOLIO_DATA.studio3D.editorialBottomRight}
-          </p>
+          <div className="max-w-[270px] sm:max-w-sm rounded-2xl border border-white/10 bg-[#07111E]/65 px-4 py-3 backdrop-blur-md">
+            <span className="block font-mono text-[9px] font-bold uppercase tracking-[0.22em] text-[#38BDF8]">
+              02.A // STRUCTURAL DIGITAL TWIN
+            </span>
+            <p className="mt-1 font-sans text-[11px] sm:text-xs leading-relaxed text-slate-100">
+              {PORTFOLIO_DATA.studio3D.editorialTopLeft}
+            </p>
+          </div>
+
+          <div className="ml-auto max-w-[270px] sm:max-w-sm rounded-2xl border border-white/10 bg-[#07111E]/65 px-4 py-3 text-right backdrop-blur-md">
+            <span className="block font-mono text-[9px] font-bold uppercase tracking-[0.22em] text-[#C6FF3D]">
+              02.B // COMPUTATIONAL SOLVER
+            </span>
+            <p className="mt-1 font-sans text-[11px] sm:text-xs leading-relaxed text-slate-100">
+              {PORTFOLIO_DATA.studio3D.editorialBottomRight}
+            </p>
+          </div>
         </div>
 
         {/* === KINETIC FLOATING ZERO-G LABELS === */}
         <div
           ref={zeroGLabelsRef}
-          className="pointer-events-none absolute inset-0 z-10 flex items-center justify-between px-4 sm:px-16 md:px-20 opacity-0 will-change-[opacity]"
+          className="pointer-events-none absolute inset-0 z-10 mx-auto flex max-w-[1440px] items-center justify-between px-7 sm:px-16 md:px-24 opacity-0 will-change-[opacity]"
         >
           <span
             ref={leftLabelRef}
-            className="font-display text-[clamp(1.35rem,5.5vw,3.1rem)] font-black tracking-tight text-orange-400 drop-shadow-[0_8px_24px_rgba(234,88,12,0.65)] will-change-transform"
+            className="font-display text-[clamp(1.25rem,5vw,3rem)] font-black tracking-tight text-[#C6FF3D] drop-shadow-[0_8px_24px_rgba(0,0,0,0.55)] will-change-transform"
           >
             {PORTFOLIO_DATA.studio3D.floatingLeftLabel}
           </span>
           <span
             ref={rightLabelRef}
-            className="font-display text-[clamp(1.35rem,5.5vw,3.1rem)] font-black tracking-tight text-amber-300 drop-shadow-[0_8px_24px_rgba(245,158,11,0.65)] will-change-transform"
+            className="font-display text-[clamp(1.25rem,5vw,3rem)] font-black tracking-tight text-amber-300 drop-shadow-[0_8px_24px_rgba(0,0,0,0.55)] will-change-transform"
           >
             {PORTFOLIO_DATA.studio3D.floatingRightLabel}
           </span>
