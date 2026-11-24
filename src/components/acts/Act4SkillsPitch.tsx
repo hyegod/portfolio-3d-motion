@@ -60,7 +60,7 @@ const CHAPTERS: DisciplineChapter[] = [
     tools: ["autocad", "revit"],
     startP: 0.115,
     endP: 0.315,
-    jumpRatio: 0.153,
+    jumpRatio: 0.159,
     beats: [
       {
         idx: "01",
@@ -103,7 +103,7 @@ const CHAPTERS: DisciplineChapter[] = [
     tools: ["typescript", "python"],
     startP: 0.315,
     endP: 0.51,
-    jumpRatio: 0.352,
+    jumpRatio: 0.35,
     beats: [
       {
         idx: "01",
@@ -146,7 +146,7 @@ const CHAPTERS: DisciplineChapter[] = [
     tools: ["figma"],
     startP: 0.51,
     endP: 0.705,
-    jumpRatio: 0.547,
+    jumpRatio: 0.545,
     beats: [
       {
         idx: "01",
@@ -189,7 +189,7 @@ const CHAPTERS: DisciplineChapter[] = [
     tools: ["music"],
     startP: 0.705,
     endP: 0.85,
-    jumpRatio: 0.735,
+    jumpRatio: 0.737,
     beats: [
       {
         idx: "01",
@@ -457,35 +457,35 @@ export function Act4SkillsPitch() {
 
         const irisP = clamp01((p - 0.835) / 0.105);
         const navVis =
-          clamp01((p - 0.115) / 0.025) * (1 - clamp01((p - 0.825) / 0.025));
+          clamp01((p - 0.13) / 0.025) * (1 - clamp01((p - 0.825) / 0.025));
 
         const activeChIdx =
           p < 0.315 ? 0 : p < 0.51 ? 1 : p < 0.705 ? 2 : 3;
 
         // ====================================================================
-        // SYNCHRONIZED MIDPOINT TRANSITION TIMELINES (NEVER "PINDAH DULU BARU TRANSISI"!)
-        // - Cut 0 (Intro -> 01 Civil): Masked Blueprint Aperture Iris (0.100 -> 0.138)
-        // - Cut 1 (01 Civil -> 02 Software): Straddles 0.315 (0.299 -> 0.331); swap at u1 = 0.5!
-        // - Cut 2 (02 Software -> 03 UI/UX): Straddles 0.510 (0.494 -> 0.526); swap at u2 = 0.5!
-        // - Cut 3 (03 UI/UX -> 04 Hobbies):  Straddles 0.705 (0.689 -> 0.721); swap at u3 = 0.5!
+        // SYNCHRONIZED MIDPOINT TRANSITION TIMELINES (WEIGHTED CINEMA PACING)
+        // - Cut 0 (Intro -> 01 Civil): Masked Blueprint Aperture Iris (0.095 -> 0.155, ~53vh)
+        // - Cut 1 (01 Civil -> 02 Software): Straddles 0.315 (0.285 -> 0.345, ~53vh); swap at u1 = 0.5!
+        // - Cut 2 (02 Software -> 03 UI/UX): Straddles 0.510 (0.480 -> 0.540, ~53vh); swap at u2 = 0.5!
+        // - Cut 3 (03 UI/UX -> 04 Hobbies):  Straddles 0.705 (0.677 -> 0.733, ~49vh); swap at u3 = 0.5!
         // ====================================================================
-        const w0 = easeInOutCubic(clamp01((p - 0.1) / 0.038));
-        const inCut0 = p >= 0.1 && p < 0.138;
+        const w0 = easeInOutCubic(clamp01((p - 0.095) / 0.06));
+        const inCut0 = p >= 0.095 && p < 0.155;
         const fx0 = inCut0 ? Math.sin(w0 * Math.PI) : 0;
 
-        const u1 = clamp01((p - 0.299) / 0.032);
-        const inCut1 = p > 0.299 && p < 0.331;
+        const u1 = clamp01((p - 0.285) / 0.06);
+        const inCut1 = p > 0.285 && p < 0.345;
         const fx1Glitch = inCut1 ? Math.sin(u1 * Math.PI) : 0;
 
-        const u2 = clamp01((p - 0.494) / 0.032);
-        const inCut2 = p > 0.494 && p < 0.526;
+        const u2 = clamp01((p - 0.48) / 0.06);
+        const inCut2 = p > 0.48 && p < 0.54;
         const fx2Env = inCut2 ? Math.sin(u2 * Math.PI) : 0;
 
-        const u3 = clamp01((p - 0.689) / 0.032);
-        const inCut3 = p > 0.689 && p < 0.721;
+        const u3 = clamp01((p - 0.677) / 0.056);
+        const inCut3 = p > 0.677 && p < 0.733;
         const fx3Env = inCut3 ? Math.sin(u3 * Math.PI) : 0;
 
-        const show3D = p >= 0.1 && irisP < 0.98;
+        const show3D = p >= 0.095 && irisP < 0.98;
         if (canvasLayerRef.current) {
           canvasLayerRef.current.style.opacity = show3D ? "1" : "0";
           canvasLayerRef.current.style.visibility = show3D ? "visible" : "hidden";
@@ -724,7 +724,7 @@ export function Act4SkillsPitch() {
         }
 
         // Keep Beat 0 white backdrop cleanly underneath until Cut 0's aperture finishes expanding!
-        const s0Fade = clamp01((p - 0.136) / 0.018);
+        const s0Fade = clamp01((p - 0.15) / 0.015);
         if (bg0Ref.current) {
           bg0Ref.current.style.opacity = (1 - s0Fade).toFixed(3);
           bg0Ref.current.style.visibility =
@@ -739,7 +739,7 @@ export function Act4SkillsPitch() {
         CHAPTERS.forEach((ch, cIdx) => {
           const isCurrent =
             cIdx === 0
-              ? p >= 0.1 && p < 0.315
+              ? p >= 0.095 && p < 0.315
               : cIdx === 1
                 ? p >= 0.315 && p < 0.51
                 : cIdx === 2
@@ -787,7 +787,7 @@ export function Act4SkillsPitch() {
                   : "none";
 
               // Distinct spatial entrance & continuous parallax motion per chapter!
-              const enterT = easeInOutCubic(clamp01(local / 0.15));
+              const enterT = easeInOutCubic(clamp01(local / 0.24));
               const enterRem = 1 - enterT;
 
               if (headerEl && spotEl) {
@@ -828,8 +828,8 @@ export function Act4SkillsPitch() {
               }
 
               // Continuous analog scroll-drum across the 4 frameless Spotlight Super-Titles (0.0 -> 3.0)
-              // Framed cleanly between the incoming & outgoing cut curtains (local 0.12 -> 0.88)!
-              const beatLocal = clamp01((local - 0.12) / 0.76);
+              // Framed cleanly between the wider incoming & outgoing cut curtains (local 0.20 -> 0.84)!
+              const beatLocal = clamp01((local - 0.2) / 0.64);
               const beatFloat = beatLocal * 3;
               const activeBeat = Math.min(3, Math.round(beatFloat));
               if (activeChIdx === cIdx) {
@@ -951,7 +951,7 @@ export function Act4SkillsPitch() {
         trigger: section,
         start: "top top",
         end: "bottom bottom",
-        scrub: 0.25,
+        scrub: 0.55,
         onEnter: () => {
           setActiveChapter("act-4");
           setLetterboxActive(false);
@@ -999,7 +999,7 @@ export function Act4SkillsPitch() {
       id="act-4"
       ref={sectionRef}
       onPointerMove={handlePointerMove}
-      className="relative h-[760vh] w-full bg-[#F8FAFC]"
+      className="relative h-[980vh] w-full bg-[#F8FAFC]"
     >
       <div className="sticky top-0 h-[100dvh] w-full overflow-hidden">
         {/* ================================================================
@@ -1411,8 +1411,7 @@ export function Act4SkillsPitch() {
                 {/* Minimal Frameless 01-04 Beat Switcher (Pure Typography, Zero Card Borders!) */}
                 <div className="pointer-events-auto flex flex-wrap items-center gap-3 sm:gap-5">
                   {ch.beats.map((beat, bIdx) => {
-                    const beatLocalTarget =
-                      bIdx === 0 ? 0.17 : 0.12 + (bIdx / 3) * 0.76;
+                    const beatLocalTarget = 0.21 + (bIdx / 3) * 0.63;
                     const targetP =
                       ch.startP + beatLocalTarget * (ch.endP - ch.startP);
                     return (

@@ -188,8 +188,8 @@ function SkillsCinemaRig({
     lookSpline.getPoint(u, tempLook);
 
     const sample = sampleCameraPath(CHAPTER_CAMERA_PATHS[chapterIdx], u);
-    // Distinct per-chapter camera entry punch (decays cleanly to 0 by local = 0.18)
-    const entryDecay = 1 - smoothstep(0.0, 0.18, u);
+    // Distinct per-chapter camera entry punch (decays cleanly to 0 by local = 0.26)
+    const entryDecay = 1 - smoothstep(0.0, 0.26, u);
     const entryFovKick =
       chapterIdx === 1
         ? entryDecay * 13 // Software: hyperspace FPV warp entry
@@ -554,8 +554,8 @@ function SoftwareWorld3D({
       if (chapterIdx !== 1) return;
     }
 
-    // Hyper-cube matrix burst-open on chapter entry (local: 0 -> 0.18) then smooth FPV tunnel corridor!
-    const matrixEnter = smoothstep(0.0, 0.18, local);
+    // Hyper-cube matrix burst-open on chapter entry (local: 0 -> 0.25) then smooth FPV tunnel corridor!
+    const matrixEnter = smoothstep(0.0, 0.25, local);
     const enterSpring = easeOutBack(matrixEnter);
     const explode =
       (0.32 + 0.56 * enterSpring) + Math.sin(local * Math.PI * 0.88) * 0.72;
@@ -739,8 +739,8 @@ function DesignWorld3D({
       const pl = planeRefs.current[i];
       if (!pl) continue;
       const [ax, ay, az, rotY] = cardAnchors[i];
-      // Staggered 3D spatial flip-in fan on chapter entry (local: 0 -> 0.24), then pure smooth glide!
-      const cardEnterRaw = clamp01((local - i * 0.025) / 0.14);
+      // Staggered 3D spatial flip-in fan on chapter entry (local: 0 -> 0.28), then pure smooth glide!
+      const cardEnterRaw = clamp01((local - i * 0.032) / 0.18);
       const cardEnter = easeOutBack(cardEnterRaw);
       const settled = clamp01(cardEnterRaw);
       const flipAngle = (1 - settled) * (i % 2 === 0 ? -1.15 : 1.15);
@@ -908,8 +908,8 @@ function HobbiesWorld3D({
       if (chapterIdx !== 3) return;
     }
 
-    // Analog stage-spotlight rise & center-outward EQ surge on entry (local: 0 -> 0.24)
-    const stageEnter = smoothstep(0.0, 0.22, local);
+    // Analog stage-spotlight rise & center-outward EQ surge on entry (local: 0 -> 0.30)
+    const stageEnter = smoothstep(0.0, 0.28, local);
     const stageSpring = easeOutBack(stageEnter);
 
     if (fretboardRef.current) {
@@ -931,7 +931,7 @@ function HobbiesWorld3D({
       if (!bar) continue;
       const distFromCenter = Math.abs(i - 8.5);
       const eqEnter = easeOutBack(
-        clamp01((local - distFromCenter * 0.011) / 0.14)
+        clamp01((local - distFromCenter * 0.014) / 0.18)
       );
       const groove =
         0.35 +
