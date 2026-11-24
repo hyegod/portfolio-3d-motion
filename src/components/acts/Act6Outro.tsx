@@ -9,7 +9,6 @@ import {
   Copy,
   Check,
   Send,
-  Radio,
   Clock,
   Sparkles,
   Layers,
@@ -27,81 +26,109 @@ function clamp01(v: number) {
 }
 
 function easeOutBack(x: number) {
-  const c1 = 1.65;
+  const c1 = 1.85;
   const c3 = c1 + 1;
   return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2);
 }
 
+const EXTRAORDINARY_CHARS = "Extraordinary.".split("");
+
 interface InquiryChannel {
   id: string;
-  code: string;
-  label: string;
+  shortLabel: string;
+  tagline: string;
   icon: React.ElementType;
   subject: string;
   defaultBody: string;
   accent: string;
+  freq: number;
 }
 
 const INQUIRY_CHANNELS: InquiryChannel[] = [
   {
     id: "civil-fea",
-    code: "CHANNEL_01",
-    label: "Civil & Structural BIM",
+    shortLabel: "Structural & BIM",
+    tagline: "BRIDGES • SEISMIC CORES • LOD 400 DIGITAL TWINS",
     icon: Layers,
     subject: "Inquiry: Civil & Structural Engineering Collaboration",
     defaultBody:
-      "Hi Axis,\n\nI would like to discuss a structural engineering / BIM automation project with your team.\n\nProject details:",
+      "Hi Axis,\n\nI would like to discuss a structural engineering / BIM automation project.\n\nProject details:",
     accent: "#38BDF8",
+    freq: 2.2,
   },
   {
     id: "software-api",
-    code: "CHANNEL_02",
-    label: "Full-Stack Software & API",
+    shortLabel: "Full-Stack & API",
+    tagline: "NEXT.JS • TYPESCRIPT • PYTHON FEA SOLVERS",
     icon: Code2,
     subject: "Inquiry: Full-Stack Computational Software Project",
     defaultBody:
-      "Hi Axis,\n\nI am looking for a Software Engineer to architect web apps / engineering calculation tools.\n\nStack & requirements:",
+      "Hi Axis,\n\nI am looking for a Software Engineer to architect high-performance web apps / engineering tools.\n\nStack & requirements:",
     accent: "#C6FF3D",
+    freq: 3.4,
   },
   {
     id: "3d-motion",
-    code: "CHANNEL_03",
-    label: "UI/UX & 3D Motion Craft",
+    shortLabel: "3D & Motion UI",
+    tagline: "120 FPS WEBGL • THREE.JS • KINETIC CHOREOGRAPHY",
     icon: Palette,
     subject: "Inquiry: UI/UX & Interactive 3D Web Design",
     defaultBody:
-      "Hi Axis,\n\nWe love your interactive 3D and kinetic motion work and want to collaborate on a digital experience.\n\nScope & timeline:",
+      "Hi Axis,\n\nWe love your interactive 3D and kinetic motion work and want to collaborate on a flagship web experience.\n\nScope & timeline:",
     accent: "#FF6B4A",
+    freq: 4.4,
   },
   {
     id: "sync-coffee",
-    code: "CHANNEL_04",
-    label: "Casual Sync / Coffee",
+    shortLabel: "Coffee & Sync",
+    tagline: "OPEN ROLES • ADVISORY • CREATIVE JAM",
     icon: Coffee,
-    subject: "Hello from someone who loves your portfolio",
+    subject: "Hello from someone who loved your 3D portfolio!",
     defaultBody:
-      "Hi Axis,\n\nSaw your 3D motion portfolio and wanted to connect and say hello!\n\nBest regards,",
-    accent: "#E2E8F0",
+      "Hi Axis,\n\nSaw your interactive 3D motion portfolio and wanted to connect!\n\nBest regards,",
+    accent: "#C084FC",
+    freq: 1.6,
   },
 ];
 
 /**
- * High-Tech Interactive Mission Control Contact Station (Chapter 06)
- * Real-time WIB clock, live radar beacon, interactive channel dispatch selector,
- * pre-filled email transmission, one-click copy, and full-screen kinetic credits.
+ * Explosive Kinetic Showreel Finale & Magnetic Contact Launchpad (Chapter 06)
+ * - Counter-racing kinetic background typography ribbons scrubbed on scroll
+ * - Expanding concentric radar sonar portal + 3D perspective stage tilt
+ * - Per-letter elastic 3D flip-slam on "Extraordinary." + animated cursor click highlight
+ * - Live 60fps harmonic oscilloscope SVG reacting to selected collaboration channel
+ * - Magnetic cursor-pull hero launch capsule + celebratory copy shockwave burst
  */
 export function Act6Outro() {
   const sectionRef = useRef<HTMLElement>(null);
-  const emblemRef = useRef<SVGSVGElement>(null);
-  const word1Ref = useRef<HTMLSpanElement>(null);
-  const word2Ref = useRef<HTMLSpanElement>(null);
-  const word3Ref = useRef<HTMLSpanElement>(null);
-  const consoleRef = useRef<HTMLDivElement>(null);
+  const stage3DRef = useRef<HTMLDivElement>(null);
+
+  // Background kinetic ribbons & portal rings
+  const ribbonTopRef = useRef<HTMLDivElement>(null);
+  const ribbonBotRef = useRef<HTMLDivElement>(null);
+  const portalRingsRef = useRef<SVGSVGElement>(null);
+  const radarSweepRef = useRef<SVGGElement>(null);
+
+  // Kinetic headline refs
+  const line1Ref = useRef<HTMLSpanElement>(null);
+  const line2Ref = useRef<HTMLSpanElement>(null);
+  const extraPillRef = useRef<HTMLDivElement>(null);
+  const extraCharsRef = useRef<(HTMLSpanElement | null)[]>([]);
+  const pointerCursorRef = useRef<HTMLDivElement>(null);
+
+  // Interactive launchpad & live wave refs
+  const launchpadWrapRef = useRef<HTMLDivElement>(null);
+  const magneticCardRef = useRef<HTMLDivElement>(null);
+  const wavePath1Ref = useRef<SVGPathElement>(null);
+  const wavePath2Ref = useRef<SVGPathElement>(null);
   const creditsRef = useRef<HTMLElement>(null);
 
-  const [activeChannelId, setActiveChannelId] = useState<string>("civil-fea");
+  const [activeChannelId, setActiveChannelId] = useState<string>("software-api");
   const [copied, setCopied] = useState(false);
-  const [timeString, setTimeString] = useState<string>("02:00:00");
+  const [burstKey, setBurstKey] = useState(0);
+  const [pillLit, setPillLit] = useState(false);
+  const wasLitRef = useRef(false);
+  const [timeString, setTimeString] = useState<string>("12:00:00");
 
   const { setActiveChapter, setLetterboxActive, setContactOpen, scrollToChapter } =
     useShowreel();
@@ -109,15 +136,21 @@ export function Act6Outro() {
   const selectedChannel = useMemo(
     () =>
       INQUIRY_CHANNELS.find((c) => c.id === activeChannelId) ||
-      INQUIRY_CHANNELS[0],
+      INQUIRY_CHANNELS[1],
     [activeChannelId]
   );
 
-  // Live WIB clock (UTC+7)
+  const freqRef = useRef(selectedChannel.freq);
+  const spikeRef = useRef(0);
+
+  useEffect(() => {
+    freqRef.current = selectedChannel.freq;
+    spikeRef.current = 1.0; // Energetic amplitude burst whenever user switches channel!
+  }, [selectedChannel]);
+
+  // Live Jakarta WIB clock (UTC+7)
   useEffect(() => {
     const updateTime = () => {
-      const now = new Date();
-      // Format to WIB (Asia/Jakarta)
       const options: Intl.DateTimeFormatOptions = {
         timeZone: "Asia/Jakarta",
         hour12: false,
@@ -125,23 +158,74 @@ export function Act6Outro() {
         minute: "2-digit",
         second: "2-digit",
       };
-      setTimeString(new Intl.DateTimeFormat("en-GB", options).format(now));
+      setTimeString(new Intl.DateTimeFormat("en-GB", options).format(new Date()));
     };
     updateTime();
     const interval = setInterval(updateTime, 1000);
     return () => clearInterval(interval);
   }, []);
 
+  // 1. Scroll-Scrubbed Kinetic Choreography + Living 60fps Harmonic Oscilloscope
   useEffect(() => {
     const section = sectionRef.current;
     if (!section) return;
+
+    let rafId = 0;
+    let inViewport = false;
+    let phase = 0;
+
+    // Lightweight 60fps SVG Dual-Harmonic Oscilloscope & Living Character Ripple
+    const tickWave = () => {
+      if (inViewport) {
+        phase += 0.065;
+        spikeRef.current *= 0.94;
+        const amp = 10 + spikeRef.current * 14;
+        const f = freqRef.current;
+
+        if (wavePath1Ref.current && wavePath2Ref.current) {
+          let d1 = "M 0 24";
+          let d2 = "M 0 24";
+          for (let x = 0; x <= 600; x += 20) {
+            const u = x / 600;
+            const envelope = Math.sin(u * Math.PI);
+            const y1 =
+              24 +
+              Math.sin(u * Math.PI * 2 * f - phase) * amp * envelope +
+              Math.cos(u * Math.PI * 5 + phase * 0.7) * 3 * envelope;
+            const y2 =
+              24 +
+              Math.cos(u * Math.PI * 2 * (f * 0.75) + phase * 1.15) *
+                (amp * 0.68) *
+                envelope;
+            d1 += ` L ${x} ${y1.toFixed(1)}`;
+            d2 += ` L ${x} ${y2.toFixed(1)}`;
+          }
+          wavePath1Ref.current.setAttribute("d", d1);
+          wavePath2Ref.current.setAttribute("d", d2);
+        }
+
+        if (radarSweepRef.current) {
+          radarSweepRef.current.style.transform = `rotate(${((phase * 28) % 360).toFixed(1)}deg)`;
+        }
+      }
+      rafId = requestAnimationFrame(tickWave);
+    };
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        inViewport = entry.isIntersecting;
+      },
+      { rootMargin: "200px 0px" }
+    );
+    observer.observe(section);
+    rafId = requestAnimationFrame(tickWave);
 
     const ctx = gsap.context(() => {
       ScrollTrigger.create({
         trigger: section,
         start: "top top",
         end: "bottom bottom",
-        scrub: true,
+        scrub: 0.35,
         onEnter: () => {
           setActiveChapter("act-6");
           setLetterboxActive(false);
@@ -153,52 +237,132 @@ export function Act6Outro() {
         onUpdate: (self) => {
           const p = self.progress;
 
-          const w1 = easeOutBack(clamp01(p / 0.34));
-          const w2 = easeOutBack(clamp01((p - 0.08) / 0.34));
-          const w3 = easeOutBack(clamp01((p - 0.16) / 0.36));
-          const consoleT = clamp01((p - 0.24) / 0.36);
+          // Counter-racing colossal kinetic background typography ribbons
+          if (ribbonTopRef.current) {
+            ribbonTopRef.current.style.transform = `translate3d(${(220 - p * 640).toFixed(1)}px, 0, 0) rotate(-3deg)`;
+          }
+          if (ribbonBotRef.current) {
+            ribbonBotRef.current.style.transform = `translate3d(${(-320 + p * 640).toFixed(1)}px, 0, 0) rotate(-3deg)`;
+          }
 
-          if (emblemRef.current) {
-            const sc = 0.65 + clamp01(p / 0.45) * 0.35;
-            emblemRef.current.style.transform = `scale(${sc.toFixed(3)}) rotate(${(p * 140).toFixed(1)}deg)`;
+          // Expanding concentric sonar portal rings
+          if (portalRingsRef.current) {
+            const pScale = 0.48 + clamp01(p / 0.55) * 0.62;
+            portalRingsRef.current.style.transform = `translate(-50%, -50%) scale(${pScale.toFixed(3)}) rotate(${(p * 95).toFixed(1)}deg)`;
+            portalRingsRef.current.style.opacity = (0.22 + clamp01(p / 0.4) * 0.55).toFixed(3);
           }
-          if (word1Ref.current) {
-            word1Ref.current.style.transform = `translate3d(0, ${((1 - w1) * 36).toFixed(1)}px, 0) scale(${(0.88 + w1 * 0.12).toFixed(3)})`;
-            word1Ref.current.style.opacity = Math.min(1, w1 * 1.5).toFixed(3);
+
+          // Opposite-direction kinetic whip-slam for "LET'S BUILD" & "SOMETHING"
+          const t1 = easeOutBack(clamp01(p / 0.26));
+          const t2 = easeOutBack(clamp01((p - 0.05) / 0.28));
+
+          if (line1Ref.current) {
+            const x1 = (1 - t1) * -140;
+            const sk1 = (1 - t1) * -16;
+            line1Ref.current.style.transform = `translate3d(${x1.toFixed(1)}px, 0, 0) skewX(${sk1.toFixed(1)}deg) scale(${(0.84 + t1 * 0.16).toFixed(3)})`;
+            line1Ref.current.style.opacity = clamp01(p / 0.14).toFixed(3);
           }
-          if (word2Ref.current) {
-            word2Ref.current.style.transform = `translate3d(0, ${((1 - w2) * 40).toFixed(1)}px, 0) scale(${(0.88 + w2 * 0.12).toFixed(3)})`;
-            word2Ref.current.style.opacity = Math.min(1, w2 * 1.5).toFixed(3);
+          if (line2Ref.current) {
+            const x2 = (1 - t2) * 140;
+            const sk2 = (1 - t2) * 16;
+            line2Ref.current.style.transform = `translate3d(${x2.toFixed(1)}px, 0, 0) skewX(${sk2.toFixed(1)}deg) scale(${(0.84 + t2 * 0.16).toFixed(3)})`;
+            line2Ref.current.style.opacity = clamp01((p - 0.04) / 0.14).toFixed(3);
           }
-          if (word3Ref.current) {
-            word3Ref.current.style.transform = `translate3d(0, ${((1 - w3) * 44).toFixed(1)}px, 0) rotate(${((1 - w3) * -4).toFixed(1)}deg) scale(${(0.86 + w3 * 0.14).toFixed(3)})`;
-            word3Ref.current.style.opacity = Math.min(1, w3 * 1.5).toFixed(3);
+
+          // Per-letter 3D elastic flip-slam on "Extraordinary."
+          for (let i = 0; i < EXTRAORDINARY_CHARS.length; i++) {
+            const span = extraCharsRef.current[i];
+            if (!span) continue;
+            const charP = clamp01((p - (0.1 + i * 0.015)) / 0.24);
+            const sp = easeOutBack(charP);
+            const y = (1 - sp) * 56;
+            const rot = (1 - sp) * (i % 2 === 0 ? -24 : 24);
+            const sc = 0.55 + sp * 0.45;
+            span.style.transform = `translate3d(0, ${y.toFixed(1)}px, 0) rotate(${rot.toFixed(1)}deg) scale(${sc.toFixed(3)})`;
+            span.style.opacity = clamp01(charP * 2.5).toFixed(3);
           }
-          if (consoleRef.current) {
-            consoleRef.current.style.transform = `translate3d(0, ${((1 - consoleT) * 30).toFixed(1)}px, 0)`;
-            consoleRef.current.style.opacity = (0.2 + consoleT * 0.8).toFixed(3);
+
+          // Animated pointer cursor swoops in & clicks "Extraordinary." pill at p >= 0.42!
+          const cursorProgress = clamp01((p - 0.24) / 0.22);
+          if (pointerCursorRef.current) {
+            const cx = (1 - cursorProgress) * 95;
+            const cy = (1 - cursorProgress) * 65;
+            const clickPress = p > 0.42 && p < 0.5 ? 0.84 : 1.0;
+            pointerCursorRef.current.style.transform = `translate3d(${cx.toFixed(1)}px, ${cy.toFixed(1)}px, 0) scale(${clickPress})`;
+            pointerCursorRef.current.style.opacity = clamp01((p - 0.2) / 0.1).toFixed(3);
           }
+
+          const shouldLight = p >= 0.42;
+          if (shouldLight !== wasLitRef.current) {
+            wasLitRef.current = shouldLight;
+            setPillLit(shouldLight);
+            spikeRef.current = 1.0;
+          }
+
+          // Launchpad console & social satellites spring upward into frame
+          const padT = easeOutBack(clamp01((p - 0.22) / 0.34));
+          if (launchpadWrapRef.current) {
+            const py = (1 - padT) * 64;
+            const pSc = 0.88 + padT * 0.12;
+            launchpadWrapRef.current.style.transform = `translate3d(0, ${py.toFixed(1)}px, 0) scale(${pSc.toFixed(3)})`;
+            launchpadWrapRef.current.style.opacity = clamp01((p - 0.18) / 0.2).toFixed(3);
+          }
+
           if (creditsRef.current) {
-            creditsRef.current.style.opacity = (0.2 + consoleT * 0.8).toFixed(3);
+            creditsRef.current.style.opacity = clamp01((p - 0.3) / 0.25).toFixed(3);
           }
         },
       });
     }, section);
 
-    return () => ctx.revert();
+    // 2. Desktop Magnetic Cursor Pull + 3D Stage Tilt
+    const stageRotX = stage3DRef.current
+      ? gsap.quickTo(stage3DRef.current, "rotateX", { duration: 0.5, ease: "power2.out" })
+      : null;
+    const stageRotY = stage3DRef.current
+      ? gsap.quickTo(stage3DRef.current, "rotateY", { duration: 0.5, ease: "power2.out" })
+      : null;
+    const cardX = magneticCardRef.current
+      ? gsap.quickTo(magneticCardRef.current, "x", { duration: 0.38, ease: "power3.out" })
+      : null;
+    const cardY = magneticCardRef.current
+      ? gsap.quickTo(magneticCardRef.current, "y", { duration: 0.38, ease: "power3.out" })
+      : null;
+
+    const onMouseMove = (e: MouseEvent) => {
+      if (!inViewport) return;
+      const nx = (e.clientX / window.innerWidth - 0.5) * 2;
+      const ny = (e.clientY / window.innerHeight - 0.5) * 2;
+      stageRotY?.(nx * 5.5);
+      stageRotX?.(-ny * 4);
+      cardX?.(nx * 10);
+      cardY?.(ny * 6);
+    };
+
+    window.addEventListener("mousemove", onMouseMove, { passive: true });
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      observer.disconnect();
+      window.removeEventListener("mousemove", onMouseMove);
+      ctx.revert();
+    };
   }, [setActiveChapter, setLetterboxActive]);
 
   const handleCopyEmail = async () => {
     try {
       await navigator.clipboard.writeText(PORTFOLIO_DATA.brand.email);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2200);
     } catch {
       // Clipboard fallback
     }
+    setCopied(true);
+    setBurstKey((k) => k + 1);
+    spikeRef.current = 1.35;
+    setTimeout(() => setCopied(false), 2400);
   };
 
   const handleDirectDispatch = () => {
+    spikeRef.current = 1.25;
     const mailto = `mailto:${PORTFOLIO_DATA.brand.email}?subject=${encodeURIComponent(
       selectedChannel.subject
     )}&body=${encodeURIComponent(selectedChannel.defaultBody)}`;
@@ -209,245 +373,346 @@ export function Act6Outro() {
     <section
       id="act-6"
       ref={sectionRef}
-      className="relative min-h-[190vh] w-full bg-[#050C14] text-white"
+      className="relative h-[260vh] w-full bg-[#040A12] text-white"
     >
-      <div className="sticky top-0 flex h-[100dvh] w-full flex-col items-center justify-between overflow-hidden bg-[#050C14] bg-[radial-gradient(ellipse_at_bottom,#103D52_0%,#071520_58%,#050C14_100%)] px-4 pb-3 pt-10 sm:px-8 sm:pb-6 sm:pt-14">
-        {/* Subtle engineering blueprint dot grid */}
-        <div className="dot-grid-dark pointer-events-none absolute inset-0 opacity-40" />
-
-        {/* Ambient atmospheric glows */}
+      <div className="sticky top-0 flex h-[100dvh] w-full flex-col items-center justify-between overflow-hidden bg-[#040A12] px-4 pb-3 pt-11 sm:px-8 sm:pb-5 sm:pt-14 [perspective:1200px]">
+        {/* === DYNAMIC ACCENT ATMOSPHERE GLOW (Morphs Color with Selected Channel!) === */}
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute left-1/2 top-1/3 h-[520px] w-[520px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#38BDF8]/10 blur-[110px]"
+          className="pointer-events-none absolute left-1/2 top-1/2 h-[480px] w-[480px] sm:h-[640px] sm:w-[640px] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[120px] transition-colors duration-700"
+          style={{ backgroundColor: `${selectedChannel.accent}22` }}
         />
+        <div className="dot-grid-dark pointer-events-none absolute inset-0 opacity-45" />
+
+        {/* === COUNTER-RACING KINETIC TYPOGRAPHY RIBBONS === */}
         <div
+          ref={ribbonTopRef}
           aria-hidden="true"
-          className="pointer-events-none absolute right-10 bottom-10 h-72 w-72 rounded-full bg-[#C6FF3D]/10 blur-[90px]"
-        />
+          className="pointer-events-none absolute top-[12%] whitespace-nowrap font-display text-[13vw] sm:text-[8.5vw] font-black uppercase tracking-tighter text-white/[0.035] select-none will-change-transform"
+        >
+          STRUCTURAL FEA • FULL-STACK SYSTEMS • 120 FPS WEBGL • DIGITAL TWINS •
+        </div>
+        <div
+          ref={ribbonBotRef}
+          aria-hidden="true"
+          className="pointer-events-none absolute bottom-[13%] whitespace-nowrap font-display text-[13vw] sm:text-[8.5vw] font-black uppercase tracking-tighter text-[#C6FF3D]/[0.04] select-none will-change-transform"
+        >
+          READY TO SHIP • JAKARTA TO WORLDWIDE • LET&apos;S COLLABORATE • AXIS._ •
+        </div>
 
-        {/* === MAIN INTERACTIVE MISSION CONTROL CONTAINER === */}
-        <div className="relative z-10 my-auto flex w-full max-w-4xl flex-col items-center text-center">
-          {/* Rotating Parametric Truss Monogram */}
-          <div className="relative mb-2 sm:mb-4 flex h-14 w-14 sm:h-20 sm:w-20 items-center justify-center">
-            <svg
-              ref={emblemRef}
-              viewBox="0 0 120 120"
-              className="h-full w-full will-change-transform"
-              aria-hidden="true"
-            >
-              <circle
-                cx="60"
-                cy="60"
-                r="52"
-                fill="none"
-                stroke="#38BDF8"
-                strokeWidth="1.5"
-                strokeDasharray="6 6"
-                opacity="0.75"
-              />
-              <polygon
-                points="60,12 102,36 102,84 60,108 18,84 18,36"
-                fill="none"
-                stroke="#C6FF3D"
-                strokeWidth="2"
-              />
-              <polygon
-                points="60,24 91,42 91,78 60,96 29,78 29,42"
-                fill="none"
-                stroke="#FF6B4A"
-                strokeWidth="1.5"
-                opacity="0.85"
-              />
-            </svg>
-            <span className="absolute font-display text-sm sm:text-base font-extrabold text-white">
-              A<span className="text-[#C6FF3D]">.</span>
-            </span>
-          </div>
+        {/* === EXPANDING SONAR PORTAL RINGS + ROTATING RADAR SWEEP === */}
+        <svg
+          ref={portalRingsRef}
+          aria-hidden="true"
+          viewBox="0 0 600 600"
+          className="pointer-events-none absolute left-1/2 top-1/2 h-[420px] w-[420px] sm:h-[620px] sm:w-[620px] will-change-transform"
+          style={{ transform: "translate(-50%, -50%) scale(0.6)" }}
+        >
+          <defs>
+            <linearGradient id="radarBeamGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor={selectedChannel.accent} stopOpacity="0.32" />
+              <stop offset="100%" stopColor={selectedChannel.accent} stopOpacity="0" />
+            </linearGradient>
+          </defs>
+          <circle
+            cx="300"
+            cy="300"
+            r="275"
+            fill="none"
+            stroke="rgba(56,189,248,0.18)"
+            strokeWidth="1.2"
+            strokeDasharray="8 10"
+          />
+          <circle
+            cx="300"
+            cy="300"
+            r="210"
+            fill="none"
+            stroke="rgba(198,255,61,0.18)"
+            strokeWidth="1.2"
+          />
+          <circle
+            cx="300"
+            cy="300"
+            r="142"
+            fill="none"
+            stroke="rgba(255,255,255,0.1)"
+            strokeWidth="1"
+            strokeDasharray="4 8"
+          />
+          <g ref={radarSweepRef} style={{ transformOrigin: "300px 300px" }}>
+            <path d="M300 300 L300 25 A275 275 0 0 1 495 106 Z" fill="url(#radarBeamGrad)" />
+            <circle cx="300" cy="25" r="4" fill={selectedChannel.accent} />
+          </g>
+        </svg>
 
-          {/* Telemetry Radar Pill with Live WIB Clock */}
-          <div className="inline-flex flex-wrap items-center justify-center gap-2 rounded-full border border-white/15 bg-white/[0.04] px-3.5 py-1 backdrop-blur-md">
+        {/* === 3D PERSPECTIVE KINETIC STAGE === */}
+        <div
+          ref={stage3DRef}
+          className="relative z-10 my-auto flex w-full max-w-4xl flex-col items-center text-center will-change-transform [transform-style:preserve-3d]"
+        >
+          {/* Top Live Radar Telemetry Pill */}
+          <div className="inline-flex flex-wrap items-center justify-center gap-2 rounded-full border border-white/15 bg-[#07131E]/80 px-3.5 py-1 shadow-lg backdrop-blur-md">
             <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#C6FF3D] opacity-75" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-[#C6FF3D]" />
+              <span
+                className="absolute inline-flex h-full w-full animate-ping rounded-full opacity-80"
+                style={{ backgroundColor: selectedChannel.accent }}
+              />
+              <span
+                className="relative inline-flex h-2 w-2 rounded-full"
+                style={{ backgroundColor: selectedChannel.accent }}
+              />
             </span>
-            <span className="font-mono text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.22em] text-[#C6FF3D]">
-              RADAR ACTIVE • OPEN FOR COMMISSIONS &amp; ROLES
+            <span
+              className="font-mono text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.22em] transition-colors duration-300"
+              style={{ color: selectedChannel.accent }}
+            >
+              SIGNAL LOCKED • AVAILABLE FOR ROLES &amp; PROJECTS
             </span>
-            <span className="hidden sm:inline text-white/30">•</span>
+            <span className="hidden sm:inline text-white/25">•</span>
             <span className="hidden sm:inline-flex items-center gap-1 font-mono text-[10px] text-slate-300">
               <Clock className="h-3 w-3 text-[#38BDF8]" />
-              <span>JAKARTA (UTC+7): {timeString}</span>
+              <span>WIB {timeString}</span>
             </span>
           </div>
 
-          {/* Monumental Headline */}
-          <h2 className="mt-2.5 sm:mt-3.5 flex flex-col items-center leading-[0.92] tracking-tight select-none">
-            <div className="flex flex-wrap items-center justify-center gap-x-2 sm:gap-x-3">
+          {/* === KINETIC WHIP-SLAM + PER-LETTER FLIP HEADLINE === */}
+          <h2 className="mt-2.5 sm:mt-4 flex flex-col items-center leading-[0.94] tracking-tight select-none">
+            <div className="flex flex-wrap items-center justify-center gap-x-2.5 sm:gap-x-3.5">
               <span
-                ref={word1Ref}
-                className="font-display text-[clamp(1.9rem,7.5vw,4.2rem)] font-black text-white will-change-transform"
+                ref={line1Ref}
+                className="inline-block font-display text-[clamp(1.85rem,7vw,4.3rem)] font-black uppercase text-white will-change-transform"
               >
-                Let&apos;s Build
+                LET&apos;S BUILD
               </span>
               <span
-                ref={word2Ref}
-                className="font-display text-[clamp(1.9rem,7.5vw,4.2rem)] font-black text-white will-change-transform"
+                ref={line2Ref}
+                className="inline-block font-display text-[clamp(1.85rem,7vw,4.3rem)] font-black uppercase text-sky-200 will-change-transform"
               >
-                Something
+                SOMETHING
               </span>
             </div>
-            <span
-              ref={word3Ref}
-              className="font-serif italic text-[clamp(2.3rem,9vw,5.2rem)] font-normal text-[#C6FF3D] will-change-transform"
-            >
-              Extraordinary.
-            </span>
+
+            {/* Tactile Cursor-Clicked Highlight Pill around "Extraordinary." */}
+            <div className="relative mt-1.5 sm:mt-2 inline-flex items-center justify-center">
+              <button
+                type="button"
+                ref={extraPillRef as unknown as React.RefObject<HTMLButtonElement>}
+                onClick={() => setContactOpen(true)}
+                onMouseEnter={() => {
+                  setPillLit(true);
+                  spikeRef.current = 1.1;
+                }}
+                className={`relative inline-flex items-center rounded-2xl px-4 py-0.5 sm:px-6 sm:py-1 font-serif italic text-[clamp(2.25rem,8.8vw,5.1rem)] leading-none transition-all duration-300 cursor-pointer ${
+                  pillLit
+                    ? "-rotate-1 scale-[1.04] bg-[#C6FF3D] text-[#050C14] shadow-[0_18px_50px_rgba(198,255,61,0.42)] ring-2 ring-white/80"
+                    : "bg-white/[0.04] text-[#C6FF3D]"
+                }`}
+              >
+                {EXTRAORDINARY_CHARS.map((ch, idx) => (
+                  <span
+                    key={idx}
+                    ref={(el) => {
+                      extraCharsRef.current[idx] = el;
+                    }}
+                    className="inline-block will-change-transform"
+                  >
+                    {ch}
+                  </span>
+                ))}
+              </button>
+
+              {/* Animated Vector Studio Pointer Clicking the Headline */}
+              <div
+                ref={pointerCursorRef}
+                aria-hidden="true"
+                className="pointer-events-none absolute -bottom-5 -right-6 sm:-bottom-6 sm:-right-8 z-30 will-change-transform"
+              >
+                <svg
+                  viewBox="0 0 36 36"
+                  className="h-8 w-8 sm:h-11 sm:w-11 drop-shadow-[0_8px_16px_rgba(0,0,0,0.5)]"
+                >
+                  <path
+                    d="M5 3L30 18L18 21L23 32L17 34L12 23L5 29V3Z"
+                    fill="#FFFFFF"
+                    stroke="#050C14"
+                    strokeWidth="2.6"
+                  />
+                </svg>
+              </div>
+            </div>
           </h2>
 
-          {/* === INTERACTIVE DISPATCH & TRANSMISSION CONSOLE === */}
+          {/* === FRAMELESS MAGNETIC ORBITAL LAUNCHPAD === */}
           <div
-            ref={consoleRef}
-            className="mt-4 sm:mt-6 w-full rounded-2xl sm:rounded-3xl border border-white/15 bg-gradient-to-b from-[#091520]/90 to-[#04090F]/90 p-3.5 sm:p-5 shadow-[0_24px_70px_rgba(0,0,0,0.8)] backdrop-blur-xl will-change-transform"
+            ref={launchpadWrapRef}
+            className="mt-4 sm:mt-6 flex w-full max-w-3xl flex-col items-center will-change-transform"
           >
-            {/* Top Bar of Console */}
-            <div className="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-2.5 text-left">
-              <div className="flex items-center gap-2">
-                <Radio className="h-3.5 w-3.5 text-[#38BDF8] animate-pulse" />
-                <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-[#38BDF8]">
-                  TRANSMISSION CHANNEL
-                </span>
-              </div>
-              <span className="font-mono text-[9px] uppercase tracking-wider text-slate-400">
-                ⚡ SLA: RESPONSE WITHIN 12 HOURS
-              </span>
-            </div>
-
-            {/* Interactive Intent Badges / Channels */}
-            <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4 sm:gap-2">
-              {INQUIRY_CHANNELS.map((channel) => {
-                const Icon = channel.icon;
-                const isSelected = activeChannelId === channel.id;
+            {/* 4 Tactile Frequency-Tuned Channel Pills (Tilted Hover Spring!) */}
+            <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2.5">
+              {INQUIRY_CHANNELS.map((ch, idx) => {
+                const Icon = ch.icon;
+                const active = ch.id === activeChannelId;
                 return (
                   <button
-                    key={channel.id}
+                    key={ch.id}
                     type="button"
-                    onClick={() => setActiveChannelId(channel.id)}
-                    className={`group relative flex items-center gap-2 rounded-xl border px-2.5 py-2 text-left transition-all cursor-pointer ${
-                      isSelected
-                        ? "border-[#C6FF3D] bg-[#C6FF3D]/10 text-white shadow-[0_0_18px_rgba(198,255,61,0.2)]"
-                        : "border-white/10 bg-white/[0.02] text-slate-400 hover:border-white/30 hover:text-white"
-                    }`}
+                    onClick={() => setActiveChannelId(ch.id)}
+                    style={{
+                      borderColor: active ? ch.accent : "rgba(255,255,255,0.12)",
+                      boxShadow: active ? `0 10px 28px ${ch.accent}35` : "none",
+                    }}
+                    className={`group inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 sm:px-4 sm:py-2 font-mono text-[9px] sm:text-[10px] font-extrabold uppercase tracking-wider backdrop-blur-md transition-all duration-200 cursor-pointer ${
+                      active
+                        ? "-translate-y-0.5 scale-105 bg-white/12 text-white"
+                        : "bg-white/[0.03] text-slate-400 hover:-translate-y-0.5 hover:text-white"
+                    } ${idx % 2 === 0 ? "hover:-rotate-1" : "hover:rotate-1"}`}
                   >
                     <Icon
-                      className="h-3.5 w-3.5 shrink-0 transition-transform group-hover:scale-110"
-                      style={{ color: isSelected ? "#C6FF3D" : channel.accent }}
+                      className="h-3 w-3 sm:h-3.5 sm:w-3.5 transition-transform duration-200 group-hover:scale-125"
+                      style={{ color: ch.accent }}
                     />
-                    <div className="min-w-0">
-                      <p className="truncate font-mono text-[9px] font-extrabold uppercase tracking-wider">
-                        {channel.label}
-                      </p>
-                    </div>
+                    <span>{ch.shortLabel}</span>
                   </button>
                 );
               })}
             </div>
 
-            {/* Direct Email & Action Dispatch Bar */}
-            <div className="mt-3.5 flex flex-wrap items-center justify-between gap-2.5 rounded-xl border border-white/10 bg-white/[0.03] p-2 sm:p-2.5">
-              {/* Email Address & Copy */}
-              <div className="flex min-w-0 items-center gap-2 px-2">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#C6FF3D]" />
-                <span className="truncate font-mono text-xs sm:text-sm font-bold text-white">
-                  {PORTFOLIO_DATA.brand.email}
-                </span>
-                <button
-                  type="button"
-                  onClick={handleCopyEmail}
-                  className="inline-flex items-center gap-1 rounded-md border border-white/15 bg-white/10 px-2 py-0.5 font-mono text-[9px] font-bold text-slate-300 transition hover:bg-[#C6FF3D] hover:text-[#07131C] cursor-pointer"
-                  title="Copy email to clipboard"
-                >
-                  {copied ? (
-                    <>
-                      <Check className="h-2.5 w-2.5 text-emerald-400" />
-                      <span>Copied!</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="h-2.5 w-2.5" />
-                      <span>Copy</span>
-                    </>
-                  )}
-                </button>
-              </div>
+            {/* Live 60fps Dual-Harmonic Oscilloscope Strip */}
+            <div className="mt-2.5 flex w-full max-w-xl flex-col items-center px-2">
+              <svg
+                viewBox="0 0 600 48"
+                className="h-7 sm:h-9 w-full overflow-visible"
+                aria-hidden="true"
+              >
+                <path
+                  ref={wavePath2Ref}
+                  d="M 0 24 L 600 24"
+                  fill="none"
+                  stroke="#38BDF8"
+                  strokeWidth="1.5"
+                  strokeOpacity="0.38"
+                  strokeLinecap="round"
+                />
+                <path
+                  ref={wavePath1Ref}
+                  d="M 0 24 L 600 24"
+                  fill="none"
+                  stroke={selectedChannel.accent}
+                  strokeWidth="2.6"
+                  strokeLinecap="round"
+                />
+              </svg>
+              <span className="font-mono text-[8px] sm:text-[9px] font-bold uppercase tracking-[0.24em] text-slate-400">
+                {selectedChannel.tagline}
+              </span>
+            </div>
 
-              {/* Action Buttons */}
-              <div className="flex flex-wrap items-center gap-2">
+            {/* === MAGNETIC HERO DISPATCH CAPSULE (Curved Pill — Zero Boxiness!) === */}
+            <div
+              ref={magneticCardRef}
+              className="relative mt-3 flex w-full max-w-2xl flex-col items-center justify-between gap-2.5 rounded-3xl sm:rounded-full border border-white/20 bg-gradient-to-r from-[#0B1B2B]/95 via-[#0F273D]/95 to-[#091522]/95 p-2.5 sm:flex-row sm:px-4 sm:py-2.5 shadow-[0_22px_60px_rgba(0,0,0,0.75)] backdrop-blur-xl will-change-transform"
+            >
+              {/* Celebratory Shockwave Ring Burst on Email Copy */}
+              {copied && (
+                <span
+                  key={burstKey}
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-0 animate-ping rounded-full border-2 border-[#C6FF3D] opacity-60"
+                />
+              )}
+
+              {/* Direct Email + 1-Click Tactile Copy Pill */}
+              <button
+                type="button"
+                onClick={handleCopyEmail}
+                className="group flex items-center gap-2.5 rounded-full px-3 py-1 text-left transition hover:bg-white/5 cursor-pointer"
+                title="Click to copy direct email"
+              >
+                <span
+                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[#050C14] transition-transform duration-200 group-hover:scale-110"
+                  style={{ backgroundColor: selectedChannel.accent }}
+                >
+                  {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                </span>
+                <div className="min-w-0">
+                  <span className="block font-mono text-[8px] font-bold uppercase tracking-[0.2em] text-slate-400">
+                    {copied ? "COPIED TO CLIPBOARD ✓" : "TAP TO COPY DIRECT EMAIL"}
+                  </span>
+                  <span className="block truncate font-display text-sm sm:text-base font-extrabold text-white">
+                    {PORTFOLIO_DATA.brand.email}
+                  </span>
+                </div>
+              </button>
+
+              {/* Twin High-Energy Action Pills */}
+              <div className="flex flex-wrap items-center justify-center gap-2">
                 <button
                   type="button"
                   onClick={handleDirectDispatch}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-[#C6FF3D] px-4 py-2 font-mono text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-[#07131C] shadow-[0_8px_24px_rgba(198,255,61,0.28)] transition hover:scale-[1.03] hover:bg-white cursor-pointer"
+                  style={{ backgroundColor: selectedChannel.accent }}
+                  className="inline-flex items-center gap-1.5 rounded-full px-4 py-2.5 sm:px-5 font-mono text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-[#050C14] shadow-lg transition-transform duration-200 hover:scale-105 hover:brightness-110 cursor-pointer"
                 >
-                  <Send className="h-3 w-3" />
-                  <span>Dispatch Email ↗</span>
+                  <Send className="h-3.5 w-3.5" />
+                  <span>Dispatch Now ↗</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setContactOpen(true)}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3.5 py-2 font-mono text-[10px] sm:text-[11px] font-bold text-white transition hover:border-[#38BDF8] hover:text-[#38BDF8] cursor-pointer"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-4 py-2.5 font-mono text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-white transition hover:scale-105 hover:border-[#C6FF3D] hover:text-[#C6FF3D] cursor-pointer"
                 >
-                  <Sparkles className="h-3 w-3 text-[#38BDF8]" />
-                  <span>Interactive Brief</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => scrollToChapter("top")}
-                  className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-transparent px-3 py-2 font-mono text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400 transition hover:border-[#C6FF3D] hover:text-[#C6FF3D] cursor-pointer"
-                  title="Replay from Beginning"
-                >
-                  <ArrowUp className="h-3 w-3" />
-                  <span className="hidden sm:inline">Replay</span>
+                  <Sparkles className="h-3.5 w-3.5 text-[#C6FF3D]" />
+                  <span>Write Brief</span>
                 </button>
               </div>
+            </div>
+
+            {/* Floating Orbiting Social Satellites + Replay Rocket Pill */}
+            <div className="mt-3.5 flex flex-wrap items-center justify-center gap-2">
+              {PORTFOLIO_DATA.socials.map((s, idx) => (
+                <a
+                  key={s.label}
+                  href={s.href}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={`inline-flex items-center gap-1 rounded-full border border-white/12 bg-white/[0.04] px-3.5 py-1.5 font-mono text-[10px] font-bold uppercase tracking-wider text-slate-200 backdrop-blur-sm transition duration-200 hover:-translate-y-1 hover:border-[#C6FF3D] hover:text-[#C6FF3D] ${
+                    idx % 2 === 0 ? "animate-float-gentle" : "animate-float-reverse"
+                  }`}
+                >
+                  <span>{s.label}</span>
+                  <ArrowUpRight className="h-3 w-3" />
+                </a>
+              ))}
+
+              <button
+                type="button"
+                onClick={() => scrollToChapter("top")}
+                className="inline-flex items-center gap-1 rounded-full border border-[#38BDF8]/35 bg-[#38BDF8]/10 px-3.5 py-1.5 font-mono text-[10px] font-bold uppercase tracking-wider text-[#38BDF8] transition duration-200 hover:-translate-y-1 hover:bg-[#38BDF8] hover:text-[#050C14] cursor-pointer"
+              >
+                <ArrowUp className="h-3 w-3" />
+                <span>Replay Reel</span>
+              </button>
             </div>
           </div>
         </div>
 
-        {/* === BORDERLESS FLOATING END-CREDITS FOOTER === */}
+        {/* === MINIMAL FLOATING CREDITS SIGNATURE === */}
         <footer
           ref={creditsRef}
-          className="relative z-10 flex w-full max-w-5xl flex-col items-center justify-between gap-2 border-t border-white/10 pt-2.5 sm:flex-row sm:pt-3.5"
+          className="relative z-10 flex w-full max-w-5xl flex-wrap items-center justify-between gap-2 border-t border-white/10 pt-2 text-[10px] font-mono text-slate-400"
         >
-          <div className="flex flex-wrap items-center justify-center gap-2 text-xs text-slate-300">
-            <span className="font-display text-sm font-extrabold text-white">
+          <div className="flex items-center gap-2">
+            <span className="font-display text-xs font-extrabold text-white">
               {PORTFOLIO_DATA.brand.name}
               <span className="text-[#C6FF3D]">._</span>
             </span>
-            <span className="text-white/25">•</span>
-            <span className="font-mono text-[10px] text-slate-400">
-              {PORTFOLIO_DATA.brand.roleLine}
-            </span>
-            <span className="hidden md:inline text-white/25">•</span>
-            <span className="hidden md:inline font-mono text-[10px] text-slate-400">
-              {PORTFOLIO_DATA.brand.hobbyLine}
-            </span>
+            <span className="text-white/20">•</span>
+            <span>{PORTFOLIO_DATA.brand.roleLine}</span>
           </div>
-
-          <div className="flex items-center gap-4 font-mono text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-slate-300">
-            {PORTFOLIO_DATA.socials.map((s) => (
-              <a
-                key={s.label}
-                href={s.href}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-1 transition hover:text-[#C6FF3D]"
-              >
-                <span>{s.label}</span>
-                <ArrowUpRight className="h-3 w-3" />
-              </a>
-            ))}
-          </div>
+          <span className="hidden sm:inline text-slate-400">
+            {PORTFOLIO_DATA.brand.hobbyLine}
+          </span>
         </footer>
       </div>
     </section>
