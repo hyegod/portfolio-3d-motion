@@ -46,10 +46,10 @@ interface CameraKeyframe {
 const RETRO_ROOM_KEYFRAMES: CameraKeyframe[] = [
   { p: 0.0, pos: [-0.48, 0.72, 1.88], lookAt: [-0.26, 0.56, -0.06], roll: -0.045, fov: 46 },
   { p: 0.2, pos: [0.92, 0.86, 2.22], lookAt: [-0.2, 0.56, -0.06], roll: 0.05, fov: 44 },
-  { p: 0.4, pos: [0.76, 0.33, 1.24], lookAt: [0.02, 0.35, 0.06], roll: 0.08, fov: 48 },
-  { p: 0.6, pos: [-0.48, 0.31, 1.15], lookAt: [0.04, 0.38, 0.06], roll: -0.065, fov: 46 },
-  { p: 0.8, pos: [0.05, 0.57, 0.58], lookAt: [0.05, 0.57, 0.04], roll: 0.0, fov: 45 },
-  { p: 1.0, pos: [0.05, 0.57, 0.21], lookAt: [0.05, 0.57, -0.2], roll: 0.0, fov: 45 },
+  { p: 0.4, pos: [0.76, 0.34, 1.24], lookAt: [0.02, 0.36, 0.06], roll: 0.08, fov: 48 },
+  { p: 0.6, pos: [-0.48, 0.32, 1.14], lookAt: [0.04, 0.39, 0.06], roll: -0.065, fov: 46 },
+  { p: 0.8, pos: [0.05, 0.57, 0.46], lookAt: [0.05, 0.57, 0.02], roll: 0.0, fov: 45 },
+  { p: 1.0, pos: [0.05, 0.57, 0.18], lookAt: [0.05, 0.57, -0.2], roll: 0.0, fov: 45 },
 ];
 
 /**
@@ -129,17 +129,22 @@ export function SceneRigAndFX({
     []
   );
   const crtFbo = useMemo(() => {
-    const supportsHalfFloat =
-      gl.capabilities.isWebGL2 &&
-      Boolean(gl.extensions.get("EXT_color_buffer_float"));
-    return new THREE.WebGLRenderTarget(1280, 800, {
-      type: supportsHalfFloat ? THREE.HalfFloatType : THREE.UnsignedByteType,
+    const rt = new THREE.WebGLRenderTarget(1280, 800, {
+      type: THREE.UnsignedByteType,
       minFilter: THREE.LinearFilter,
       magFilter: THREE.LinearFilter,
       depthBuffer: true,
       samples: 4,
     });
-  }, [gl]);
+    // Render into RGBA8 with exact canvas toneMapping + sRGB output & alpha blending
+    // so uPortalBlend = 1.0 matches direct Phase 2 canvas output bit-for-bit (#07111E === #07111E)!
+    rt.texture.colorSpace = THREE.SRGBColorSpace;
+    rt.texture.internalFormat = "RGBA8";
+    (
+      rt as THREE.WebGLRenderTarget & { isXRRenderTarget?: boolean }
+    ).isXRRenderTarget = true;
+    return rt;
+  }, []);
 
   useEffect(() => {
     const dpr = gl.getPixelRatio();
@@ -190,7 +195,7 @@ export function SceneRigAndFX({
 
     if (inRetroRoom) {
       const roomP = clamp01(rawP / PORTAL_CUT_P);
-      const portalBlend = smoothstep(0.68, 0.96, roomP);
+      const portalBlend = smoothstep(0.64, 0.9, roomP);
 
       // 1. Position portalCam at the exact opening pose of Babak 2 (TWIN_START_P = 0.24)
       const twinStartKf = TWIN_KEYFRAMES[0];

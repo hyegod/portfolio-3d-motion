@@ -264,15 +264,45 @@ const CRT_PORTAL_FRAG = /* glsl */ `
     }
 
     gl_FragColor = vec4(col, 1.0);
-    #include <tonemapping_fragment>
-    #include <colorspace_fragment>
   }
 `;
+
+function createRoundedMatGeometry(
+  width: number,
+  depth: number,
+  cornerRadius: number,
+  thickness: number
+): THREE.ExtrudeGeometry {
+  const hw = width / 2;
+  const hd = depth / 2;
+  const r = Math.min(cornerRadius, hw * 0.45, hd * 0.45);
+  const shape = new THREE.Shape();
+  shape.moveTo(-hw + r, -hd);
+  shape.lineTo(hw - r, -hd);
+  shape.quadraticCurveTo(hw, -hd, hw, -hd + r);
+  shape.lineTo(hw, hd - r);
+  shape.quadraticCurveTo(hw, hd, hw - r, hd);
+  shape.lineTo(-hw + r, hd);
+  shape.quadraticCurveTo(-hw, hd, -hw, hd - r);
+  shape.lineTo(-hw, -hd + r);
+  shape.quadraticCurveTo(-hw, -hd, -hw + r, -hd);
+
+  const geo = new THREE.ExtrudeGeometry(shape, {
+    depth: thickness,
+    bevelEnabled: true,
+    bevelThickness: 0.001,
+    bevelSize: 0.0012,
+    bevelSegments: 2,
+    curveSegments: 10,
+  });
+  geo.rotateX(-Math.PI / 2);
+  return geo;
+}
 
 /**
  * Phase 1 of Act 2:
  * Cozy Golden-Hour Sunlit Retro Computer Room with LIVE 3D RenderTarget Portal Screen,
- * Rippling Mechanical Keycaps, Steaming Mug & Window Cactus!
+ * Authentic Full-Size Sculpted Mechanical Keyboard, Thin Desk Mat, Steaming Mug & Window Cactus!
  */
 export function RetroComputerRoom({
   scrollRef,
@@ -297,48 +327,93 @@ export function RetroComputerRoom({
   const deskTex = useMemo(() => createWalnutDeskTexture(), []);
   const posterTex = useMemo(() => createWallPosterTexture(), []);
   const osdTex = useMemo(() => createCrtOsdOverlayTexture(), []);
+  const deskMatGeo = useMemo(
+    () => createRoundedMatGeometry(1.18, 0.48, 0.032, 0.0038),
+    []
+  );
 
   const keycaps = useMemo(() => {
     const caps: { x: number; z: number; w: number; col: string }[] = [];
-    for (let row = 0; row < 4; row++) {
-      for (let col = 0; col < 11; col++) {
-        if (row === 3 && col >= 3 && col <= 7) {
-          if (col === 5) {
-            caps.push({
-              x: -0.09,
-              z: -0.06 + row * 0.038,
-              w: 0.165,
-              col: "#EFECE4",
-            });
-          }
-          continue;
-        }
-        const isEsc = row === 0 && col === 0;
-        const isEnter = row === 1 && col === 10;
+    const ALABASTER = "#F4F0E6";
+    const MOD_GREY = "#C7BFB0";
+    const ESC_CORAL = "#E06D53";
+    const ENTER_MINT = "#5AB6A2";
+
+    // Row 0: Function Row (ESC + F1-F4 + F5-F8 + F9-F12)
+    const zF = -0.082;
+    caps.push({ x: -0.28, z: zF, w: 0.026, col: ESC_CORAL });
+    for (let i = 0; i < 4; i++) {
+      caps.push({ x: -0.224 + i * 0.029, z: zF, w: 0.025, col: ALABASTER });
+    }
+    for (let i = 0; i < 4; i++) {
+      caps.push({ x: -0.092 + i * 0.029, z: zF, w: 0.025, col: MOD_GREY });
+    }
+    for (let i = 0; i < 4; i++) {
+      caps.push({ x: 0.04 + i * 0.029, z: zF, w: 0.025, col: ALABASTER });
+    }
+
+    // Row 1: Number Row (~ to = + Backspace)
+    const z1 = -0.044;
+    for (let i = 0; i < 13; i++) {
+      caps.push({
+        x: -0.28 + i * 0.029,
+        z: z1,
+        w: 0.025,
+        col: i === 0 ? MOD_GREY : ALABASTER,
+      });
+    }
+    caps.push({ x: 0.113, z: z1, w: 0.052, col: MOD_GREY });
+
+    // Row 2: QWERTY Row (Tab + 12 alphas + \)
+    const z2 = -0.012;
+    caps.push({ x: -0.274, z: z2, w: 0.038, col: MOD_GREY });
+    for (let i = 0; i < 12; i++) {
+      caps.push({ x: -0.233 + i * 0.029, z: z2, w: 0.025, col: ALABASTER });
+    }
+    caps.push({ x: 0.121, z: z2, w: 0.036, col: MOD_GREY });
+
+    // Row 3: ASDF Home Row (Caps + 11 alphas + Mint Enter)
+    const z3 = 0.02;
+    caps.push({ x: -0.27, z: z3, w: 0.046, col: MOD_GREY });
+    for (let i = 0; i < 11; i++) {
+      caps.push({ x: -0.225 + i * 0.029, z: z3, w: 0.025, col: ALABASTER });
+    }
+    caps.push({ x: 0.111, z: z3, w: 0.056, col: ENTER_MINT });
+
+    // Row 4: ZXCV Shift Row (LShift + 10 alphas + RShift)
+    const z4 = 0.052;
+    caps.push({ x: -0.264, z: z4, w: 0.058, col: MOD_GREY });
+    for (let i = 0; i < 10; i++) {
+      caps.push({ x: -0.213 + i * 0.029, z: z4, w: 0.025, col: ALABASTER });
+    }
+    caps.push({ x: 0.105, z: z4, w: 0.068, col: MOD_GREY });
+
+    // Row 5: Bottom Row (Ctrl, Win, Alt, Spacebar, Alt, Fn, Ctrl)
+    const z5 = 0.084;
+    caps.push({ x: -0.276, z: z5, w: 0.034, col: MOD_GREY });
+    caps.push({ x: -0.237, z: z5, w: 0.032, col: MOD_GREY });
+    caps.push({ x: -0.199, z: z5, w: 0.032, col: MOD_GREY });
+    caps.push({ x: -0.072, z: z5, w: 0.205, col: "#EFEBE0" });
+    caps.push({ x: 0.054, z: z5, w: 0.032, col: MOD_GREY });
+    caps.push({ x: 0.09, z: z5, w: 0.03, col: MOD_GREY });
+    caps.push({ x: 0.123, z: z5, w: 0.032, col: MOD_GREY });
+
+    // Right Numpad / Nav Block (4 columns × 5 rows aligned cleanly to chassis right edge)
+    const numRows = [z1, z2, z3, z4, z5];
+    for (let r = 0; r < numRows.length; r++) {
+      for (let c = 0; c < 4; c++) {
+        // Wide '0' key on bottom row
+        if (r === 4 && c === 1) continue;
+        const isZero = r === 4 && c === 0;
         caps.push({
-          x: -0.265 + col * 0.036,
-          z: -0.06 + row * 0.038,
-          w: isEnter ? 0.044 : 0.028,
-          col: isEsc
-            ? "#E06D53"
-            : isEnter
-              ? "#5BB5A2"
-              : col === 0 || col === 10
-                ? "#C8C0B0"
-                : "#F2EFE7",
+          x: isZero ? 0.1945 : 0.18 + c * 0.029,
+          z: numRows[r],
+          w: isZero ? 0.054 : 0.025,
+          col: r === 0 || c === 3 ? MOD_GREY : ALABASTER,
         });
       }
     }
-    for (let row = 0; row < 4; row++) {
-      for (let col = 0; col < 3; col++) {
-        caps.push({
-          x: 0.175 + col * 0.035,
-          z: -0.06 + row * 0.038,
-          w: 0.028,
-          col: "#EAE5D9",
-        });
-      }
-    }
+
     return caps;
   }, []);
 
@@ -512,14 +587,12 @@ export function RetroComputerRoom({
           </mesh>
         ))}
 
-        <RoundedBox
-          args={[1.18, 0.01, 0.48]}
-          radius={0.02}
-          smoothness={3}
-          position={[0.08, 0.005, 0.28]}
+        <mesh
+          geometry={deskMatGeo}
+          position={[0.08, 0.001, 0.28]}
         >
-          <meshStandardMaterial color="#1F8A7E" roughness={0.72} />
-        </RoundedBox>
+          <meshStandardMaterial color="#1F8A7E" roughness={0.74} metalness={0.04} />
+        </mesh>
       </group>
 
       {/* ================================================================
@@ -578,14 +651,14 @@ export function RetroComputerRoom({
 
           <RoundedBox
             args={[0.62, 0.48, 0.025]}
-            radius={0.028}
+            radius={0.011}
             smoothness={3}
             position={[0, 0.02, 0.244]}
           >
             <meshStandardMaterial color="#181C22" roughness={0.55} />
           </RoundedBox>
 
-          {/* LIVE 3D BABAK 2 PORTAL SCREEN (World center = [0.05, 0.57, 0.118]!) */}
+          {/* LIVE 3D BABAK 2 PORTAL SCREEN — Raw RGBA8 sRGB pass-through for exact 1:1 color match! */}
           <mesh position={[0, 0.02, 0.258]}>
             <planeGeometry args={[0.58, 0.44]} />
             <shaderMaterial
@@ -593,7 +666,7 @@ export function RetroComputerRoom({
               vertexShader={CRT_PORTAL_VERT}
               fragmentShader={CRT_PORTAL_FRAG}
               uniforms={initialUniforms}
-              toneMapped={true}
+              toneMapped={false}
             />
           </mesh>
 
@@ -622,46 +695,79 @@ export function RetroComputerRoom({
         </group>
       </group>
 
-      {/* Full Vintage Mechanical Keyboard with Live-Typing Keycaps */}
-      <group position={[-0.02, 0.024, 0.34]} rotation={[0.08, 0.05, 0]}>
-        <RoundedBox args={[0.66, 0.032, 0.22]} radius={0.014} smoothness={3}>
-          <meshStandardMaterial color="#DDD4C3" roughness={0.46} />
+      {/* Authentic Full-Size Sculpted Mechanical Keyboard Sitting Cleanly on Desk Mat */}
+      <group position={[-0.03, 0.028, 0.34]} rotation={[0.075, 0.035, 0]}>
+        {/* Sculpted Beige Keyboard Case */}
+        <RoundedBox args={[0.65, 0.024, 0.24]} radius={0.009} smoothness={3}>
+          <meshStandardMaterial color="#DFD6C5" roughness={0.46} metalness={0.04} />
         </RoundedBox>
+
+        {/* Rear Ergonomic Flip-Out Riser Feet Grounding Keyboard on Mat */}
+        {[-0.26, 0.26].map((fx, fi) => (
+          <mesh key={fi} position={[fx, -0.015, -0.095]}>
+            <boxGeometry args={[0.042, 0.012, 0.024]} />
+            <meshStandardMaterial color="#3A3632" roughness={0.8} />
+          </mesh>
+        ))}
+
+        {/* Recessed Dark Charcoal Switch Wells (Main Alpha + Numpad) */}
+        <mesh position={[-0.072, 0.0122, 0.002]}>
+          <boxGeometry args={[0.456, 0.003, 0.204]} />
+          <meshStandardMaterial color="#232220" roughness={0.85} />
+        </mesh>
+        <mesh position={[0.224, 0.0122, 0.02]}>
+          <boxGeometry args={[0.118, 0.003, 0.168]} />
+          <meshStandardMaterial color="#232220" roughness={0.85} />
+        </mesh>
+
+        {/* 3 Classic Lock Status LEDs (NUM / CAPS / SCRL) on Top-Right Bezel */}
+        {[0.19, 0.22, 0.25].map((lx, li) => (
+          <mesh key={li} position={[lx, 0.013, -0.084]}>
+            <boxGeometry args={[0.014, 0.003, 0.007]} />
+            <meshBasicMaterial color={li < 2 ? "#4ADE80" : "#52525B"} />
+          </mesh>
+        ))}
+
+        {/* Individual Sculpted Mechanical Keycaps */}
         {keycaps.map((kc, idx) => (
           <group
             key={idx}
             ref={(el) => {
               keyRefs.current[idx] = el;
             }}
-            position={[kc.x, 0.02, kc.z]}
+            position={[kc.x, 0.019, kc.z]}
           >
             <RoundedBox
-              args={[kc.w, 0.018, 0.028]}
-              radius={0.005}
+              args={[kc.w, 0.014, 0.025]}
+              radius={0.0035}
               smoothness={2}
             >
-              <meshStandardMaterial color={kc.col} roughness={0.42} />
+              <meshStandardMaterial color={kc.col} roughness={0.4} />
             </RoundedBox>
           </group>
         ))}
       </group>
 
-      {/* Animated Two-Button Retro Mouse */}
+      {/* Sculpted Two-Button Retro Mouse Sitting Flush on Top of Teal Mat */}
       <group
         ref={mouseMeshRef}
-        position={[0.45, 0.024, 0.38]}
+        position={[0.45, 0.021, 0.37]}
         rotation={[0, -0.12, 0]}
       >
-        <RoundedBox args={[0.085, 0.032, 0.13]} radius={0.014} smoothness={3}>
-          <meshStandardMaterial color="#DED6C6" roughness={0.44} />
+        <RoundedBox args={[0.082, 0.03, 0.128]} radius={0.011} smoothness={3}>
+          <meshStandardMaterial color="#E2DAC9" roughness={0.44} />
         </RoundedBox>
-        <mesh position={[-0.018, 0.017, -0.038]}>
-          <boxGeometry args={[0.032, 0.004, 0.042]} />
-          <meshStandardMaterial color="#C5BCB0" />
+        <mesh position={[-0.018, 0.016, -0.035]}>
+          <boxGeometry args={[0.032, 0.004, 0.044]} />
+          <meshStandardMaterial color="#CBC2B2" roughness={0.42} />
         </mesh>
-        <mesh position={[0.018, 0.017, -0.038]}>
-          <boxGeometry args={[0.032, 0.004, 0.042]} />
-          <meshStandardMaterial color="#C5BCB0" />
+        <mesh position={[0.018, 0.016, -0.035]}>
+          <boxGeometry args={[0.032, 0.004, 0.044]} />
+          <meshStandardMaterial color="#CBC2B2" roughness={0.42} />
+        </mesh>
+        <mesh position={[0, 0.017, -0.035]} rotation={[0, 0, Math.PI / 2]}>
+          <cylinderGeometry args={[0.005, 0.005, 0.004, 12]} />
+          <meshStandardMaterial color="#2B2927" roughness={0.7} />
         </mesh>
       </group>
 
@@ -676,7 +782,7 @@ export function RetroComputerRoom({
           </RoundedBox>
           <RoundedBox
             args={[0.135, 0.19, 0.015]}
-            radius={0.008}
+            radius={0.005}
             smoothness={2}
             position={[0, 0.02, 0.088]}
           >
@@ -690,10 +796,14 @@ export function RetroComputerRoom({
       ))}
 
       {/* Desk Sketchpad on Left + Steaming Coffee Mug on Right */}
-      <group position={[-0.64, 0.012, 0.24]} rotation={[0, 0.24, 0]}>
-        <RoundedBox args={[0.12, 0.012, 0.2]} radius={0.012} smoothness={2}>
-          <meshStandardMaterial color="#1E293B" metalness={0.6} roughness={0.25} />
+      <group position={[-0.64, 0.009, 0.24]} rotation={[0, 0.24, 0]}>
+        <RoundedBox args={[0.14, 0.014, 0.21]} radius={0.004} smoothness={2}>
+          <meshStandardMaterial color="#1E293B" metalness={0.5} roughness={0.3} />
         </RoundedBox>
+        <mesh position={[0, 0.0076, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+          <planeGeometry args={[0.118, 0.186]} />
+          <meshStandardMaterial color="#F8F4EC" roughness={0.8} />
+        </mesh>
       </group>
 
       <group position={[0.78, 0.065, 0.22]}>
