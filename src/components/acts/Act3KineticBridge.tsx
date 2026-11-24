@@ -371,13 +371,8 @@ export function Act3KineticBridge() {
             className="pointer-events-none absolute h-28 w-28 rounded-full border-[3px] border-[#1D4ED8] opacity-0 will-change-transform"
           />
 
-          {/* True Dead-Center Anchor at Exact (50%, 50%) */}
+          {/* True Dead-Center Anchor at Exact (50%, 50%) — Zero Distracting Top Badge */}
           <div className="relative z-10 flex items-center justify-center select-none">
-            {/* Top Tag Floating Above */}
-            <span className="pointer-events-none absolute -top-28 sm:-top-38 whitespace-nowrap rounded-full border border-slate-300 bg-white/90 px-4 py-1 font-mono text-[10px] font-bold uppercase tracking-[0.26em] text-slate-600 shadow-sm">
-              03 • WHAT I ACTUALLY DO
-            </span>
-
             {/* Crossed-Out "My 5tack ?" (Starts Dead-Center, Lifts Cleanly Above "My Craft." on Click!) */}
             <div
               ref={stackWrapRef}

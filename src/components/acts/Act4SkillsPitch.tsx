@@ -1,22 +1,31 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { PORTFOLIO_DATA, type ToolId } from "@/data/portfolio";
 import { useShowreel } from "@/context/ShowreelContext";
 import { ToolBadge } from "@/components/ui/ToolBadges";
-import {
-  CodeCreatorPortrait,
-  CodeEspressoProp,
-  CodeTurntableProp,
-} from "@/components/ui/CodeMotionAssets";
+import { CodeCreatorPortrait } from "@/components/ui/CodeMotionAssets";
+import type { SkillsScrollState } from "@/components/three/Skills3DStage";
 
 gsap.registerPlugin(ScrollTrigger);
 
-const CORE_TOOLS: ToolId[] = ["autocad", "revit", "typescript", "python", "figma"];
+const Skills3DStage = dynamic(
+  () => import("@/components/three/Skills3DStage"),
+  { ssr: false }
+);
 
-interface LedgerSkillRow {
+const CORE_TOOLS: ToolId[] = [
+  "autocad",
+  "revit",
+  "typescript",
+  "python",
+  "figma",
+];
+
+interface KineticSkillCard {
   code: string;
   title: string;
   spec: string;
@@ -24,128 +33,222 @@ interface LedgerSkillRow {
   fill: number;
 }
 
-const CIVIL_ROWS: LedgerSkillRow[] = [
-  {
-    code: "CIV-01",
-    title: "Long-Span Bridge & Arch FEA",
-    spec: "ETABS • SAP2000 • Nonlinear Stay-Cable Tension",
-    metric: "280m+ Span",
-    fill: 0.96,
-  },
-  {
-    code: "CIV-02",
-    title: "High-Rise Seismic Core Design",
-    spec: "Modal Response Spectrum • SNI 1726 & ACI 318-19",
-    metric: "42 Stories",
-    fill: 0.94,
-  },
-  {
-    code: "CIV-03",
-    title: "BIM LOD 400 & Rebar Detailing",
-    spec: "Autodesk Revit • Clash Detection & Bar Schedules",
-    metric: "Zero-Clash",
-    fill: 0.95,
-  },
-  {
-    code: "CIV-04",
-    title: "Corridor & Site Infrastructure",
-    spec: "AutoCAD • Civil 3D Alignments & Earthwork Volumes",
-    metric: "18.4 km",
-    fill: 0.9,
-  },
-];
+interface DisciplineChapter {
+  id: string;
+  num: string;
+  shortTab: string;
+  kicker: string;
+  headline: string;
+  chars: string[];
+  accentHex: string;
+  ribbonTop: string;
+  ribbonBot: string;
+  twinLabel: string;
+  startP: number;
+  endP: number;
+  jumpRatio: number;
+  rows: KineticSkillCard[];
+}
 
-const SOFTWARE_ROWS: LedgerSkillRow[] = [
+const CHAPTERS: DisciplineChapter[] = [
   {
-    code: "SWE-01",
-    title: "Full-Stack Web Architecture",
-    spec: "TypeScript Strict • Next.js 16 • React 19 • Node",
-    metric: "Production",
-    fill: 0.96,
+    id: "civil",
+    num: "01",
+    shortTab: "01 Civil",
+    kicker: "01 • Civil & Structural Engineering",
+    headline: "CIVIL.",
+    chars: "CIVIL.".split(""),
+    accentHex: "#F59E0B",
+    ribbonTop:
+      "42F SEISMIC DIAGRID • 280M BRIDGE FEA • REVIT BIM LOD 400 • SNI 1726 •",
+    ribbonBot:
+      "ETABS MODAL SPECTRUM • SAP2000 NONLINEAR • AUTOCAD CIVIL 3D • ACI 318 •",
+    twinLabel: "3D Twin • 42F Seismic Diagrid & Tower Crane",
+    startP: 0.12,
+    endP: 0.33,
+    jumpRatio: 0.22,
+    rows: [
+      {
+        code: "CIV-01",
+        title: "Long-Span Bridge & Arch FEA",
+        spec: "ETABS • SAP2000 • Nonlinear Cable & P-Delta",
+        metric: "280m+ Span",
+        fill: 0.96,
+      },
+      {
+        code: "CIV-02",
+        title: "High-Rise Seismic Core & Diagrid",
+        spec: "Modal Response Spectrum • SNI 1726 & ACI 318",
+        metric: "42 Stories",
+        fill: 0.94,
+      },
+      {
+        code: "CIV-03",
+        title: "BIM LOD 400 & Rebar Coordination",
+        spec: "Autodesk Revit • Automated Clash & Bar Schedules",
+        metric: "Zero-Clash",
+        fill: 0.95,
+      },
+      {
+        code: "CIV-04",
+        title: "Corridor & Earthwork Infrastructure",
+        spec: "AutoCAD • Civil 3D Alignments & Cut-Fill Modeling",
+        metric: "18.4 km",
+        fill: 0.91,
+      },
+    ],
   },
   {
-    code: "SWE-02",
-    title: "Computational Engineering Solvers",
-    spec: "Python • FastAPI • NumPy/SciPy Structural APIs",
-    metric: "< 18ms API",
-    fill: 0.94,
+    id: "software",
+    num: "02",
+    shortTab: "02 Software",
+    kicker: "02 • Full-Stack & Computational Software",
+    headline: "SOFTWARE.",
+    chars: "SOFTWARE.".split(""),
+    accentHex: "#38BDF8",
+    ribbonTop:
+      "TYPESCRIPT STRICT • NEXT.JS 16 • PYTHON FEA SOLVER • FASTAPI • DOCKER •",
+    ribbonBot:
+      "120 FPS THREE.JS • WEBGL2 SHADERS • IFC STREAMING • POSTGRESQL •",
+    twinLabel: "3D Twin • 3x3x3 Compute Cluster & Data Bus",
+    startP: 0.31,
+    endP: 0.52,
+    jumpRatio: 0.41,
+    rows: [
+      {
+        code: "SWE-01",
+        title: "Full-Stack TypeScript Architecture",
+        spec: "Next.js 16 • React 19 • Node • Scalable APIs",
+        metric: "Production",
+        fill: 0.96,
+      },
+      {
+        code: "SWE-02",
+        title: "Computational Structural Solvers",
+        spec: "Python • FastAPI • NumPy/SciPy Matrix Engines",
+        metric: "< 18ms API",
+        fill: 0.94,
+      },
+      {
+        code: "SWE-03",
+        title: "Real-Time 3D & WebGL Engines",
+        spec: "Three.js • React Three Fiber • Custom GLSL",
+        metric: "120 FPS",
+        fill: 0.95,
+      },
+      {
+        code: "SWE-04",
+        title: "BIM & CAD Pipeline Automation",
+        spec: "Revit API • pyRevit • IFC-to-WebGL Streaming",
+        metric: "-75% Time",
+        fill: 0.92,
+      },
+    ],
   },
   {
-    code: "SWE-03",
-    title: "Real-Time 3D & WebGL Engines",
-    spec: "Three.js • React Three Fiber • Custom GLSL Shaders",
-    metric: "120 FPS",
-    fill: 0.95,
+    id: "design",
+    num: "03",
+    shortTab: "03 UI/UX & 3D",
+    kicker: "03 • UI/UX Systems & Kinetic 3D Motion",
+    headline: "DESIGN.",
+    chars: "DESIGN.".split(""),
+    accentHex: "#C6FF3D",
+    ribbonTop:
+      "FIGMA VARIABLES • SPATIAL 3D INTERFACES • GSAP CHOREOGRAPHY • LENIS •",
+    ribbonBot:
+      "TACTILE DESIGN SYSTEMS • CUBIC-BEZIER PHYSICS • DESIGN-TO-CODE •",
+    twinLabel: "3D Twin • Spatial UI Stack & Kinetic Spline",
+    startP: 0.5,
+    endP: 0.71,
+    jumpRatio: 0.6,
+    rows: [
+      {
+        code: "UXD-01",
+        title: "Design Systems & Token Architecture",
+        spec: "Figma Variables • Multi-Brand Kits • WCAG AA",
+        metric: "80+ Tokens",
+        fill: 0.95,
+      },
+      {
+        code: "UXD-02",
+        title: "Scroll & Kinetic Motion Direction",
+        spec: "GSAP ScrollTrigger • Lenis Physics • Bezier Curves",
+        metric: "60-120 FPS",
+        fill: 0.96,
+      },
+      {
+        code: "UXD-03",
+        title: "Spatial 3D & Refractive Interfaces",
+        spec: "Procedural 3D Geometry • Studio Lighting • Shaders",
+        metric: "WebGL2",
+        fill: 0.93,
+      },
+      {
+        code: "UXD-04",
+        title: "Zero-Handoff Design-to-Production",
+        spec: "Direct Figma Prototype → Live Engineered Build",
+        metric: "2x Faster",
+        fill: 0.97,
+      },
+    ],
   },
   {
-    code: "SWE-04",
-    title: "BIM & CAD Pipeline Automation",
-    spec: "Revit API • pyRevit • IFC-to-WebGL Mesh Streaming",
-    metric: "-75% Time",
-    fill: 0.92,
-  },
-];
-
-const DESIGN_ROWS: LedgerSkillRow[] = [
-  {
-    code: "UXD-01",
-    title: "Design Systems & Token Architecture",
-    spec: "Figma Variables • Multi-Brand Libraries • WCAG AA",
-    metric: "80+ Tokens",
-    fill: 0.95,
-  },
-  {
-    code: "UXD-02",
-    title: "Scroll & Kinetic Motion Direction",
-    spec: "GSAP ScrollTrigger • Lenis Physics • Bezier Timing",
-    metric: "60-120 FPS",
-    fill: 0.96,
-  },
-  {
-    code: "UXD-03",
-    title: "Sculptural 3D & Refractive UI",
-    spec: "Procedural 3D Forms • Studio Lighting • Glass IOR",
-    metric: "WebGL2",
-    fill: 0.92,
-  },
-  {
-    code: "UXD-04",
-    title: "Zero-Handoff Design-to-Code",
-    spec: "Direct Figma Concept → Live Responsive Production",
-    metric: "2× Faster",
-    fill: 0.97,
-  },
-];
-
-const HOBBY_TRACKS = [
-  {
-    code: "SIDE A-01",
-    title: "Electric Guitar & Riff Sessions",
-    detail: "Neo-soul Maj9 chord voicings, pedalboard tone crafting & late-night improvisation",
-    tag: "FENDER / MAJ9",
-  },
-  {
-    code: "SIDE A-02",
-    title: "Analog Synth & DAW Beatmaking",
-    detail: "112 BPM instrumental synth layering, drum programming & arrangement",
-    tag: "112 BPM • D MIN",
-  },
-  {
-    code: "SIDE B-01",
-    title: "Specialty V60 & Espresso Dialing",
-    detail: "Single-origin pour-over extraction ratios & double-ristretto morning ritual",
-    tag: "1:15 RATIO • 93°C",
-  },
-  {
-    code: "SIDE B-02",
-    title: "Urban Architectural Sketching",
-    detail: "Fine-liner structural perspective studies of bridges, trusses & cityscapes",
-    tag: "0.1MM INK",
+    id: "hobbies",
+    num: "04",
+    shortTab: "04 Hobbies",
+    kicker: "04 • Off-Clock Hobbies & Creative Fuel",
+    headline: "OFF-CLOCK.",
+    chars: "OFF-CLOCK.".split(""),
+    accentHex: "#FF6B4A",
+    ribbonTop:
+      "ELECTRIC GUITAR MAJ9 • 112 BPM ANALOG SYNTH • LATE NIGHT DAW SESSIONS •",
+    ribbonBot:
+      "V60 SPECIALTY POUR-OVER • DOUBLE ESPRESSO • URBAN SKETCHING •",
+    twinLabel: "3D Twin • 6-String Fretboard, EQ & Turntable",
+    startP: 0.69,
+    endP: 0.87,
+    jumpRatio: 0.78,
+    rows: [
+      {
+        code: "TRK-01",
+        title: "Electric Guitar & Riff Sessions",
+        spec: "Neo-soul Maj9 chord voicings, tone crafting & improv",
+        metric: "Maj9 • Fender",
+        fill: 0.95,
+      },
+      {
+        code: "TRK-02",
+        title: "Analog Synth & DAW Beatmaking",
+        spec: "112 BPM instrumental synth layering & drum grooves",
+        metric: "112 BPM",
+        fill: 0.92,
+      },
+      {
+        code: "TRK-03",
+        title: "Specialty V60 & Espresso Dialing",
+        spec: "Single-origin 1:15 pour-over & morning ristretto ritual",
+        metric: "93°C • 1:15",
+        fill: 0.94,
+      },
+      {
+        code: "TRK-04",
+        title: "Urban Architectural Sketching",
+        spec: "Fine-liner structural perspective studies of bridges & cities",
+        metric: "0.1mm Ink",
+        fill: 0.9,
+      },
+    ],
   },
 ];
 
 function clamp01(v: number) {
   return Math.max(0, Math.min(1, v));
+}
+
+function easeOutBack(x: number) {
+  const c1 = 1.85;
+  const c3 = c1 + 1;
+  return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2);
 }
 
 function easeInOutCubic(x: number) {
@@ -154,64 +257,69 @@ function easeInOutCubic(x: number) {
 
 const STAND_LIT = [
   "bg-[#1D4ED8]",
-  "text-white",
   "shadow-[0_20px_50px_rgba(29,78,216,0.5)]",
   "-rotate-1",
   "scale-105",
+  "ring-4",
+  "ring-[#C6FF3D]/80",
 ];
-const STAND_UNLIT = ["bg-transparent", "text-[#07131C]"];
 
 /**
- * 6-Beat Architectural Full-Screen Discipline Showreel (Chapter 04 — 580vh)
- * Zero boxy cards AND zero round bubble/pill soup!
- * Every discipline commands its own dedicated 100vw x 100dvh Swiss-Architectural stage:
- *   Beat 0 (0.00 - 0.16): Monumental 45+ Intro Stage
- *   Beat 1 (0.14 - 0.34): 01 // CIVIL & STRUCTURAL ENGINEERING (Dedicated Full-Screen)
- *   Beat 2 (0.32 - 0.52): 02 // SOFTWARE & COMPUTATIONAL SYSTEMS (Dedicated Full-Screen)
- *   Beat 3 (0.50 - 0.70): 03 // UI/UX & INTERACTIVE 3D MOTION (Dedicated Full-Screen)
- *   Beat 4 (0.68 - 0.86): 04 // OFF-CLOCK HOBBIES & ANALOG FUEL (Dedicated Full-Screen)
- *   Beat 5 (0.84 - 1.00): Finale Pitch ("STAND OUT")
+ * Act 4 — 3D + Kinetic Discipline Showreel (640vh)
+ * - Beat 0: Pure Kinetic 45+ Entrance Choreography (Zero 3D cube blocking text!)
+ * - Beats 1..4: Separated Civil, Software, UI/UX & 3D, and Off-Clock Hobbies with
+ *   Tactile Rounded-Rectangle (rounded-2xl) UI + Beveled <RoundedBox> 3D WebGL Models!
+ * - Beat 5: Classic Sunburst Creator Portrait + Royal-Blue/Volt-Lime "STAND OUT" Finale!
  */
 export function Act4SkillsPitch() {
   const sectionRef = useRef<HTMLElement>(null);
+  const [inView, setInView] = useState(false);
 
-  // Top progress indicator bar & chapter counter
-  const chapterCodeRef = useRef<HTMLSpanElement>(null);
-  const segBarRefs = useRef<(HTMLSpanElement | null)[]>([]);
+  const skillsScrollRef = useRef<SkillsScrollState>({
+    progress: 0,
+    pointerX: 0,
+    pointerY: 0,
+    activeRow: 0,
+  });
+  const hoveredRowRef = useRef<number | null>(null);
 
-  // Beat 0: Intro Monument refs
-  const stage0Ref = useRef<HTMLDivElement>(null);
-  const giantNumRef = useRef<HTMLSpanElement>(null);
-  const s0Line1Ref = useRef<HTMLDivElement>(null);
-  const s0Line2Ref = useRef<HTMLDivElement>(null);
+  // Rounded-2xl Dock Switcher & 3D Canvas visibility refs
+  const hudDockRef = useRef<HTMLDivElement>(null);
+  const tabBtnRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const tabFillRefs = useRef<(HTMLSpanElement | null)[]>([]);
+  const canvasLayerRef = useRef<HTMLDivElement>(null);
+  const twinReadoutRef = useRef<HTMLDivElement>(null);
+  const twinLabelSpanRef = useRef<HTMLSpanElement>(null);
 
-  // Beat 1: Civil Engineering refs
-  const stage1CivilRef = useRef<HTMLDivElement>(null);
-  const civilContentRef = useRef<HTMLDivElement>(null);
-  const civilDiagramRef = useRef<HTMLDivElement>(null);
-  const civilBarRefs = useRef<(HTMLSpanElement | null)[]>([]);
+  // Beat 0: Dynamic Kinetic 45+ Intro refs (Zero 3D Cube!)
+  const bg0Ref = useRef<HTMLDivElement>(null);
+  const introMarqueeTopRef = useRef<HTMLDivElement>(null);
+  const introMarqueeBotRef = useRef<HTMLDivElement>(null);
+  const introKickerRef = useRef<HTMLDivElement>(null);
+  const numStageRef = useRef<HTMLDivElement>(null);
+  const giantNumMainRef = useRef<HTMLSpanElement>(null);
+  const giantNumLimeEchoRef = useRef<HTMLSpanElement>(null);
+  const giantNumCyanEchoRef = useRef<HTMLSpanElement>(null);
+  const s0TopLineRef = useRef<HTMLDivElement>(null);
+  const s0BotLineRef = useRef<HTMLDivElement>(null);
+  const introBadgeRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const introChipLeftRef = useRef<HTMLDivElement>(null);
+  const introChipRightRef = useRef<HTMLDivElement>(null);
 
-  // Beat 2: Software Engineering refs
-  const stage2SoftRef = useRef<HTMLDivElement>(null);
-  const softContentRef = useRef<HTMLDivElement>(null);
-  const softDiagramRef = useRef<HTMLDivElement>(null);
-  const softBarRefs = useRef<(HTMLSpanElement | null)[]>([]);
+  // Beats 1..4: Separated 3D + Kinetic Discipline refs
+  const bgChapterRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const ribbonTopRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const ribbonBotRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const fgChapterRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const charRefs = useRef<(HTMLSpanElement | null)[][]>([[], [], [], []]);
+  const rowRefs = useRef<(HTMLDivElement | null)[][]>([[], [], [], []]);
+  const barRefs = useRef<(HTMLSpanElement | null)[][]>([[], [], [], []]);
 
-  // Beat 3: UI/UX & 3D Design refs
-  const stage3DesignRef = useRef<HTMLDivElement>(null);
-  const designContentRef = useRef<HTMLDivElement>(null);
-  const designDiagramRef = useRef<HTMLDivElement>(null);
-  const designBezierRef = useRef<SVGPathElement>(null);
-  const designBarRefs = useRef<(HTMLSpanElement | null)[]>([]);
-
-  // Beat 4: Off-Clock Hobbies refs
-  const stage4HobbyRef = useRef<HTMLDivElement>(null);
-  const hobbyContentRef = useRef<HTMLDivElement>(null);
-  const hobbyVisualRef = useRef<HTMLDivElement>(null);
-
-  // Beat 5: Stand Out Finale refs
-  const stage5FinaleRef = useRef<HTMLDivElement>(null);
+  // Beat 5: Restored Sunburst Portrait + "STAND OUT" Finale refs
+  const stageFinaleRef = useRef<HTMLDivElement>(null);
   const finalePortraitRef = useRef<HTMLDivElement>(null);
+  const finaleLine1Ref = useRef<HTMLParagraphElement>(null);
+  const finaleLine2Ref = useRef<HTMLParagraphElement>(null);
   const standOutBtnRef = useRef<HTMLButtonElement>(null);
   const standCursorRef = useRef<HTMLDivElement>(null);
   const isStandLitRef = useRef(false);
@@ -224,18 +332,19 @@ export function Act4SkillsPitch() {
     isStandLitRef.current = lit;
     const btn = standOutBtnRef.current;
     if (btn) {
+      btn.style.color = lit ? "#FFFFFF" : "#07131C";
       if (lit) {
-        btn.classList.remove(...STAND_UNLIT);
+        btn.classList.remove("bg-transparent");
         btn.classList.add(...STAND_LIT);
       } else {
         btn.classList.remove(...STAND_LIT);
-        btn.classList.add(...STAND_UNLIT);
+        btn.classList.add("bg-transparent");
       }
     }
     if (standCursorRef.current) {
       standCursorRef.current.style.transform = lit
-        ? "translate3d(-10px, -8px, 0) scale(0.86)"
-        : "translate3d(20px, 16px, 0) scale(1.06)";
+        ? "translate3d(-10px, -8px, 0) scale(0.85)"
+        : "translate3d(18px, 14px, 0) scale(1.05)";
     }
   };
 
@@ -243,197 +352,340 @@ export function Act4SkillsPitch() {
     const section = sectionRef.current;
     if (!section) return;
 
-    let counterPlayed = false;
-    let lastLabel = "";
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setInView(entry.isIntersecting);
+      },
+      { rootMargin: "250px 0px" }
+    );
+    observer.observe(section);
+
+    let lastTwinText = "";
+    let lastLitTab = -1;
 
     const ctx = gsap.context(() => {
-      ScrollTrigger.create({
+      // Pre-pin scroll-scrubbed kinetic entrance for Beat 0 (as Act 4 enters viewport!)
+      const applyIntroEntrance = (ep: number, pinnedP: number) => {
+        const spNum = easeOutBack(clamp01(ep / 0.72));
+        const targetVal = Math.round(
+          clamp01(ep / 0.78) * PORTFOLIO_DATA.skillsSection.primaryStatTarget
+        );
+        const textVal = `${targetVal}+`;
+
+        if (giantNumMainRef.current) giantNumMainRef.current.textContent = textVal;
+        if (giantNumLimeEchoRef.current) giantNumLimeEchoRef.current.textContent = textVal;
+        if (giantNumCyanEchoRef.current) giantNumCyanEchoRef.current.textContent = textVal;
+
+        const exitSplit = clamp01((pinnedP - 0.065) / 0.06);
+
+        if (introMarqueeTopRef.current) {
+          introMarqueeTopRef.current.style.transform = `translate3d(${(180 - ep * 260 - pinnedP * 900).toFixed(1)}px, 0, 0) skewX(-10deg)`;
+        }
+        if (introMarqueeBotRef.current) {
+          introMarqueeBotRef.current.style.transform = `translate3d(${(-180 + ep * 260 + pinnedP * 900).toFixed(1)}px, 0, 0) skewX(-10deg)`;
+        }
+
+        if (introKickerRef.current) {
+          const kSp = easeOutBack(clamp01((ep - 0.08) / 0.55));
+          introKickerRef.current.style.opacity = (clamp01(ep * 2.4) * (1 - exitSplit)).toFixed(3);
+          introKickerRef.current.style.transform = `translate3d(0, ${((1 - kSp) * -36 - exitSplit * 45).toFixed(1)}px, 0) scale(${(0.78 + kSp * 0.22).toFixed(3)})`;
+        }
+
+        if (numStageRef.current) {
+          const dropY = (1 - spNum) * 95;
+          const tilt = (1 - spNum) * -9;
+          const zoom = (0.42 + spNum * 0.58) * (1 + exitSplit * 0.72);
+          numStageRef.current.style.opacity = (clamp01(ep * 2.8) * (1 - exitSplit)).toFixed(3);
+          numStageRef.current.style.transform = `translate3d(0, ${dropY.toFixed(1)}px, 0) rotate(${tilt.toFixed(2)}deg) scale(${zoom.toFixed(3)})`;
+        }
+
+        // Chromatic 3D echo layers snap cleanly behind 45+ on arrival, then fan out on exit!
+        const spreadEcho = (1 - clamp01(ep / 0.85)) * 26 + exitSplit * 34;
+        if (giantNumLimeEchoRef.current) {
+          giantNumLimeEchoRef.current.style.transform = `translate3d(${(-8 - spreadEcho).toFixed(1)}px, ${(6 + spreadEcho * 0.5).toFixed(1)}px, 0)`;
+        }
+        if (giantNumCyanEchoRef.current) {
+          giantNumCyanEchoRef.current.style.transform = `translate3d(${(8 + spreadEcho).toFixed(1)}px, ${(-6 - spreadEcho * 0.5).toFixed(1)}px, 0)`;
+        }
+
+        // Opposite-velocity kinetic headlines ("STRUCTURES & APPS" / "Engineered & Shipped")
+        const lineT = easeOutBack(clamp01((ep - 0.18) / 0.65));
+        if (s0TopLineRef.current) {
+          const x1 = (1 - lineT) * -185 - exitSplit * 310;
+          const sk1 = (1 - lineT) * 16 - exitSplit * 14;
+          s0TopLineRef.current.style.opacity = clamp01((ep - 0.15) * 3).toFixed(3);
+          s0TopLineRef.current.style.transform = `translate3d(${x1.toFixed(1)}px, 0, 0) skewX(${sk1.toFixed(1)}deg)`;
+        }
+        if (s0BotLineRef.current) {
+          const x2 = (1 - lineT) * 185 + exitSplit * 310;
+          const sk2 = (1 - lineT) * -16 + exitSplit * 14;
+          s0BotLineRef.current.style.opacity = clamp01((ep - 0.2) * 3).toFixed(3);
+          s0BotLineRef.current.style.transform = `translate3d(${x2.toFixed(1)}px, 0, 0) skewX(${sk2.toFixed(1)}deg)`;
+        }
+
+        // Floating outer telemetry squircle chips
+        if (introChipLeftRef.current && introChipRightRef.current) {
+          const chSp = easeOutBack(clamp01((ep - 0.28) / 0.58));
+          const chOp = clamp01((ep - 0.28) * 3) * (1 - exitSplit * 1.4);
+          introChipLeftRef.current.style.opacity = Math.max(0, chOp).toFixed(3);
+          introChipLeftRef.current.style.transform = `translate3d(${((1 - chSp) * -70 - exitSplit * 120).toFixed(1)}px, ${(Math.sin(ep * Math.PI) * -8).toFixed(1)}px, 0) rotate(-6deg) scale(${Math.max(0.2, chSp).toFixed(3)})`;
+          introChipRightRef.current.style.opacity = Math.max(0, chOp).toFixed(3);
+          introChipRightRef.current.style.transform = `translate3d(${((1 - chSp) * 70 + exitSplit * 120).toFixed(1)}px, ${(Math.sin(ep * Math.PI) * 8).toFixed(1)}px, 0) rotate(6deg) scale(${Math.max(0.2, chSp).toFixed(3)})`;
+        }
+
+        // Staggered parabolic spring-wave on the 5 squircle tool icons!
+        const tilts = [-9, 6, -4, 7, -6];
+        for (let i = 0; i < CORE_TOOLS.length; i++) {
+          const bEl = introBadgeRefs.current[i];
+          if (!bEl) continue;
+          const bT = clamp01((ep - 0.3 - i * 0.065) / 0.45);
+          const bSp = easeOutBack(bT);
+          const yOff = (1 - bSp) * 58 + exitSplit * 65;
+          const rot = (1 - bSp) * tilts[i] * 2.2;
+          bEl.style.opacity = (clamp01(bT * 3) * (1 - exitSplit)).toFixed(3);
+          bEl.style.transform = `translate3d(0, ${yOff.toFixed(1)}px, 0) rotate(${rot.toFixed(1)}deg) scale(${Math.max(0.1, bSp).toFixed(3)})`;
+        }
+      };
+
+      let currentEntranceP = 0;
+      let currentPinnedP = 0;
+
+      const entranceSt = ScrollTrigger.create({
         trigger: section,
-        start: "top 82%",
-        once: true,
-        onEnter: () => {
-          if (!counterPlayed && giantNumRef.current) {
-            counterPlayed = true;
-            const obj = { val: 0 };
-            gsap.to(obj, {
-              val: PORTFOLIO_DATA.skillsSection.primaryStatTarget,
-              duration: 1.25,
-              ease: "power3.out",
-              onUpdate: () => {
-                if (giantNumRef.current) {
-                  giantNumRef.current.textContent = `${Math.round(obj.val)}+`;
-                }
-              },
-            });
-          }
+        start: "top 88%",
+        end: "top top",
+        scrub: 0.2,
+        onUpdate: (self) => {
+          currentEntranceP = self.progress;
+          applyIntroEntrance(currentEntranceP, currentPinnedP);
         },
       });
 
       const applyProgress = (p: number) => {
-        // Update top-left architectural index readout
-        const nextLabel =
-          p < 0.14
-            ? "04.00 // OVERVIEW"
-            : p < 0.32
-              ? "04.01 // CIVIL ENGINEERING"
-              : p < 0.5
-                ? "04.02 // SOFTWARE ENGINEERING"
-                : p < 0.68
-                  ? "04.03 // UI/UX & 3D DESIGN"
-                  : p < 0.84
-                    ? "04.04 // OFF-CLOCK HOBBIES"
-                    : "04.05 // THE PITCH";
+        currentPinnedP = p;
+        skillsScrollRef.current.progress = p;
+        applyIntroEntrance(
+          p > 0.001 ? 1 : entranceSt.progress,
+          p
+        );
 
-        if (nextLabel !== lastLabel && chapterCodeRef.current) {
-          lastLabel = nextLabel;
-          chapterCodeRef.current.textContent = nextLabel;
-          const isLightBg = p < 0.15 || (p >= 0.51 && p < 0.69) || p >= 0.85;
-          chapterCodeRef.current.style.color = isLightBg ? "#07131C" : "#C6FF3D";
+        // Show 3D WebGL Canvas & Rounded Dock Switcher ONLY inside Beats 1..4, staying visible underneath while the white circular iris expands!
+        const irisP = clamp01((p - 0.82) / 0.11);
+        const foundryVis =
+          clamp01((p - 0.115) / 0.035) * (irisP >= 0.98 ? 0 : 1);
+        const dockVis =
+          clamp01((p - 0.115) / 0.035) * (1 - clamp01((p - 0.81) / 0.03));
+
+        if (canvasLayerRef.current) {
+          canvasLayerRef.current.style.opacity = foundryVis.toFixed(3);
+          canvasLayerRef.current.style.visibility =
+            foundryVis > 0.005 ? "visible" : "hidden";
+        }
+        if (hudDockRef.current) {
+          hudDockRef.current.style.opacity = dockVis.toFixed(3);
+          hudDockRef.current.style.visibility =
+            dockVis > 0.005 ? "visible" : "hidden";
+        }
+        if (twinReadoutRef.current) {
+          twinReadoutRef.current.style.opacity = dockVis.toFixed(3);
         }
 
-        // Update 4 discipline timeline dashes
-        const ranges = [
-          [0.14, 0.32],
-          [0.32, 0.5],
-          [0.5, 0.68],
-          [0.68, 0.84],
-        ];
-        ranges.forEach(([s, e], i) => {
-          const bar = segBarRefs.current[i];
-          if (!bar) return;
-          const fill = clamp01((p - s) / (e - s));
-          bar.style.transform = `scaleX(${Math.max(0.08, fill).toFixed(3)})`;
+        const activeChIdx =
+          p < 0.31 ? 0 : p < 0.5 ? 1 : p < 0.69 ? 2 : 3;
+
+        if (activeChIdx !== lastLitTab) {
+          lastLitTab = activeChIdx;
+          CHAPTERS.forEach((ch, idx) => {
+            const btn = tabBtnRefs.current[idx];
+            if (!btn) return;
+            if (idx === activeChIdx) {
+              btn.style.backgroundColor = "rgba(255,255,255,0.12)";
+              btn.style.color = "#FFFFFF";
+            } else {
+              btn.style.backgroundColor = "transparent";
+              btn.style.color = "rgba(226,232,240,0.65)";
+            }
+          });
+        }
+
+        const nextTwin = CHAPTERS[activeChIdx].twinLabel;
+        if (nextTwin !== lastTwinText && twinLabelSpanRef.current) {
+          lastTwinText = nextTwin;
+          twinLabelSpanRef.current.textContent = nextTwin;
+          twinLabelSpanRef.current.style.color = CHAPTERS[activeChIdx].accentHex;
+        }
+
+        CHAPTERS.forEach((ch, idx) => {
+          const fillEl = tabFillRefs.current[idx];
+          if (!fillEl) return;
+          const f = clamp01((p - ch.startP) / (ch.endP - ch.startP));
+          fillEl.style.transform = `scaleX(${Math.max(0.08, f).toFixed(3)})`;
+        });
+
+        // Beat 0 visibility
+        const s0Fade = clamp01((p - 0.1) / 0.045);
+        if (bg0Ref.current) {
+          bg0Ref.current.style.opacity = (1 - s0Fade).toFixed(3);
+          bg0Ref.current.style.visibility = s0Fade >= 0.995 ? "hidden" : "visible";
+        }
+
+        // ====================================================================
+        // BEATS 1..4: 4 SEPARATED 3D + KINETIC DISCIPLINE STAGES
+        // ====================================================================
+        CHAPTERS.forEach((ch, cIdx) => {
+          const wipeIn = easeInOutCubic(clamp01((p - ch.startP) / 0.05));
+          const nextStart = cIdx < 3 ? CHAPTERS[cIdx + 1].startP : 0.94;
+          const wipeOut = easeInOutCubic(clamp01((p - (nextStart + 0.035)) / 0.04));
+          const local = clamp01(
+            (p - (ch.startP + 0.015)) / (ch.endP - ch.startP - 0.015)
+          );
+
+          const bgEl = bgChapterRefs.current[cIdx];
+          const fgEl = fgChapterRefs.current[cIdx];
+
+          if (bgEl) {
+            if (wipeIn <= 0.003 || wipeOut >= 0.998) {
+              bgEl.style.visibility = "hidden";
+            } else {
+              bgEl.style.visibility = "visible";
+              if (cIdx === 0) {
+                const lead = 122 - wipeIn * 148;
+                const tail = 98 - wipeIn * 148;
+                bgEl.style.clipPath =
+                  wipeIn >= 0.995
+                    ? "polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)"
+                    : `polygon(${lead.toFixed(1)}% 0%, 100% 0%, 100% 100%, ${tail.toFixed(1)}% 100%)`;
+              } else if (cIdx === 1) {
+                const lead = -22 + wipeIn * 148;
+                const tail = 2 + wipeIn * 148;
+                bgEl.style.clipPath =
+                  wipeIn >= 0.995
+                    ? "polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)"
+                    : `polygon(0% 0%, ${lead.toFixed(1)}% 0%, ${tail.toFixed(1)}% 100%, 0% 100%)`;
+              } else if (cIdx === 2) {
+                bgEl.style.clipPath = `inset(${((1 - wipeIn) * 100).toFixed(1)}% 0% 0% 0%)`;
+              } else {
+                const lead = 122 - wipeIn * 148;
+                const tail = 98 - wipeIn * 148;
+                bgEl.style.clipPath =
+                  wipeIn >= 0.995
+                    ? "polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)"
+                    : `polygon(${lead.toFixed(1)}% 0%, 100% 0%, 100% 100%, ${tail.toFixed(1)}% 100%)`;
+              }
+            }
+          }
+
+          if (wipeIn > 0.005 && wipeOut < 0.995) {
+            const rTop = ribbonTopRefs.current[cIdx];
+            const rBot = ribbonBotRefs.current[cIdx];
+            if (rTop) {
+              rTop.style.transform = `translate3d(${(240 - local * 720).toFixed(1)}px, 0, 0) skewX(-12deg)`;
+            }
+            if (rBot) {
+              rBot.style.transform = `translate3d(${(-260 + local * 720).toFixed(1)}px, 0, 0) skewX(-12deg)`;
+            }
+          }
+
+          const exitFade = clamp01((p - (nextStart - 0.005)) / 0.04);
+          const fgOp = clamp01(wipeIn * 1.6) * (1 - exitFade);
+
+          if (fgEl) {
+            if (fgOp <= 0.005) {
+              fgEl.style.visibility = "hidden";
+              fgEl.style.opacity = "0";
+            } else {
+              fgEl.style.visibility = "visible";
+              fgEl.style.opacity = fgOp.toFixed(3);
+              fgEl.style.transform = `translate3d(0, ${(-exitFade * 44).toFixed(1)}px, 0)`;
+
+              const chars = ch.chars;
+              for (let i = 0; i < chars.length; i++) {
+                const cSpan = charRefs.current[cIdx]?.[i];
+                if (!cSpan) continue;
+                const cT = clamp01((local * 1.45 - i * 0.032) / 0.28);
+                const sp = easeOutBack(cT);
+                const dropY = (1 - sp) * (i % 2 === 0 ? -52 : 52);
+                const sk = (1 - sp) * -16;
+                const sc = Math.max(0.2, 1.42 - sp * 0.42);
+                cSpan.style.opacity = clamp01(cT * 3.2).toFixed(3);
+                cSpan.style.transform = `translate3d(0, ${dropY.toFixed(1)}px, 0) skewX(${sk.toFixed(1)}deg) scale(${sc.toFixed(3)})`;
+              }
+
+              const scannedIdx =
+                hoveredRowRef.current !== null
+                  ? hoveredRowRef.current
+                  : Math.min(3, Math.floor(clamp01(local * 1.15) * 4));
+              if (activeChIdx === cIdx) {
+                skillsScrollRef.current.activeRow = scannedIdx;
+              }
+
+              ch.rows.forEach((row, rIdx) => {
+                const rowEl = rowRefs.current[cIdx]?.[rIdx];
+                const barEl = barRefs.current[cIdx]?.[rIdx];
+                const rT = clamp01((local * 1.5 - 0.06 - rIdx * 0.065) / 0.3);
+                const rSp = easeOutBack(rT);
+                const isLit = rIdx === scannedIdx;
+
+                if (rowEl) {
+                  const slideX = (1 - rSp) * -80 + (isLit ? 10 : 0);
+                  const skew = (1 - rSp) * -6;
+                  rowEl.style.opacity = clamp01(rT * 2.8).toFixed(3);
+                  rowEl.style.transform = `translate3d(${slideX.toFixed(1)}px, 0, 0) skewX(${skew.toFixed(1)}deg)`;
+                  rowEl.style.borderColor = isLit
+                    ? `${ch.accentHex}99`
+                    : "rgba(255,255,255,0.10)";
+                  rowEl.style.backgroundColor = isLit
+                    ? "rgba(15, 23, 42, 0.78)"
+                    : "rgba(15, 23, 42, 0.44)";
+                  rowEl.style.boxShadow = isLit
+                    ? `0 14px 36px -8px ${ch.accentHex}33`
+                    : "0 8px 24px -10px rgba(0,0,0,0.35)";
+                }
+                if (barEl) {
+                  const bf = clamp01(rT * 1.2) * row.fill;
+                  barEl.style.transform = `scaleX(${bf.toFixed(3)})`;
+                  barEl.style.opacity = isLit ? "1" : "0.45";
+                }
+              });
+            }
+          }
         });
 
         // ====================================================================
-        // BEAT 0 (0.00 -> 0.16): INTRO MONUMENT
+        // BEAT 5 (0.82 -> 1.00): WHITE CIRCULAR IRIS WIPE + "STAND OUT" FINALE
         // ====================================================================
-        const s0Split = clamp01((p - 0.1) / 0.06);
-        if (stage0Ref.current) {
-          stage0Ref.current.style.opacity = (1 - s0Split).toFixed(3);
+        if (stageFinaleRef.current) {
+          const rad = irisP * 148;
+          stageFinaleRef.current.style.clipPath = `circle(${rad.toFixed(1)}% at 50% 92%)`;
+          stageFinaleRef.current.style.opacity = irisP > 0.005 ? "1" : "0";
+          stageFinaleRef.current.style.visibility =
+            irisP > 0.005 ? "visible" : "hidden";
+          stageFinaleRef.current.style.pointerEvents =
+            irisP > 0.45 ? "auto" : "none";
         }
-        if (giantNumRef.current) {
-          giantNumRef.current.style.transform = `scale(${(0.95 + p * 1.1).toFixed(3)})`;
-        }
-        if (s0Line1Ref.current) {
-          s0Line1Ref.current.style.transform = `translate3d(${(-s0Split * 220).toFixed(1)}px, 0, 0) skewX(${(-s0Split * 10).toFixed(1)}deg)`;
-        }
-        if (s0Line2Ref.current) {
-          s0Line2Ref.current.style.transform = `translate3d(${(s0Split * 220).toFixed(1)}px, 0, 0) skewX(${(s0Split * 10).toFixed(1)}deg)`;
-        }
-
-        // ====================================================================
-        // BEAT 1 (0.14 -> 0.34): 01 // CIVIL & STRUCTURAL (Horizontal Shutter Wipe!)
-        // ====================================================================
-        const w1 = easeInOutCubic(clamp01((p - 0.14) / 0.055));
-        const l1 = clamp01((p - 0.15) / 0.18);
-        if (stage1CivilRef.current) {
-          stage1CivilRef.current.style.clipPath = `inset(0% 0% 0% ${((1 - w1) * 100).toFixed(2)}%)`;
-          stage1CivilRef.current.style.visibility = w1 > 0.005 ? "visible" : "hidden";
-        }
-        if (w1 > 0.005) {
-          const enter1 = clamp01(l1 * 3.2);
-          if (civilContentRef.current) {
-            civilContentRef.current.style.transform = `translate3d(${((1 - enter1) * -40).toFixed(1)}px, 0, 0)`;
+        if (irisP > 0.005) {
+          const pScale = 0.72 + irisP * 0.28;
+          if (finalePortraitRef.current) {
+            finalePortraitRef.current.style.transform = `scale(${pScale.toFixed(3)})`;
           }
-          if (civilDiagramRef.current) {
-            civilDiagramRef.current.style.transform = `translate3d(${((1 - enter1) * 45).toFixed(1)}px, ${(l1 * -14).toFixed(1)}px, 0)`;
+          if (finaleLine1Ref.current) {
+            const show1 = p > 0.87;
+            finaleLine1Ref.current.style.opacity = show1 ? "1" : "0.2";
+            finaleLine1Ref.current.style.transform = show1
+              ? "translate3d(0, 0, 0)"
+              : "translate3d(0, 18px, 0)";
           }
-          CIVIL_ROWS.forEach((row, idx) => {
-            const bar = civilBarRefs.current[idx];
-            if (!bar) return;
-            const bf = clamp01((l1 - idx * 0.05) * 3.5) * row.fill;
-            bar.style.transform = `scaleX(${bf.toFixed(3)})`;
-          });
-        }
-
-        // ====================================================================
-        // BEAT 2 (0.32 -> 0.52): 02 // SOFTWARE & COMPUTATIONAL (Vertical Shutter Wipe!)
-        // ====================================================================
-        const w2 = easeInOutCubic(clamp01((p - 0.32) / 0.055));
-        const l2 = clamp01((p - 0.33) / 0.18);
-        if (stage2SoftRef.current) {
-          stage2SoftRef.current.style.clipPath = `inset(${((1 - w2) * 100).toFixed(2)}% 0% 0% 0%)`;
-          stage2SoftRef.current.style.visibility = w2 > 0.005 ? "visible" : "hidden";
-        }
-        if (w2 > 0.005) {
-          const enter2 = clamp01(l2 * 3.2);
-          if (softContentRef.current) {
-            softContentRef.current.style.transform = `translate3d(${((1 - enter2) * 40).toFixed(1)}px, 0, 0)`;
+          if (finaleLine2Ref.current) {
+            const show2 = p > 0.895;
+            finaleLine2Ref.current.style.opacity = show2 ? "1" : "0.2";
+            finaleLine2Ref.current.style.transform = show2
+              ? "translate3d(0, 0, 0)"
+              : "translate3d(0, 18px, 0)";
           }
-          if (softDiagramRef.current) {
-            softDiagramRef.current.style.transform = `translate3d(${((1 - enter2) * -45).toFixed(1)}px, ${(l2 * -12).toFixed(1)}px, 0)`;
-          }
-          SOFTWARE_ROWS.forEach((row, idx) => {
-            const bar = softBarRefs.current[idx];
-            if (!bar) return;
-            const bf = clamp01((l2 - idx * 0.05) * 3.5) * row.fill;
-            bar.style.transform = `scaleX(${bf.toFixed(3)})`;
-          });
+          setStandOutDOM(p > 0.92);
+        } else {
+          setStandOutDOM(false);
         }
-
-        // ====================================================================
-        // BEAT 3 (0.50 -> 0.70): 03 // UI/UX & 3D MOTION (Horizontal Shutter Wipe!)
-        // ====================================================================
-        const w3 = easeInOutCubic(clamp01((p - 0.5) / 0.055));
-        const l3 = clamp01((p - 0.51) / 0.18);
-        if (stage3DesignRef.current) {
-          stage3DesignRef.current.style.clipPath = `inset(0% ${((1 - w3) * 100).toFixed(2)}% 0% 0%)`;
-          stage3DesignRef.current.style.visibility = w3 > 0.005 ? "visible" : "hidden";
-        }
-        if (w3 > 0.005) {
-          const enter3 = clamp01(l3 * 3.2);
-          if (designContentRef.current) {
-            designContentRef.current.style.transform = `translate3d(${((1 - enter3) * -40).toFixed(1)}px, 0, 0)`;
-          }
-          if (designDiagramRef.current) {
-            designDiagramRef.current.style.transform = `translate3d(${((1 - enter3) * 45).toFixed(1)}px, 0, 0)`;
-          }
-          if (designBezierRef.current) {
-            const dash = 460 * (1 - clamp01(l3 * 2.2));
-            designBezierRef.current.style.strokeDashoffset = dash.toFixed(1);
-          }
-          DESIGN_ROWS.forEach((row, idx) => {
-            const bar = designBarRefs.current[idx];
-            if (!bar) return;
-            const bf = clamp01((l3 - idx * 0.05) * 3.5) * row.fill;
-            bar.style.transform = `scaleX(${bf.toFixed(3)})`;
-          });
-        }
-
-        // ====================================================================
-        // BEAT 4 (0.68 -> 0.86): 04 // OFF-CLOCK HOBBIES (Vertical Shutter Wipe!)
-        // ====================================================================
-        const w4 = easeInOutCubic(clamp01((p - 0.68) / 0.055));
-        const l4 = clamp01((p - 0.69) / 0.16);
-        if (stage4HobbyRef.current) {
-          stage4HobbyRef.current.style.clipPath = `inset(${((1 - w4) * 100).toFixed(2)}% 0% 0% 0%)`;
-          stage4HobbyRef.current.style.visibility = w4 > 0.005 ? "visible" : "hidden";
-        }
-        if (w4 > 0.005) {
-          const enter4 = clamp01(l4 * 3.2);
-          if (hobbyContentRef.current) {
-            hobbyContentRef.current.style.transform = `translate3d(${((1 - enter4) * -36).toFixed(1)}px, 0, 0)`;
-          }
-          if (hobbyVisualRef.current) {
-            hobbyVisualRef.current.style.transform = `translate3d(${((1 - enter4) * 36).toFixed(1)}px, 0, 0)`;
-          }
-        }
-
-        // ====================================================================
-        // BEAT 5 (0.84 -> 1.00): FINALE PITCH ("STAND OUT")
-        // ====================================================================
-        const w5 = easeInOutCubic(clamp01((p - 0.84) / 0.06));
-        if (stage5FinaleRef.current) {
-          stage5FinaleRef.current.style.clipPath = `inset(0% 0% 0% ${((1 - w5) * 100).toFixed(2)}%)`;
-          stage5FinaleRef.current.style.visibility = w5 > 0.005 ? "visible" : "hidden";
-          stage5FinaleRef.current.style.pointerEvents = w5 > 0.6 ? "auto" : "none";
-        }
-        if (finalePortraitRef.current) {
-          const pSc = 0.86 + w5 * 0.14;
-          finalePortraitRef.current.style.transform = `scale(${pSc.toFixed(3)})`;
-        }
-        setStandOutDOM(p > 0.91);
       };
 
       const st = ScrollTrigger.create({
@@ -454,369 +706,365 @@ export function Act4SkillsPitch() {
         },
       });
 
-      // Pre-seed initial p=0 state immediately on mount (zero flick!)
+      currentEntranceP = entranceSt.progress;
       applyProgress(st.progress);
     }, section);
 
-    return () => ctx.revert();
+    return () => {
+      observer.disconnect();
+      ctx.revert();
+    };
   }, [setActiveChapter, setLetterboxActive]);
 
-  const jumpToStage = (targetP: number) => {
-    const section = sectionRef.current;
-    if (!section) return;
-    const rectTop = section.getBoundingClientRect().top + window.scrollY;
-    const scrollable = Math.max(1, section.offsetHeight - window.innerHeight);
-    window.scrollTo({ top: rectTop + targetP * scrollable, behavior: "smooth" });
+  const jumpToRatio = (ratio: number) => {
+    const el = sectionRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const absTop = window.scrollY + rect.top;
+    const travel = Math.max(0, el.offsetHeight - window.innerHeight);
+    window.scrollTo({
+      top: absTop + travel * ratio,
+      behavior: "smooth",
+    });
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLElement>) => {
+    const nx = (e.clientX / Math.max(1, window.innerWidth)) * 2 - 1;
+    const ny = (e.clientY / Math.max(1, window.innerHeight)) * 2 - 1;
+    skillsScrollRef.current.pointerX = nx;
+    skillsScrollRef.current.pointerY = ny;
   };
 
   return (
     <section
       id="act-4"
       ref={sectionRef}
-      className="relative h-[580vh] w-full bg-[#F4F7FB] text-[#07131C]"
+      onPointerMove={handlePointerMove}
+      className="relative h-[640vh] w-full bg-[#F8FAFC]"
     >
-      <div className="sticky top-0 flex h-[100dvh] w-full items-center justify-center overflow-hidden bg-[#F4F7FB]">
-        {/* === TOP-LEFT ARCHITECTURAL DISCIPLINE INDEX & QUICK-JUMP STRIP === */}
-        <div className="pointer-events-none absolute left-4 top-14 sm:left-12 sm:top-6 z-50 flex flex-wrap items-center gap-3">
-          <span
-            ref={chapterCodeRef}
-            className="font-mono text-[10px] sm:text-[11px] font-extrabold uppercase tracking-[0.22em] text-[#07131C] transition-colors duration-200"
-          >
-            04.00 // OVERVIEW
-          </span>
-          <div className="pointer-events-auto hidden sm:flex items-center gap-2">
-            {[
-              { label: "01 Civil", p: 0.22 },
-              { label: "02 Software", p: 0.4 },
-              { label: "03 UI/UX 3D", p: 0.58 },
-              { label: "04 Hobbies", p: 0.76 },
-            ].map((item, idx) => (
-              <button
-                key={item.label}
-                type="button"
-                onClick={() => jumpToStage(item.p)}
-                className="group flex flex-col gap-1 px-1.5 py-0.5 text-left cursor-pointer"
-              >
-                <span className="font-mono text-[9px] font-bold uppercase tracking-wider text-slate-400 group-hover:text-[#38BDF8]">
-                  {item.label}
-                </span>
-                <span className="block h-[2px] w-14 bg-slate-400/30">
-                  <span
-                    ref={(el) => {
-                      segBarRefs.current[idx] = el;
-                    }}
-                    className="block h-full w-full origin-left bg-[#38BDF8] will-change-transform"
-                    style={{ transform: "scaleX(0.08)" }}
-                  />
-                </span>
-              </button>
-            ))}
-          </div>
+      <div className="sticky top-0 h-[100dvh] w-full overflow-hidden">
+        {/* ================================================================
+            ROUNDED-2XL TACTILE CHAPTER DOCK (VISIBLE ONLY IN SKILLS 01..04)
+           ================================================================ */}
+        <div
+          ref={hudDockRef}
+          style={{ opacity: 0, visibility: "hidden" }}
+          className="pointer-events-auto absolute left-4 top-20 sm:left-10 sm:top-22 z-[48] inline-flex items-center gap-1 rounded-2xl border border-white/12 bg-slate-950/65 p-1.5 shadow-[0_16px_40px_rgba(0,0,0,0.4)] backdrop-blur-xl"
+        >
+          {CHAPTERS.map((ch, idx) => (
+            <button
+              key={ch.id}
+              ref={(el) => {
+                tabBtnRefs.current[idx] = el;
+              }}
+              type="button"
+              onClick={() => jumpToRatio(ch.jumpRatio)}
+              className="group flex flex-col items-start rounded-xl px-2.5 py-1.5 sm:px-3.5 sm:py-1.5 text-left transition-all duration-200 cursor-pointer"
+            >
+              <span className="font-mono text-[9px] sm:text-[10px] font-bold tracking-wider whitespace-nowrap">
+                {ch.shortTab}
+              </span>
+              <span className="mt-1 relative h-1 w-full rounded-full bg-white/15 overflow-hidden">
+                <span
+                  ref={(el) => {
+                    tabFillRefs.current[idx] = el;
+                  }}
+                  className="absolute inset-0 origin-left rounded-full will-change-transform"
+                  style={{
+                    backgroundColor: ch.accentHex,
+                    transform: "scaleX(0.08)",
+                  }}
+                />
+              </span>
+            </button>
+          ))}
         </div>
 
         {/* ================================================================
-            BEAT 0 (0.00 -> 0.16): INTRO MONUMENT
+            BEAT 0: DYNAMIC KINETIC 45+ ENTRANCE STAGE (ZERO 3D CUBE!)
            ================================================================ */}
         <div
-          ref={stage0Ref}
-          className="absolute inset-0 z-10 flex flex-col items-center justify-center overflow-hidden px-4 text-center"
+          ref={bg0Ref}
+          className="absolute inset-0 z-10 flex flex-col items-center justify-center overflow-hidden bg-[#F8FAFC] px-6"
         >
-          <div className="dot-grid-light pointer-events-none absolute inset-0" />
-          <span
-            ref={giantNumRef}
+          <div className="mosaic-grid pointer-events-none absolute inset-0 opacity-50" />
+
+          {/* Subtle Counter-Gliding Kinetic Background Typography Streams */}
+          <div
+            ref={introMarqueeTopRef}
             aria-hidden="true"
-            className="pointer-events-none absolute font-display text-[36vw] sm:text-[26vw] font-black leading-none tracking-tighter text-[#1D4ED8]/[0.08] select-none will-change-transform"
+            className="pointer-events-none absolute top-[13%] whitespace-nowrap font-display text-[13vw] sm:text-[9.5vw] font-black uppercase tracking-tighter text-[#1D4ED8]/[0.045] select-none will-change-transform"
           >
-            0+
-          </span>
+            STRUCTURAL ENGINEERING • FULL-STACK SYSTEMS • SPATIAL 3D •
+          </div>
+          <div
+            ref={introMarqueeBotRef}
+            aria-hidden="true"
+            className="pointer-events-none absolute bottom-[11%] whitespace-nowrap font-display text-[13vw] sm:text-[9.5vw] font-black uppercase tracking-tighter text-[#07131C]/[0.04] select-none will-change-transform"
+          >
+            280M SPANS • 120 FPS WEBGL • ZERO-HANDOFF PRODUCTION •
+          </div>
 
-          <div className="relative z-10 flex flex-col items-center max-w-4xl">
-            <span className="font-mono text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.26em] text-[#1D4ED8]">
-              {PORTFOLIO_DATA.skillsSection.experienceLabel} • 4 DEDICATED CHAPTERS
+          {/* Outer Tactile Rounded-2xl Floating Telemetry Chips (Desktop Safe Corners) */}
+          <div
+            ref={introChipLeftRef}
+            aria-hidden="true"
+            className="pointer-events-none hidden md:flex absolute left-[9%] lg:left-[14%] top-[34%] items-center gap-2 rounded-2xl border border-slate-200 bg-white/95 px-4 py-2.5 shadow-[0_16px_35px_rgba(29,78,216,0.12)] will-change-transform"
+          >
+            <span className="h-2.5 w-2.5 rounded-md bg-[#C6FF3D] ring-2 ring-[#07131C]/15" />
+            <span className="font-mono text-[10px] font-extrabold uppercase tracking-wider text-slate-700">
+              Civil × Software
             </span>
+          </div>
+          <div
+            ref={introChipRightRef}
+            aria-hidden="true"
+            className="pointer-events-none hidden md:flex absolute right-[9%] lg:right-[14%] bottom-[34%] items-center gap-2 rounded-2xl border border-slate-200 bg-[#07131C] px-4 py-2.5 shadow-[0_16px_35px_rgba(7,19,28,0.2)] will-change-transform"
+          >
+            <span className="h-2.5 w-2.5 rounded-md bg-[#38BDF8]" />
+            <span className="font-mono text-[10px] font-extrabold uppercase tracking-wider text-[#C6FF3D]">
+              60–120 FPS Craft
+            </span>
+          </div>
 
-            <h2 className="mt-3 flex flex-col items-center leading-[0.9] select-none">
-              <div
-                ref={s0Line1Ref}
-                className="font-display text-[clamp(2.3rem,10.5vw,6.8rem)] font-black uppercase tracking-tight text-[#07131C] will-change-transform"
+          <div className="relative z-10 flex flex-col items-center text-center max-w-4xl">
+            {/* Tactile Volt-Lime Squircle Kicker Badge */}
+            <div
+              ref={introKickerRef}
+              className="rounded-xl bg-[#C6FF3D] px-4 py-1.5 shadow-[0_10px_28px_rgba(198,255,61,0.5)] ring-2 ring-[#07131C]/10 will-change-transform"
+            >
+              <span className="font-mono text-[10px] sm:text-[11px] font-extrabold uppercase tracking-[0.22em] text-[#07131C]">
+                {PORTFOLIO_DATA.skillsSection.experienceLabel}
+              </span>
+            </div>
+
+            {/* Layered 3D Chromatic Pop Counter ("45+") */}
+            <div
+              ref={numStageRef}
+              className="relative mt-3 inline-flex items-center justify-center select-none will-change-transform"
+            >
+              <span
+                ref={giantNumLimeEchoRef}
+                aria-hidden="true"
+                className="pointer-events-none absolute font-display text-[clamp(5.4rem,20vw,15rem)] font-black leading-[0.84] tracking-tighter text-[#C6FF3D] will-change-transform"
               >
-                DISCIPLINES
-              </div>
-              <div
-                ref={s0Line2Ref}
-                className="flex flex-wrap items-baseline justify-center gap-x-3 font-display text-[clamp(2.1rem,9.5vw,6.2rem)] font-black uppercase tracking-tight text-[#1D4ED8] will-change-transform"
+                45+
+              </span>
+              <span
+                ref={giantNumCyanEchoRef}
+                aria-hidden="true"
+                className="pointer-events-none absolute font-display text-[clamp(5.4rem,20vw,15rem)] font-black leading-[0.84] tracking-tighter text-[#38BDF8]/55 will-change-transform"
               >
-                <span className="font-serif italic font-normal text-[#07131C]">&amp;</span>
-                <span>CRAFT</span>
-              </div>
-            </h2>
+                45+
+              </span>
+              <span
+                ref={giantNumMainRef}
+                className="relative z-10 font-display text-[clamp(5.4rem,20vw,15rem)] font-black leading-[0.84] tracking-tighter text-[#1D4ED8] drop-shadow-[0_16px_36px_rgba(29,78,216,0.22)]"
+              >
+                45+
+              </span>
+            </div>
 
-            <p className="mt-3 font-mono text-[10px] sm:text-xs font-bold uppercase tracking-[0.22em] text-slate-500">
-              01 Civil Engineering — 02 Software Systems — 03 UI/UX &amp; 3D — 04 Off-Clock Hobbies
-            </p>
+            {/* Opposite-Velocity Whip Headlines */}
+            <div
+              ref={s0TopLineRef}
+              className="mt-3 font-display text-2xl sm:text-5xl font-black uppercase tracking-tight text-[#07131C] will-change-transform"
+            >
+              {PORTFOLIO_DATA.skillsSection.primaryStatTop}
+            </div>
+            <div
+              ref={s0BotLineRef}
+              className="font-serif-editorial text-2xl sm:text-5xl italic text-[#1D4ED8] will-change-transform"
+            >
+              {PORTFOLIO_DATA.skillsSection.primaryStatBottom}
+            </div>
 
-            <div className="mt-5 flex items-center justify-center gap-2">
-              {CORE_TOOLS.map((t) => (
-                <ToolBadge key={t} tool={t} size="sm" />
+            {/* Staggered Parabolic Spring-Wave of Squircle Tool Icons */}
+            <div className="mt-7 flex flex-wrap items-center justify-center gap-3.5 sm:gap-4">
+              {CORE_TOOLS.map((tool, idx) => (
+                <div
+                  key={tool}
+                  ref={(el) => {
+                    introBadgeRefs.current[idx] = el;
+                  }}
+                  className="will-change-transform"
+                >
+                  <ToolBadge tool={tool} size="md" />
+                </div>
               ))}
             </div>
           </div>
         </div>
 
         {/* ================================================================
-            BEAT 1 (0.14 -> 0.34): DEDICATED STAGE 01 — CIVIL & STRUCTURAL
+            BEATS 1..4 BACKGROUND ATMOSPHERE & GIANT RACING RIBBONS
+           ================================================================ */}
+        {CHAPTERS.map((ch, idx) => {
+          const gradients = [
+            "bg-[#090D16] bg-[radial-gradient(circle_at_72%_48%,rgba(245,158,11,0.22)_0%,rgba(67,20,7,0.38)_42%,#090D16_80%)]",
+            "bg-[#050C1A] bg-[radial-gradient(circle_at_72%_48%,rgba(56,189,248,0.22)_0%,rgba(29,78,216,0.32)_44%,#050C1A_82%)]",
+            "bg-[#0A0F24] bg-[radial-gradient(circle_at_72%_48%,rgba(198,255,61,0.16)_0%,rgba(124,58,237,0.28)_44%,#0A0F24_82%)]",
+            "bg-[#0D0716] bg-[radial-gradient(circle_at_72%_48%,rgba(255,107,74,0.22)_0%,rgba(147,51,234,0.28)_44%,#0D0716_82%)]",
+          ];
+          return (
+            <div
+              key={ch.id}
+              ref={(el) => {
+                bgChapterRefs.current[idx] = el;
+              }}
+              style={{ visibility: "hidden", zIndex: 14 + idx * 2 }}
+              className={`pointer-events-none absolute inset-0 overflow-hidden ${gradients[idx]}`}
+            >
+              <div className="blueprint-grid absolute inset-0 opacity-30" />
+
+              <div
+                ref={(el) => {
+                  ribbonTopRefs.current[idx] = el;
+                }}
+                aria-hidden="true"
+                className="absolute top-[13%] whitespace-nowrap font-display text-[15vw] sm:text-[10.5vw] font-black uppercase tracking-tighter text-white/[0.045] select-none will-change-transform"
+              >
+                {ch.ribbonTop}
+              </div>
+              <div
+                ref={(el) => {
+                  ribbonBotRefs.current[idx] = el;
+                }}
+                aria-hidden="true"
+                className="absolute bottom-[8%] whitespace-nowrap font-display text-[15vw] sm:text-[10.5vw] font-black uppercase tracking-tighter text-white/[0.045] select-none will-change-transform"
+              >
+                {ch.ribbonBot}
+              </div>
+            </div>
+          );
+        })}
+
+        {/* ================================================================
+            REAL-TIME 60-120 FPS BEVELED 3D SCULPTURE STAGE (BEATS 1..4 ONLY)
            ================================================================ */}
         <div
-          ref={stage1CivilRef}
-          className="absolute inset-0 z-20 flex items-center bg-[#06131F] px-5 pb-6 pt-20 sm:px-12 sm:py-16 text-white"
-          style={{ clipPath: "inset(0% 0% 0% 100%)", visibility: "hidden" }}
+          ref={canvasLayerRef}
+          style={{ opacity: 0, visibility: "hidden" }}
+          className="pointer-events-none absolute inset-0 z-[34]"
         >
-          <div className="blueprint-grid pointer-events-none absolute inset-0 opacity-35" />
+          <Skills3DStage scrollRef={skillsScrollRef} active={inView} />
+        </div>
+
+        {/* Bottom-Right Rounded-2xl 3D Digital Twin Badge (Desktop) */}
+        <div
+          ref={twinReadoutRef}
+          className="pointer-events-none hidden lg:flex absolute right-10 bottom-8 z-[44] flex-col items-end gap-0.5 rounded-2xl border border-white/12 bg-slate-950/60 px-4 py-2.5 text-right shadow-xl backdrop-blur-xl opacity-0"
+        >
           <span
-            aria-hidden="true"
-            className="pointer-events-none absolute right-6 bottom-2 font-display text-[24vw] sm:text-[17vw] font-black leading-none tracking-tighter text-[#38BDF8]/[0.06] select-none"
+            ref={twinLabelSpanRef}
+            className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-[#C6FF3D]"
           >
-            01
+            3D Twin • Active
           </span>
-
-          <div className="relative z-10 mx-auto grid w-full max-w-[1360px] grid-cols-1 items-center gap-6 lg:grid-cols-12 lg:gap-12">
-            {/* LEFT: Architectural Hairline Skill Ledger */}
-            <div ref={civilContentRef} className="lg:col-span-6 will-change-transform">
-              <div className="flex items-center gap-3">
-                <span className="h-[2px] w-8 bg-[#38BDF8]" />
-                <span className="font-mono text-[10px] sm:text-xs font-bold uppercase tracking-[0.26em] text-[#38BDF8]">
-                  DISCIPLINE 01 // PHYSICAL INFRASTRUCTURE
-                </span>
-              </div>
-
-              <h3 className="mt-2 font-display text-[clamp(2rem,5.2vw,4rem)] font-black uppercase leading-[0.92] tracking-tight text-white">
-                Civil &amp;{" "}
-                <span className="font-serif italic font-normal capitalize text-[#38BDF8]">
-                  Structural.
-                </span>
-              </h3>
-
-              <div className="mt-4 sm:mt-6 divide-y divide-white/12 border-y border-white/12">
-                {CIVIL_ROWS.map((row, idx) => (
-                  <div key={row.code} className="py-2.5 sm:py-3.5">
-                    <div className="flex items-baseline justify-between gap-2">
-                      <div className="flex items-baseline gap-2.5 min-w-0">
-                        <span className="font-mono text-[10px] font-bold text-[#38BDF8]">
-                          {row.code}
-                        </span>
-                        <span className="truncate font-display text-sm sm:text-lg font-bold text-white">
-                          {row.title}
-                        </span>
-                      </div>
-                      <span className="shrink-0 font-mono text-[10px] font-extrabold uppercase tracking-wider text-[#C6FF3D]">
-                        {row.metric}
-                      </span>
-                    </div>
-                    <p className="mt-0.5 pl-12 font-mono text-[10px] sm:text-[11px] text-slate-400">
-                      {row.spec}
-                    </p>
-                    <div className="mt-1.5 ml-12 h-[2px] w-[calc(100%-3rem)] bg-white/10">
-                      <span
-                        ref={(el) => {
-                          civilBarRefs.current[idx] = el;
-                        }}
-                        className="block h-full w-full origin-left bg-gradient-to-r from-[#38BDF8] to-[#C6FF3D] will-change-transform"
-                        style={{ transform: "scaleX(0)" }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* RIGHT: Open-Canvas Structural Bridge Elevation & Moment Diagram (NO Circle/Card!) */}
-            <div
-              ref={civilDiagramRef}
-              className="hidden sm:flex lg:col-span-6 flex-col justify-center will-change-transform"
-            >
-              <svg viewBox="0 0 620 380" className="w-full h-auto overflow-visible" fill="none">
-                {/* CAD Dimension Line */}
-                <line x1="40" y1="36" x2="580" y2="36" stroke="#38BDF8" strokeOpacity="0.5" strokeWidth="1" />
-                <line x1="40" y1="28" x2="40" y2="44" stroke="#38BDF8" strokeWidth="1.5" />
-                <line x1="580" y1="28" x2="580" y2="44" stroke="#38BDF8" strokeWidth="1.5" />
-                <text x="310" y="26" textAnchor="middle" fill="#38BDF8" fontSize="11" fontFamily="monospace" fontWeight="bold">
-                  L = 280.00m CABLE-STAYED MAIN SPAN // FEA ENVELOPE
-                </text>
-
-                {/* Twin Towers */}
-                <path d="M175 245 L182 68 L190 68 L197 245" stroke="#F8FAFC" strokeWidth="3" />
-                <path d="M423 245 L430 68 L438 68 L445 245" stroke="#F8FAFC" strokeWidth="3" />
-
-                {/* Fan Stay Cables */}
-                {[-125, -95, -65, -35, 35, 65, 95, 125].map((dx, i) => (
-                  <g key={i}>
-                    <line
-                      x1="186"
-                      y1={78 + Math.abs(dx) * 0.22}
-                      x2={186 + dx}
-                      y2="205"
-                      stroke={i % 3 === 0 ? "#C6FF3D" : "#38BDF8"}
-                      strokeOpacity="0.8"
-                      strokeWidth="1.4"
-                    />
-                    <line
-                      x1="434"
-                      y1={78 + Math.abs(dx) * 0.22}
-                      x2={434 + dx}
-                      y2="205"
-                      stroke={i % 3 === 0 ? "#C6FF3D" : "#38BDF8"}
-                      strokeOpacity="0.8"
-                      strokeWidth="1.4"
-                    />
-                  </g>
-                ))}
-
-                {/* Main Highway Deck Girder */}
-                <line x1="30" y1="205" x2="590" y2="205" stroke="#FFFFFF" strokeWidth="4" />
-                <line x1="30" y1="212" x2="590" y2="212" stroke="#38BDF8" strokeWidth="1.5" />
-
-                {/* Bending Moment Diagram Curve Below Deck */}
-                <path
-                  d="M 40 285 Q 112 330 186 250 Q 310 365 434 250 Q 508 330 580 285"
-                  stroke="#C6FF3D"
-                  strokeWidth="2.5"
-                  fill="rgba(198,255,61,0.08)"
-                />
-                <line x1="40" y1="285" x2="580" y2="285" stroke="#94A3B8" strokeDasharray="5 5" strokeWidth="1" />
-                <text x="310" y="356" textAnchor="middle" fill="#C6FF3D" fontSize="11" fontFamily="monospace" fontWeight="bold">
-                  BENDING MOMENT ENVELOPE: Mu = 412.6 kN·m ≤ φMn (PASS)
-                </text>
-              </svg>
-
-              <div className="mt-2 flex items-center justify-end gap-3">
-                <ToolBadge tool="autocad" size="sm" />
-                <ToolBadge tool="revit" size="sm" />
-              </div>
-            </div>
-          </div>
+          <span className="font-mono text-[9px] uppercase tracking-[0.16em] text-slate-400">
+            Move cursor or hover cards to inspect 3D rig
+          </span>
         </div>
 
         {/* ================================================================
-            BEAT 2 (0.32 -> 0.52): DEDICATED STAGE 02 — SOFTWARE & SOLVERS
+            4 SEPARATED KINETIC FOREGROUND DISCIPLINE CHOREOGRAPHIES
+            (TACTILE ROUNDED-2XL CARDS MATCHING PORTFOLIO SQUIRCLE THEME!)
            ================================================================ */}
-        <div
-          ref={stage2SoftRef}
-          className="absolute inset-0 z-30 flex items-center bg-[#050B14] px-5 pb-6 pt-20 sm:px-12 sm:py-16 text-white"
-          style={{ clipPath: "inset(100% 0% 0% 0%)", visibility: "hidden" }}
-        >
-          <div className="dot-grid-dark pointer-events-none absolute inset-0 opacity-45" />
-          <span
-            aria-hidden="true"
-            className="pointer-events-none absolute left-6 bottom-2 font-display text-[24vw] sm:text-[17vw] font-black leading-none tracking-tighter text-[#C6FF3D]/[0.05] select-none"
+        {CHAPTERS.map((ch, cIdx) => (
+          <div
+            key={ch.id}
+            ref={(el) => {
+              fgChapterRefs.current[cIdx] = el;
+            }}
+            style={{ visibility: "hidden", opacity: 0 }}
+            className="pointer-events-none absolute inset-0 z-[42] mx-auto flex max-w-[1440px] flex-col justify-end lg:justify-center px-4 pb-5 pt-28 sm:px-12 lg:py-16 will-change-transform"
           >
-            02
-          </span>
-
-          <div className="relative z-10 mx-auto grid w-full max-w-[1360px] grid-cols-1 items-center gap-6 lg:grid-cols-12 lg:gap-12">
-            {/* LEFT: Open-Canvas Computational Architecture & Code Stream (NO Circle/Card!) */}
-            <div
-              ref={softDiagramRef}
-              className="hidden sm:flex lg:col-span-6 flex-col justify-center order-2 lg:order-1 will-change-transform"
-            >
-              <svg viewBox="0 0 600 320" className="w-full h-auto overflow-visible" fill="none">
-                {/* Architectural Hairline Node Pipeline */}
-                <line x1="160" y1="84" x2="245" y2="148" stroke="#38BDF8" strokeWidth="2" />
-                <line x1="160" y1="212" x2="245" y2="148" stroke="#C6FF3D" strokeWidth="2" />
-                <line x1="395" y1="148" x2="465" y2="148" stroke="#C6FF3D" strokeWidth="2.5" />
-
-                {/* Input Nodes */}
-                <line x1="20" y1="62" x2="160" y2="62" stroke="#38BDF8" strokeWidth="2" />
-                <text x="20" y="84" fill="#FFFFFF" fontSize="13" fontFamily="monospace" fontWeight="bold">
-                  REVIT_IFC.STREAM
-                </text>
-                <text x="20" y="102" fill="#64748B" fontSize="10" fontFamily="monospace">
-                  142,800 Mesh Vertices
-                </text>
-
-                <line x1="20" y1="190" x2="160" y2="190" stroke="#C6FF3D" strokeWidth="2" />
-                <text x="20" y="212" fill="#FFFFFF" fontSize="13" fontFamily="monospace" fontWeight="bold">
-                  LOAD_MATRIX.PY
-                </text>
-                <text x="20" y="230" fill="#64748B" fontSize="10" fontFamily="monospace">
-                  FastAPI • NumPy Stiffness [K]
-                </text>
-
-                {/* Central Solver Engine */}
-                <line x1="245" y1="118" x2="395" y2="118" stroke="#C6FF3D" strokeWidth="3" />
-                <line x1="245" y1="178" x2="395" y2="178" stroke="#38BDF8" strokeOpacity="0.4" strokeWidth="1" />
-                <text x="320" y="146" textAnchor="middle" fill="#C6FF3D" fontSize="15" fontFamily="monospace" fontWeight="bold">
-                  SOLVE_TWIN()
-                </text>
-                <text x="320" y="166" textAnchor="middle" fill="#94A3B8" fontSize="10" fontFamily="monospace">
-                  P99 = 14.2ms • Strict TS
-                </text>
-
-                {/* Output WebGL Stage */}
-                <line x1="465" y1="118" x2="585" y2="118" stroke="#38BDF8" strokeWidth="3" />
-                <text x="465" y="146" fill="#38BDF8" fontSize="15" fontFamily="monospace" fontWeight="bold">
-                  120 FPS WEBGL
-                </text>
-                <text x="465" y="166" fill="#E2E8F0" fontSize="10" fontFamily="monospace">
-                  Next.js 16 • Three.js
-                </text>
-
-                {/* Open-Space Code Excerpt */}
-                <text x="20" y="284" fill="#38BDF8" fontSize="12" fontFamily="monospace">
-                  export const solveSpan = async (mesh: BimGraph): Promise&lt;TwinState&gt; =&gt;
-                </text>
-                <text x="20" y="304" fill="#C6FF3D" fontSize="12" fontFamily="monospace">
-                  {"  computeEigenModes(mesh.stiffnessMatrix, { targetFps: 120 });"}
-                </text>
-              </svg>
-
-              <div className="mt-3 flex items-center gap-3">
-                <ToolBadge tool="typescript" size="sm" />
-                <ToolBadge tool="python" size="sm" />
-              </div>
-            </div>
-
-            {/* RIGHT: Software Hairline Skill Ledger */}
-            <div ref={softContentRef} className="lg:col-span-6 order-1 lg:order-2 will-change-transform">
-              <div className="flex items-center gap-3">
-                <span className="h-[2px] w-8 bg-[#C6FF3D]" />
-                <span className="font-mono text-[10px] sm:text-xs font-bold uppercase tracking-[0.26em] text-[#C6FF3D]">
-                  DISCIPLINE 02 // DIGITAL ARCHITECTURE
+            <div className="pointer-events-auto w-full lg:w-[49%] max-w-[600px]">
+              {/* Tactile Rounded-XL Eyebrow Kicker */}
+              <div className="inline-flex items-center gap-2 rounded-xl border border-white/12 bg-white/[0.06] px-3 py-1 backdrop-blur-md">
+                <span
+                  className="inline-block h-2 w-2 rounded-sm"
+                  style={{ backgroundColor: ch.accentHex }}
+                />
+                <span
+                  className="font-mono text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.2em]"
+                  style={{ color: ch.accentHex }}
+                >
+                  {ch.kicker}
                 </span>
               </div>
 
-              <h3 className="mt-2 font-display text-[clamp(2rem,5.2vw,4rem)] font-black uppercase leading-[0.92] tracking-tight text-white">
-                Software &amp;{" "}
-                <span className="font-serif italic font-normal capitalize text-[#C6FF3D]">
-                  Systems.
-                </span>
+              {/* Per-Character 3D Whip-Slam Discipline Headline */}
+              <h3 className="mt-2 flex flex-wrap items-center font-display text-[clamp(2.35rem,7vw,5.1rem)] font-black leading-[0.9] tracking-tight text-white drop-shadow-[0_14px_34px_rgba(0,0,0,0.65)] select-none">
+                {ch.chars.map((char, charIdx) => (
+                  <span
+                    key={charIdx}
+                    ref={(el) => {
+                      if (!charRefs.current[cIdx]) charRefs.current[cIdx] = [];
+                      charRefs.current[cIdx][charIdx] = el;
+                    }}
+                    style={char === "." ? { color: ch.accentHex } : undefined}
+                    className="inline-block will-change-transform"
+                  >
+                    {char}
+                  </span>
+                ))}
               </h3>
 
-              <div className="mt-4 sm:mt-6 divide-y divide-white/12 border-y border-white/12">
-                {SOFTWARE_ROWS.map((row, idx) => (
-                  <div key={row.code} className="py-2.5 sm:py-3.5">
-                    <div className="flex items-baseline justify-between gap-2">
-                      <div className="flex items-baseline gap-2.5 min-w-0">
-                        <span className="font-mono text-[10px] font-bold text-[#C6FF3D]">
+              {/* 4 Tactile Rounded-2xl Kinetic Skill Cards */}
+              <div className="mt-3 sm:mt-4 flex flex-col gap-2 sm:gap-2.5">
+                {ch.rows.map((row, rIdx) => (
+                  <div
+                    key={row.code}
+                    ref={(el) => {
+                      if (!rowRefs.current[cIdx]) rowRefs.current[cIdx] = [];
+                      rowRefs.current[cIdx][rIdx] = el;
+                    }}
+                    onPointerEnter={() => {
+                      hoveredRowRef.current = rIdx;
+                      skillsScrollRef.current.activeRow = rIdx;
+                    }}
+                    onPointerLeave={() => {
+                      hoveredRowRef.current = null;
+                    }}
+                    className="group relative rounded-2xl border border-white/10 bg-slate-900/50 px-3.5 py-2 sm:px-4 sm:py-2.5 backdrop-blur-md transition-[background-color,border-color,box-shadow] duration-200 will-change-transform"
+                  >
+                    <div className="flex items-center justify-between gap-2.5">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <span
+                          className="shrink-0 rounded-lg px-2 py-0.5 font-mono text-[10px] font-extrabold tracking-wider text-[#07131C]"
+                          style={{ backgroundColor: ch.accentHex }}
+                        >
                           {row.code}
                         </span>
-                        <span className="truncate font-display text-sm sm:text-lg font-bold text-white">
+                        <span className="truncate font-display text-sm sm:text-[16.5px] font-bold text-white">
                           {row.title}
                         </span>
                       </div>
-                      <span className="shrink-0 font-mono text-[10px] font-extrabold uppercase tracking-wider text-[#38BDF8]">
+                      <span
+                        className="shrink-0 rounded-lg border border-white/10 bg-white/[0.06] px-2 py-0.5 font-mono text-[10px] sm:text-[11px] font-bold tracking-wide"
+                        style={{ color: ch.accentHex }}
+                      >
                         {row.metric}
                       </span>
                     </div>
-                    <p className="mt-0.5 pl-12 font-mono text-[10px] sm:text-[11px] text-slate-400">
+
+                    <p className="mt-1 font-sans text-[11px] sm:text-xs text-slate-300/85 line-clamp-1">
                       {row.spec}
                     </p>
-                    <div className="mt-1.5 ml-12 h-[2px] w-[calc(100%-3rem)] bg-white/10">
+
+                    {/* Smooth Rounded-Full Precision Bar */}
+                    <div className="mt-1.5 h-1.5 w-full rounded-full bg-white/10 overflow-hidden">
                       <span
                         ref={(el) => {
-                          softBarRefs.current[idx] = el;
+                          if (!barRefs.current[cIdx]) barRefs.current[cIdx] = [];
+                          barRefs.current[cIdx][rIdx] = el;
                         }}
-                        className="block h-full w-full origin-left bg-gradient-to-r from-[#C6FF3D] to-[#38BDF8] will-change-transform"
-                        style={{ transform: "scaleX(0)" }}
+                        className="block h-full w-full origin-left rounded-full will-change-transform"
+                        style={{
+                          backgroundColor: ch.accentHex,
+                          transform: "scaleX(0)",
+                        }}
                       />
                     </div>
                   </div>
@@ -824,283 +1072,72 @@ export function Act4SkillsPitch() {
               </div>
             </div>
           </div>
-        </div>
+        ))}
 
         {/* ================================================================
-            BEAT 3 (0.50 -> 0.70): DEDICATED STAGE 03 — UI/UX & 3D DESIGN
+            BEAT 5 (0.82 -> 1.00): WHITE CIRCULAR IRIS WIPE + "STAND OUT"
            ================================================================ */}
         <div
-          ref={stage3DesignRef}
-          className="absolute inset-0 z-40 flex items-center bg-[#F5F7FB] px-5 pb-6 pt-20 sm:px-12 sm:py-16 text-[#07131C]"
-          style={{ clipPath: "inset(0% 100% 0% 0%)", visibility: "hidden" }}
+          ref={stageFinaleRef}
+          style={{
+            opacity: 0,
+            clipPath: "circle(0% at 50% 92%)",
+            visibility: "hidden",
+            pointerEvents: "none",
+          }}
+          className="absolute inset-0 z-[52] flex items-center justify-center bg-white text-[#07131C]"
         >
-          <div className="mosaic-grid pointer-events-none absolute inset-0 opacity-40" />
-          <span
-            aria-hidden="true"
-            className="pointer-events-none absolute right-6 bottom-2 font-display text-[24vw] sm:text-[17vw] font-black leading-none tracking-tighter text-[#1D4ED8]/[0.06] select-none"
-          >
-            03
-          </span>
-
-          <div className="relative z-10 mx-auto grid w-full max-w-[1360px] grid-cols-1 items-center gap-6 lg:grid-cols-12 lg:gap-12">
-            {/* LEFT: Swiss-Grid UI/UX & 3D Ledger */}
-            <div ref={designContentRef} className="lg:col-span-6 will-change-transform">
-              <div className="flex items-center gap-3">
-                <span className="h-[2px] w-8 bg-[#1D4ED8]" />
-                <span className="font-mono text-[10px] sm:text-xs font-bold uppercase tracking-[0.26em] text-[#1D4ED8]">
-                  DISCIPLINE 03 // INTERACTIVE CRAFT
-                </span>
-              </div>
-
-              <h3 className="mt-2 font-display text-[clamp(2rem,5.2vw,4rem)] font-black uppercase leading-[0.92] tracking-tight text-[#07131C]">
-                UI/UX &amp;{" "}
-                <span className="font-serif italic font-normal capitalize text-[#1D4ED8]">
-                  3D Motion.
-                </span>
-              </h3>
-
-              <div className="mt-4 sm:mt-6 divide-y divide-slate-900/12 border-y border-slate-900/12">
-                {DESIGN_ROWS.map((row, idx) => (
-                  <div key={row.code} className="py-2.5 sm:py-3.5">
-                    <div className="flex items-baseline justify-between gap-2">
-                      <div className="flex items-baseline gap-2.5 min-w-0">
-                        <span className="font-mono text-[10px] font-bold text-[#1D4ED8]">
-                          {row.code}
-                        </span>
-                        <span className="truncate font-display text-sm sm:text-lg font-bold text-[#07131C]">
-                          {row.title}
-                        </span>
-                      </div>
-                      <span className="shrink-0 font-mono text-[10px] font-extrabold uppercase tracking-wider text-[#1D4ED8]">
-                        {row.metric}
-                      </span>
-                    </div>
-                    <p className="mt-0.5 pl-12 font-mono text-[10px] sm:text-[11px] text-slate-600">
-                      {row.spec}
-                    </p>
-                    <div className="mt-1.5 ml-12 h-[2px] w-[calc(100%-3rem)] bg-slate-900/10">
-                      <span
-                        ref={(el) => {
-                          designBarRefs.current[idx] = el;
-                        }}
-                        className="block h-full w-full origin-left bg-gradient-to-r from-[#1D4ED8] to-[#7C3AED] will-change-transform"
-                        style={{ transform: "scaleX(0)" }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* RIGHT: Open-Canvas Swiss Typography & Cubic-Bezier Motion Graph (NO Circle/Card!) */}
-            <div
-              ref={designDiagramRef}
-              className="hidden sm:flex lg:col-span-6 flex-col justify-center will-change-transform"
-            >
-              <svg viewBox="0 0 580 340" className="w-full h-auto overflow-visible" fill="none">
-                {/* Swiss Baseline Axes */}
-                <line x1="60" y1="280" x2="520" y2="280" stroke="#0F172A" strokeWidth="2" />
-                <line x1="60" y1="40" x2="60" y2="280" stroke="#0F172A" strokeWidth="2" />
-                <line x1="60" y1="40" x2="520" y2="40" stroke="#94A3B8" strokeDasharray="6 6" strokeWidth="1" />
-                <line x1="520" y1="40" x2="520" y2="280" stroke="#94A3B8" strokeDasharray="6 6" strokeWidth="1" />
-
-                {/* Control Tangents */}
-                <line x1="60" y1="280" x2="155" y2="44" stroke="#FF6B4A" strokeWidth="2" strokeDasharray="5 4" />
-                <line x1="520" y1="40" x2="310" y2="40" stroke="#1D4ED8" strokeWidth="2" strokeDasharray="5 4" />
-
-                {/* Scrubbed Expo Bezier Curve */}
-                <path
-                  ref={designBezierRef}
-                  d="M 60 280 C 155 44, 310 40, 520 40"
-                  stroke="#1D4ED8"
-                  strokeWidth="5"
-                  strokeLinecap="round"
-                  strokeDasharray="460"
-                  strokeDashoffset="460"
-                />
-                <rect x="149" y="38" width="12" height="12" fill="#FF6B4A" />
-                <rect x="304" y="34" width="12" height="12" fill="#1D4ED8" />
-
-                {/* Editorial Type Specimen Overlay */}
-                <text x="330" y="215" fill="#07131C" fontSize="86" fontWeight="900" fontFamily="system-ui, sans-serif" opacity="0.12">
-                  Aa
-                </text>
-                <text x="60" y="314" fill="#1D4ED8" fontSize="11" fontFamily="monospace" fontWeight="bold">
-                  EASING: cubic-bezier(0.16, 1.00, 0.30, 1.00) // SWISS GRID RATIO 1:1.618
-                </text>
-              </svg>
-
-              <div className="mt-2 flex items-center justify-end gap-3">
-                <ToolBadge tool="figma" size="sm" />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* ================================================================
-            BEAT 4 (0.68 -> 0.86): DEDICATED STAGE 04 — OFF-CLOCK HOBBIES
-           ================================================================ */}
-        <div
-          ref={stage4HobbyRef}
-          className="absolute inset-0 z-[45] flex items-center bg-[#0B0714] px-5 pb-6 pt-20 sm:px-12 sm:py-16 text-white"
-          style={{ clipPath: "inset(100% 0% 0% 0%)", visibility: "hidden" }}
-        >
-          <div className="dot-grid-dark pointer-events-none absolute inset-0 opacity-35" />
-          <span
-            aria-hidden="true"
-            className="pointer-events-none absolute left-6 bottom-2 font-display text-[24vw] sm:text-[17vw] font-black leading-none tracking-tighter text-[#FF6B4A]/[0.06] select-none"
-          >
-            04
-          </span>
-
-          <div className="relative z-10 mx-auto grid w-full max-w-[1360px] grid-cols-1 items-center gap-6 lg:grid-cols-12 lg:gap-12">
-            {/* LEFT: LP Vinyl Tracklist Ledger (Clean Hairlines — Zero Bubble Soup!) */}
-            <div ref={hobbyContentRef} className="lg:col-span-6 will-change-transform">
-              <div className="flex items-center gap-3">
-                <span className="h-[2px] w-8 bg-[#FF6B4A]" />
-                <span className="font-mono text-[10px] sm:text-xs font-bold uppercase tracking-[0.26em] text-[#FF6B4A]">
-                  CHAPTER 04 // LIFE BEYOND THE BLUEPRINT
-                </span>
-              </div>
-
-              <h3 className="mt-2 font-display text-[clamp(2rem,5.2vw,4rem)] font-black uppercase leading-[0.92] tracking-tight text-white">
-                Off-Clock{" "}
-                <span className="font-serif italic font-normal capitalize text-[#FF6B4A]">
-                  Hobbies.
-                </span>
-              </h3>
-
-              <div className="mt-4 sm:mt-6 divide-y divide-white/12 border-y border-white/12">
-                {HOBBY_TRACKS.map((tr) => (
-                  <div key={tr.code} className="py-2.5 sm:py-3.5">
-                    <div className="flex items-baseline justify-between gap-2">
-                      <div className="flex items-baseline gap-2.5 min-w-0">
-                        <span className="font-mono text-[10px] font-bold text-[#FF6B4A]">
-                          {tr.code}
-                        </span>
-                        <span className="truncate font-display text-sm sm:text-lg font-bold text-white">
-                          {tr.title}
-                        </span>
-                      </div>
-                      <span className="shrink-0 font-mono text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-amber-300">
-                        {tr.tag}
-                      </span>
-                    </div>
-                    <p className="mt-0.5 pl-16 font-sans text-[11px] sm:text-xs text-purple-200/75">
-                      {tr.detail}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* RIGHT: Open-Canvas Guitar Fretboard + Spectrum Bars + Turntable (NO Oval Windows!) */}
-            <div
-              ref={hobbyVisualRef}
-              className="hidden sm:flex lg:col-span-6 flex-col justify-center gap-5 will-change-transform"
-            >
-              <div className="flex items-center justify-between gap-6">
-                <CodeTurntableProp className="h-36 lg:h-44 w-auto drop-shadow-[0_24px_40px_rgba(0,0,0,0.75)]" />
-                <CodeEspressoProp className="h-28 lg:h-34 w-auto drop-shadow-[0_24px_40px_rgba(0,0,0,0.75)]" />
-              </div>
-
-              {/* Open-Space 6-String Fretboard & Harmonic Waveform */}
-              <svg viewBox="0 0 560 150" className="w-full h-auto overflow-visible" fill="none">
-                <line x1="0" y1="24" x2="560" y2="24" stroke="#F59E0B" strokeOpacity="0.6" strokeWidth="2" />
-                <line x1="0" y1="116" x2="560" y2="116" stroke="#F59E0B" strokeOpacity="0.6" strokeWidth="2" />
-                {[90, 185, 280, 375, 470].map((fx) => (
-                  <line key={fx} x1={fx} y1="24" x2={fx} y2="116" stroke="#64748B" strokeWidth="2" />
-                ))}
-                {[34, 50, 66, 82, 98, 110].map((sy, idx) => (
-                  <line
-                    key={sy}
-                    x1="0"
-                    y1={sy}
-                    x2="560"
-                    y2={sy}
-                    stroke="#FDE68A"
-                    strokeOpacity="0.78"
-                    strokeWidth={1 + idx * 0.22}
-                  />
-                ))}
-                {/* Harmonic Vibrating String Wave */}
-                <path
-                  d="M 0 68 Q 70 8, 140 68 T 280 68 T 420 68 T 560 68"
-                  stroke="#FF6B4A"
-                  strokeWidth="3"
-                />
-                <path
-                  d="M 0 68 Q 95 124, 190 68 T 380 68 T 560 68"
-                  stroke="#38BDF8"
-                  strokeOpacity="0.7"
-                  strokeWidth="2"
-                />
-                <text x="0" y="142" fill="#FBBF24" fontSize="10" fontFamily="monospace" fontWeight="bold">
-                  ANALOG SIGNAL // 112 BPM • D MINOR9 VOICING • V60 COFFEE FUEL
-                </text>
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        {/* ================================================================
-            BEAT 5 (0.84 -> 1.00): FINALE PITCH ("STAND OUT")
-           ================================================================ */}
-        <div
-          ref={stage5FinaleRef}
-          className="absolute inset-0 z-[48] flex items-center justify-center bg-white text-[#07131C]"
-          style={{ clipPath: "inset(0% 0% 0% 100%)", visibility: "hidden" }}
-        >
-          <div className="mosaic-grid pointer-events-none absolute inset-0 opacity-35" />
-
-          <div className="relative z-10 mx-auto grid h-full w-full max-w-6xl grid-cols-1 items-center gap-4 sm:gap-8 px-6 py-8 sm:py-12 md:grid-cols-12">
-            {/* LEFT: Open Architectural Crosshair Portrait Stage (NO Circle Bubble!) */}
+          <div className="relative mx-auto grid h-full w-full max-w-6xl grid-cols-1 items-center gap-4 sm:gap-8 px-4 sm:px-8 py-6 sm:py-12 md:grid-cols-12">
+            {/* LEFT: Circular Rotating Sky-Blue Sunburst + Illustrated Creator Portrait */}
             <div className="relative flex items-center justify-center md:col-span-5">
               <div
                 ref={finalePortraitRef}
-                className="relative flex h-[190px] sm:h-[320px] md:h-[400px] items-end justify-center will-change-transform"
+                className="relative flex h-[175px] w-[175px] sm:h-[300px] sm:w-[300px] md:h-[390px] md:w-[390px] items-end justify-center overflow-hidden rounded-full bg-[#F0F9FF] shadow-[0_24px_65px_rgba(29,78,216,0.16)] will-change-transform"
               >
-                {/* Architectural Crosshair Lines Behind Portrait */}
                 <div
                   aria-hidden="true"
-                  className="pointer-events-none absolute inset-x-[-20%] top-1/2 h-[1px] bg-[#1D4ED8]/25"
+                  className="animate-slow-spin pointer-events-none absolute inset-[-20%]"
+                  style={{
+                    background:
+                      "repeating-conic-gradient(from 0deg, rgba(56,189,248,0.28) 0deg 10deg, transparent 10deg 20deg)",
+                  }}
                 />
-                <div
-                  aria-hidden="true"
-                  className="pointer-events-none absolute inset-y-0 left-1/2 w-[1px] bg-[#1D4ED8]/25"
-                />
-                <CodeCreatorPortrait className="relative z-10 h-full w-auto drop-shadow-[0_22px_36px_rgba(7,19,28,0.22)]" />
+                <CodeCreatorPortrait className="relative z-10 h-[92%] w-auto drop-shadow-[0_14px_24px_rgba(0,0,0,0.22)]" />
               </div>
             </div>
 
-            {/* RIGHT: Kinetic Pitch Copy + Pointer Clicking "STAND OUT" */}
+            {/* RIGHT: Classic Side-by-Side Pitch Copy + Royal-Blue/Volt-Lime "STAND OUT" */}
             <div className="relative z-20 flex flex-col items-center text-center md:col-span-7 md:items-start md:text-left">
-              <span className="mb-2 font-mono text-[10px] font-bold uppercase tracking-[0.26em] text-[#1D4ED8]">
-                READY FOR REAL-WORLD GRAVITY &amp; SCALE
-              </span>
-              <p className="font-display text-[clamp(1.5rem,5.2vw,3.4rem)] font-bold tracking-tight text-[#07131C] leading-tight">
+              <p
+                ref={finaleLine1Ref}
+                className="font-display text-[clamp(1.6rem,5.2vw,3.5rem)] font-bold tracking-tight text-[#07131C] leading-tight transition-all duration-300 will-change-transform"
+              >
                 I engineer structures &amp; apps
               </p>
-              <p className="font-display text-[clamp(1.5rem,5.2vw,3.4rem)] font-bold tracking-tight text-[#07131C] leading-tight">
+              <p
+                ref={finaleLine2Ref}
+                className="font-display text-[clamp(1.6rem,5.2vw,3.5rem)] font-bold tracking-tight text-[#07131C] leading-tight transition-all duration-300 will-change-transform"
+              >
                 built to
               </p>
 
-              <div className="relative mt-2 sm:mt-3 inline-flex items-center">
+              <div className="relative mt-2.5 sm:mt-3.5 inline-flex items-center">
                 <button
                   ref={standOutBtnRef}
                   type="button"
                   onMouseEnter={() => setStandOutDOM(true)}
                   onClick={() => setContactOpen(true)}
-                  className="relative bg-transparent px-5 sm:px-7 py-1.5 font-display text-[clamp(2.1rem,8.5vw,4.6rem)] font-black uppercase tracking-tight text-[#07131C] transition-all duration-300 cursor-pointer"
+                  style={{ color: "#07131C" }}
+                  className="relative rounded-xl sm:rounded-2xl bg-transparent px-5 sm:px-7 py-1.5 sm:py-2 font-display text-[clamp(2.1rem,8vw,4.5rem)] font-black uppercase tracking-tight transition-all duration-300 cursor-pointer"
                 >
-                  STAND OUT.
+                  STAND OUT
                 </button>
 
                 <div
                   ref={standCursorRef}
                   aria-hidden="true"
                   className="pointer-events-none absolute -right-6 -bottom-4 sm:-right-9 sm:-bottom-6 z-30 transition-transform duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)]"
-                  style={{ transform: "translate3d(20px, 16px, 0) scale(1.06)" }}
+                  style={{ transform: "translate3d(18px, 14px, 0) scale(1.05)" }}
                 >
                   <svg
                     viewBox="0 0 36 36"
@@ -1111,12 +1148,13 @@ export function Act4SkillsPitch() {
                       fill="#FFFFFF"
                       stroke="#07131C"
                       strokeWidth="2.8"
+                      strokeLinejoin="miter"
                     />
                   </svg>
                 </div>
               </div>
 
-              <p className="mt-4 sm:mt-6 font-mono text-[10px] sm:text-[11px] uppercase tracking-[0.25em] text-slate-500">
+              <p className="mt-5 sm:mt-6 font-mono text-[10px] sm:text-[11px] uppercase tracking-[0.25em] text-slate-500">
                 Keep scrolling to enter the Full-Screen Works Reel ↓
               </p>
             </div>
