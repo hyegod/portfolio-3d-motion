@@ -347,10 +347,10 @@ export function Act1HeroCollage() {
             {/* PROP 3 (Software Engineering): 65% Mechanical Developer Keyboard */}
             <div
               ref={propKeyboardRef}
-              className="hero-prop absolute bottom-[2%] left-1/2 -translate-x-1/2 sm:translate-x-0 sm:bottom-[11%] sm:left-[26%] lg:left-[30%] z-10 will-change-transform"
+              className="hero-prop absolute bottom-[3%] left-1/2 -translate-x-1/2 sm:translate-x-0 sm:bottom-[9%] sm:left-[25%] lg:left-[29%] z-10 will-change-transform"
             >
               <div className="animate-float-gentle" style={{ animationDelay: "-1.4s" }}>
-                <CodeMechKeyboardProp className="h-13 sm:h-22 md:h-28 w-auto drop-shadow-[0_22px_30px_rgba(3,10,45,0.72)]" />
+                <CodeMechKeyboardProp className="h-17 sm:h-28 md:h-36 w-auto drop-shadow-[0_22px_30px_rgba(3,10,45,0.72)]" />
               </div>
             </div>
 
@@ -472,7 +472,7 @@ export function Act1HeroCollage() {
               {PORTFOLIO_DATA.hero.microBio}
             </p>
             <div className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-[#061859]/75 px-3.5 py-1 font-mono text-[10px] uppercase tracking-[0.2em] text-white backdrop-blur-sm">
-              <span>Scroll to Dive Into 3D Desk</span>
+              <span>Scroll to Dive Into 3D Digital Twin</span>
               <ChevronDown className="h-3.5 w-3.5 animate-bounce text-[#C6FF3D]" />
             </div>
           </div>

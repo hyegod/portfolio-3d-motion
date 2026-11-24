@@ -149,7 +149,7 @@ export function CodeCreatorPortrait({ className = "" }: { className?: string }) 
 /** 4K Civil Engineering Drafting Set-Square + Steel Compass Prop (Act 1 Top-Left) */
 export function CodeDraftingToolsProp({ className = "" }: { className?: string }) {
   return (
-    <svg viewBox="0 0 210 210" className={className} fill="none">
+    <svg viewBox="-10 -10 230 230" className={`overflow-visible ${className}`} fill="none">
       <defs>
         <linearGradient id="acrylicTri" x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stopColor="#E0F2FE" stopOpacity="0.88" />
@@ -235,7 +235,7 @@ export function CodeEspressoProp({ className = "" }: { className?: string }) {
 /** 4K Custom 65% Mechanical Developer Keyboard Prop (Software Engineering — Act 1 Bottom-Center) */
 export function CodeMechKeyboardProp({ className = "" }: { className?: string }) {
   return (
-    <svg viewBox="0 0 320 130" className={className} fill="none">
+    <svg viewBox="-12 -24 344 178" className={`overflow-visible ${className}`} fill="none">
       <g transform="rotate(-14 160 65)">
         {/* Anodized Aluminum Case */}
         <rect
@@ -288,7 +288,7 @@ export function CodeMechKeyboardProp({ className = "" }: { className?: string })
 /** 4K Walnut Vinyl Turntable + Electric Guitar Pick Prop (Music & Sound — Act 1 Top-Right) */
 export function CodeTurntableProp({ className = "" }: { className?: string }) {
   return (
-    <svg viewBox="0 0 280 220" className={className} fill="none">
+    <svg viewBox="-14 -16 308 252" className={`overflow-visible ${className}`} fill="none">
       <defs>
         <linearGradient id="walnutPlinth" x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stopColor="#7C4D2B" />
