@@ -67,12 +67,12 @@ export function Act3KineticBridge() {
   const codeCharsRef = useRef<(HTMLSpanElement | null)[]>([]);
   const codePillsRef = useRef<HTMLDivElement>(null);
 
-  // Beat 3: CREATE (Center Iris + Sweeping Bezier Splines + Frameless Orbit)
+  // Beat 3: CREATE (Center Iris + Sweeping Bezier Splines + Safe-Lane Floating Badges)
   const beat3Ref = useRef<HTMLDivElement>(null);
   const beat3StageRef = useRef<HTMLDivElement>(null);
   const bezierPath1Ref = useRef<SVGPathElement>(null);
   const bezierPath2Ref = useRef<SVGPathElement>(null);
-  const orbitRingRef = useRef<HTMLDivElement>(null);
+  const createBadgeRefs = useRef<(HTMLDivElement | null)[]>([]);
   const createCharsRef = useRef<(HTMLSpanElement | null)[]>([]);
   const createSubRef = useRef<HTMLDivElement>(null);
 
@@ -113,10 +113,11 @@ export function Act3KineticBridge() {
           shockwave2Ref.current.style.transform = `scale(${(0.25 + sw2 * 6.4).toFixed(3)})`;
         }
 
-        // "My 5tack ?" gets crossed out & pushed upward into faded ghost headline
+        // "My 5tack ?" starts dead-center, then gets crossed out & pushed cleanly above center!
         if (stackWrapRef.current) {
-          const liftY = -clickT * 48;
-          const shrink = 1 - clickT * 0.34;
+          const isNarrow = window.innerWidth < 640;
+          const liftY = -clickT * (isNarrow ? 66 : 92);
+          const shrink = 1 - clickT * 0.32;
           const op = 1 - clickT * 0.72;
           stackWrapRef.current.style.transform = `translate3d(0, ${liftY.toFixed(1)}px, 0) scale(${shrink.toFixed(3)})`;
           stackWrapRef.current.style.opacity = op.toFixed(3);
@@ -125,17 +126,17 @@ export function Act3KineticBridge() {
           strikeBarRef.current.style.transform = `scaleX(${clamp01(clickT * 1.4).toFixed(3)})`;
         }
 
-        // Volt-Lime "My Craft." Pill slams onto screen with spring overshoot!
+        // Volt-Lime "My Craft." Pill slams directly onto EXACT (50%, 50%) dead-center at 0deg!
         if (craftPillRef.current) {
           const pillOp = clamp01((p - 0.1) / 0.04);
           const pillScale = Math.max(0.01, 2.15 - craftSlam * 1.15);
-          const pillRot = (1 - craftSlam) * 12 - 2;
-          const pillY = (1 - craftSlam) * 42 + 18;
+          const pillRot = (1 - craftSlam) * -10;
+          const pillY = (1 - craftSlam) * 36;
           craftPillRef.current.style.opacity = pillOp.toFixed(3);
-          craftPillRef.current.style.transform = `translate3d(0, ${pillY.toFixed(1)}px, 0) rotate(${pillRot.toFixed(1)}deg) scale(${pillScale.toFixed(3)})`;
+          craftPillRef.current.style.transform = `translate3d(0, ${pillY.toFixed(1)}px, 0) rotate(${pillRot.toFixed(2)}deg) scale(${pillScale.toFixed(3)})`;
         }
 
-        // Studio pointer cursor races in & clicks
+        // Studio pointer cursor races in & clicks dead-center capsule
         if (cursorRef.current) {
           const curIn = clamp01(p / 0.11);
           const cx = (1 - curIn) * 165;
@@ -152,7 +153,7 @@ export function Act3KineticBridge() {
         const b1Local = clamp01((p - 0.26) / 0.25);
 
         if (beat1Ref.current) {
-          beat1Ref.current.style.clipPath = `circle(${(b1Wipe * 150).toFixed(1)}% at 50% 54%)`;
+          beat1Ref.current.style.clipPath = `circle(${(b1Wipe * 150).toFixed(1)}% at 50% 50%)`;
           beat1Ref.current.style.visibility = b1Wipe > 0.005 ? "visible" : "hidden";
         }
 
@@ -283,10 +284,17 @@ export function Act3KineticBridge() {
             bezierPath2Ref.current.style.strokeDashoffset = (-dash).toFixed(1);
           }
 
-          if (orbitRingRef.current) {
-            const orbitRot = -24 + b3Local * 58;
-            const orbitScale = 0.72 + b3Local * 0.42;
-            orbitRingRef.current.style.transform = `rotate(${orbitRot.toFixed(1)}deg) scale(${orbitScale.toFixed(3)})`;
+          // Staggered spring-pop + horizontal parallax in safe upper/lower lanes (never overlaps CREATE.!)
+          for (let i = 0; i < 5; i++) {
+            const badgeEl = createBadgeRefs.current[i];
+            if (!badgeEl) continue;
+            const bT = clamp01((b3Local - i * 0.05) / 0.36);
+            const bSp = easeOutBack(bT);
+            const dir = i % 2 === 0 ? 1 : -1;
+            const glideX = (b3Local - 0.5) * 44 * dir;
+            const tilt = (i % 2 === 0 ? -10 : 10) + b3Local * 12 * dir;
+            badgeEl.style.opacity = clamp01(bT * 3).toFixed(3);
+            badgeEl.style.transform = `translate3d(${glideX.toFixed(1)}px, ${((1 - bSp) * 28 * dir).toFixed(1)}px, 0) rotate(${tilt.toFixed(1)}deg) scale(${Math.max(0.1, bSp).toFixed(3)})`;
           }
 
           if (createSubRef.current) {
@@ -363,13 +371,18 @@ export function Act3KineticBridge() {
             className="pointer-events-none absolute h-28 w-28 rounded-full border-[3px] border-[#1D4ED8] opacity-0 will-change-transform"
           />
 
-          <span className="relative z-10 mb-5 rounded-full border border-slate-300 bg-white/90 px-4 py-1 font-mono text-[10px] font-bold uppercase tracking-[0.26em] text-slate-600 shadow-sm">
-            03 • WHAT I ACTUALLY DO
-          </span>
+          {/* True Dead-Center Anchor at Exact (50%, 50%) */}
+          <div className="relative z-10 flex items-center justify-center select-none">
+            {/* Top Tag Floating Above */}
+            <span className="pointer-events-none absolute -top-28 sm:-top-38 whitespace-nowrap rounded-full border border-slate-300 bg-white/90 px-4 py-1 font-mono text-[10px] font-bold uppercase tracking-[0.26em] text-slate-600 shadow-sm">
+              03 • WHAT I ACTUALLY DO
+            </span>
 
-          <div className="relative z-10 flex flex-col items-center justify-center select-none">
-            {/* Crossed-Out "My 5tack ?" */}
-            <div ref={stackWrapRef} className="relative inline-flex items-center will-change-transform">
+            {/* Crossed-Out "My 5tack ?" (Starts Dead-Center, Lifts Cleanly Above "My Craft." on Click!) */}
+            <div
+              ref={stackWrapRef}
+              className="absolute inline-flex items-center whitespace-nowrap will-change-transform"
+            >
               <h2 className="font-display text-[clamp(2.3rem,10vw,5.4rem)] font-black tracking-tight text-slate-800">
                 {PORTFOLIO_DATA.kineticBridge.initialSkillText}
               </h2>
@@ -381,33 +394,33 @@ export function Act3KineticBridge() {
               />
             </div>
 
-            {/* Slamming Volt-Lime "My Craft." Capsule */}
+            {/* Slamming Volt-Lime "My Craft." Capsule — Lands at EXACT (50%, 50%) Dead-Center! */}
             <div
               ref={craftPillRef}
-              className="relative -mt-3 sm:-mt-5 rounded-2xl sm:rounded-3xl bg-[#C6FF3D] px-6 py-2 sm:px-10 sm:py-3 shadow-[0_24px_65px_rgba(198,255,61,0.65)] ring-4 ring-[#07131C]/10 opacity-0 will-change-transform"
+              className="relative whitespace-nowrap rounded-2xl sm:rounded-3xl bg-[#C6FF3D] px-6 py-2.5 sm:px-11 sm:py-3.5 shadow-[0_24px_65px_rgba(198,255,61,0.65)] ring-4 ring-[#07131C]/10 opacity-0 will-change-transform"
             >
-              <span className="font-display text-[clamp(2.6rem,11.5vw,6.4rem)] font-black leading-none tracking-tight text-[#07131C]">
+              <span className="font-display text-[clamp(2.5rem,11vw,6.2rem)] font-black leading-none tracking-tight text-[#07131C]">
                 {PORTFOLIO_DATA.kineticBridge.correctedSkillText}.
               </span>
-            </div>
 
-            {/* Studio Pointer Cursor */}
-            <div
-              ref={cursorRef}
-              aria-hidden="true"
-              className="pointer-events-none absolute -bottom-8 -right-8 z-30 opacity-0 will-change-transform"
-            >
-              <svg
-                viewBox="0 0 36 36"
-                className="h-11 w-11 sm:h-14 sm:w-14 drop-shadow-[0_10px_18px_rgba(0,0,0,0.32)]"
+              {/* Studio Pointer Cursor Anchored to Bottom-Right Corner of Centered Capsule */}
+              <div
+                ref={cursorRef}
+                aria-hidden="true"
+                className="pointer-events-none absolute -bottom-7 -right-7 sm:-bottom-9 sm:-right-9 z-30 opacity-0 will-change-transform"
               >
-                <path
-                  d="M5 3L30 18L18 21L23 32L17 34L12 23L5 29V3Z"
-                  fill="#FFFFFF"
-                  stroke="#07131C"
-                  strokeWidth="2.6"
-                />
-              </svg>
+                <svg
+                  viewBox="0 0 36 36"
+                  className="h-10 w-10 sm:h-14 sm:w-14 drop-shadow-[0_10px_18px_rgba(0,0,0,0.32)]"
+                >
+                  <path
+                    d="M5 3L30 18L18 21L23 32L17 34L12 23L5 29V3Z"
+                    fill="#FFFFFF"
+                    stroke="#07131C"
+                    strokeWidth="2.6"
+                  />
+                </svg>
+              </div>
             </div>
           </div>
         </div>
@@ -620,25 +633,46 @@ export function Act3KineticBridge() {
             />
           </svg>
 
-          {/* Frameless Floating Tool Emblems Orbiting in Open Space (NO White Squares!) */}
-          <div
-            ref={orbitRingRef}
-            aria-hidden="true"
-            className="absolute inset-0 mx-auto max-w-5xl scale-75 sm:scale-100 will-change-transform"
-          >
-            <div className="absolute left-[6%] sm:left-[9%] top-[16%] -rotate-12 drop-shadow-[0_18px_28px_rgba(15,23,42,0.22)]">
+          {/* Frameless Floating Tool Emblems in Safe Upper & Lower Sky Lanes (Zero Text Overlap & Zero Edge Clipping!) */}
+          <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-20 mx-auto max-w-5xl">
+            <div
+              ref={(el) => {
+                createBadgeRefs.current[0] = el;
+              }}
+              className="absolute left-[10%] sm:left-[16%] top-[14%] sm:top-[16%] scale-90 sm:scale-100 drop-shadow-[0_16px_26px_rgba(15,23,42,0.2)] will-change-transform"
+            >
               <ToolBadge tool="autocad" size="lg" />
             </div>
-            <div className="absolute left-[12%] sm:left-[16%] bottom-[15%] rotate-[12deg] drop-shadow-[0_18px_28px_rgba(15,23,42,0.22)]">
-              <ToolBadge tool="revit" size="md" />
-            </div>
-            <div className="absolute right-[6%] sm:right-[9%] top-[16%] rotate-[14deg] drop-shadow-[0_18px_28px_rgba(15,23,42,0.22)]">
-              <ToolBadge tool="typescript" size="lg" />
-            </div>
-            <div className="absolute right-[20%] sm:right-[25%] top-[9%] -rotate-[8deg] drop-shadow-[0_18px_28px_rgba(15,23,42,0.2)]">
+            <div
+              ref={(el) => {
+                createBadgeRefs.current[1] = el;
+              }}
+              className="absolute left-1/2 -translate-x-1/2 top-[11%] sm:top-[13%] scale-90 sm:scale-100 drop-shadow-[0_16px_26px_rgba(15,23,42,0.18)] will-change-transform"
+            >
               <ToolBadge tool="python" size="md" />
             </div>
-            <div className="absolute right-[10%] sm:right-[15%] bottom-[15%] -rotate-[12deg] drop-shadow-[0_18px_28px_rgba(15,23,42,0.22)]">
+            <div
+              ref={(el) => {
+                createBadgeRefs.current[2] = el;
+              }}
+              className="absolute right-[10%] sm:right-[16%] top-[14%] sm:top-[16%] scale-90 sm:scale-100 drop-shadow-[0_16px_26px_rgba(15,23,42,0.2)] will-change-transform"
+            >
+              <ToolBadge tool="typescript" size="lg" />
+            </div>
+            <div
+              ref={(el) => {
+                createBadgeRefs.current[3] = el;
+              }}
+              className="absolute left-[16%] sm:left-[24%] bottom-[14%] sm:bottom-[16%] scale-90 sm:scale-100 drop-shadow-[0_16px_26px_rgba(15,23,42,0.2)] will-change-transform"
+            >
+              <ToolBadge tool="revit" size="lg" />
+            </div>
+            <div
+              ref={(el) => {
+                createBadgeRefs.current[4] = el;
+              }}
+              className="absolute right-[16%] sm:right-[24%] bottom-[14%] sm:bottom-[16%] scale-90 sm:scale-100 drop-shadow-[0_16px_26px_rgba(15,23,42,0.2)] will-change-transform"
+            >
               <ToolBadge tool="figma" size="lg" />
             </div>
           </div>
