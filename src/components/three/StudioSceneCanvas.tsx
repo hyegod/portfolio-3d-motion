@@ -2,13 +2,13 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
-import { Canvas, useFrame } from "@react-three/fiber";
+import { Canvas } from "@react-three/fiber";
 import type { Studio3DScrollState } from "@/context/ShowreelContext";
 import { DeskEnvironment } from "./DeskEnvironment";
 import { PaperPlanePath } from "./PaperPlanePath";
 import { Hero3DText } from "./Hero3DText";
 import { LiquidGlassBar } from "./LiquidGlassBar";
-import { PORTAL_CUT_P, SceneRigAndFX } from "./SceneRigAndFX";
+import { SceneRigAndFX, TWIN_START_P } from "./SceneRigAndFX";
 import { RetroComputerRoom } from "./RetroComputerRoom";
 
 interface StudioSceneCanvasProps {
@@ -16,40 +16,18 @@ interface StudioSceneCanvasProps {
   active: boolean;
 }
 
-/**
- * Toggles the Digital Twin world group ON only after zooming into the CRT Monitor!
- */
-function DigitalTwinPortalGroup({
-  rawScrollRef,
-  twinScrollRef,
-}: {
-  rawScrollRef: React.MutableRefObject<Studio3DScrollState>;
-  twinScrollRef: React.MutableRefObject<Studio3DScrollState>;
-}) {
-  const twinWorldRef = useRef<THREE.Group>(null);
-
-  useFrame(() => {
-    if (!twinWorldRef.current) return;
-    twinWorldRef.current.visible = rawScrollRef.current.progress >= PORTAL_CUT_P;
-  });
-
-  return (
-    <group ref={twinWorldRef} visible={false}>
-      <DeskEnvironment scrollRef={twinScrollRef} />
-      <PaperPlanePath scrollRef={twinScrollRef} />
-      <Hero3DText scrollRef={twinScrollRef} />
-      <LiquidGlassBar scrollRef={twinScrollRef} />
-    </group>
-  );
-}
-
 export default function StudioSceneCanvas({
   scrollRef,
   active,
 }: StudioSceneCanvasProps) {
   const [webglReady, setWebglReady] = useState(true);
+
+  const roomGroupRef = useRef<THREE.Group>(null);
+  const twinGroupRef = useRef<THREE.Group>(null);
+  const crtShaderMatRef = useRef<THREE.ShaderMaterial>(null);
+
   const twinScrollRef = useRef<Studio3DScrollState>({
-    progress: 0,
+    progress: TWIN_START_P,
     mouseX: 0,
     mouseY: 0,
     inView: true,
@@ -86,7 +64,7 @@ export default function StudioSceneCanvas({
       shadows="percentage"
       dpr={[1, 1.65]}
       frameloop={active ? "always" : "demand"}
-      camera={{ position: [0.68, 0.76, 2.34], fov: 45, near: 0.08, far: 45 }}
+      camera={{ position: [-0.48, 0.72, 1.88], fov: 46, near: 0.04, far: 45 }}
       gl={{
         antialias: true,
         powerPreference: "high-performance",
@@ -94,14 +72,27 @@ export default function StudioSceneCanvas({
       }}
       className="h-full w-full"
     >
+      {/* Mount DigitalTwin & RetroRoom BEFORE SceneRigAndFX so their useFrame updates run BEFORE crtFbo renders! */}
+      <group ref={twinGroupRef} visible={false}>
+        <DeskEnvironment scrollRef={twinScrollRef} />
+        <PaperPlanePath scrollRef={twinScrollRef} />
+        <Hero3DText scrollRef={twinScrollRef} />
+        <LiquidGlassBar scrollRef={twinScrollRef} />
+      </group>
+
+      <group ref={roomGroupRef}>
+        <RetroComputerRoom
+          scrollRef={scrollRef}
+          crtShaderMatRef={crtShaderMatRef}
+        />
+      </group>
+
       <SceneRigAndFX
         rawScrollRef={scrollRef}
         twinScrollRef={twinScrollRef}
-      />
-      <RetroComputerRoom scrollRef={scrollRef} />
-      <DigitalTwinPortalGroup
-        rawScrollRef={scrollRef}
-        twinScrollRef={twinScrollRef}
+        roomGroupRef={roomGroupRef}
+        twinGroupRef={twinGroupRef}
+        crtShaderMatRef={crtShaderMatRef}
       />
     </Canvas>
   );

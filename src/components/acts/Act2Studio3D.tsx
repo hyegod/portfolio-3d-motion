@@ -9,7 +9,8 @@ import { useShowreel } from "@/context/ShowreelContext";
 
 gsap.registerPlugin(ScrollTrigger);
 
-const PORTAL_CUT_P = 0.355;
+const PORTAL_CUT_P = 0.44;
+const TWIN_START_P = 0.24;
 
 const StudioSceneCanvas = dynamic(
   () => import("@/components/three/StudioSceneCanvas"),
@@ -20,7 +21,7 @@ const StudioSceneCanvas = dynamic(
         <div className="flex flex-col items-center gap-3">
           <span className="h-9 w-9 animate-spin rounded-full border-2 border-white/25 border-t-[#FFE7A3]" />
           <span className="font-mono text-[11px] uppercase tracking-[0.25em] text-amber-100/85">
-            Booting Workstation &amp; 3D Twin...
+            Booting Workstation &amp; Live 3D Portal...
           </span>
         </div>
       </div>
@@ -33,7 +34,6 @@ export function Act2Studio3D() {
   const [inView, setInView] = useState(false);
 
   const roomIntroRef = useRef<HTMLDivElement>(null);
-  const portalFlashRef = useRef<HTMLDivElement>(null);
   const editorialRef = useRef<HTMLDivElement>(null);
   const zeroGLabelsRef = useRef<HTMLDivElement>(null);
   const leftLabelRef = useRef<HTMLSpanElement>(null);
@@ -60,34 +60,29 @@ export function Act2Studio3D() {
       const applyProgress = (p: number) => {
         studio3DRef.current.progress = p;
 
-        // Phase 1A: Warm Golden-Hour Workstation Whisper Caption (0.02 -> 0.19)
+        // Phase 1: Warm Golden-Hour Workstation Whisper Caption (0.015 -> 0.16)
         if (roomIntroRef.current) {
           const rOp =
-            p > 0.015 && p < 0.19
-              ? Math.min(1, (p - 0.015) * 18, (0.19 - p) * 16)
+            p > 0.015 && p < 0.16
+              ? Math.min(1, (p - 0.015) * 20, (0.16 - p) * 18)
               : 0;
           roomIntroRef.current.style.opacity = rOp.toFixed(3);
           roomIntroRef.current.style.transform = `translate3d(0, ${((1 - rOp) * 12).toFixed(1)}px, 0)`;
         }
 
-        // Phase 1B: CRT Phosphor Portal Dive Flash right at p = PORTAL_CUT_P (0.355)
-        if (portalFlashRef.current) {
-          const dist = Math.abs(p - PORTAL_CUT_P);
-          const flash = dist < 0.028 ? Math.pow(1 - dist / 0.028, 1.5) * 0.92 : 0;
-          portalFlashRef.current.style.opacity = flash.toFixed(3);
-        }
-
-        // Phase 2: Virtualized Digital Twin Progress INSIDE the Computer (0.355 -> 1.00)
+        // Phase 2: Virtualized Digital Twin Progress INSIDE the Computer (0.44 -> 1.00 => twinP 0.24 -> 1.00)
         const twinP =
           p < PORTAL_CUT_P
-            ? 0
-            : Math.max(0, Math.min(1, (p - PORTAL_CUT_P) / (1 - PORTAL_CUT_P)));
+            ? TWIN_START_P
+            : TWIN_START_P +
+              Math.max(0, Math.min(1, (p - PORTAL_CUT_P) / (1 - PORTAL_CUT_P))) *
+                (1 - TWIN_START_P);
 
-        // 1. Editorial telemetry captions glide cleanly in/out during Digital Twin reveal
+        // 1. Editorial telemetry captions glide cleanly in/out after entering the CRT Portal
         if (editorialRef.current) {
           const edOp =
-            p >= PORTAL_CUT_P && twinP > 0.04 && twinP < 0.3
-              ? Math.min(1, (twinP - 0.04) * 14, (0.3 - twinP) * 14)
+            p >= PORTAL_CUT_P + 0.01 && twinP < 0.44
+              ? Math.min(1, (p - (PORTAL_CUT_P + 0.01)) * 18, (0.44 - twinP) * 14)
               : 0;
           editorialRef.current.style.opacity = edOp.toFixed(3);
           editorialRef.current.style.transform = `translate3d(0, ${((1 - edOp) * 14).toFixed(1)}px, 0)`;
@@ -107,11 +102,11 @@ export function Act2Studio3D() {
 
         // 3. Entry & exit lens flashes
         if (entryHazeRef.current) {
-          const eh = Math.max(0, Math.min(1, 1 - p / 0.035));
+          const eh = Math.max(0, Math.min(1, 1 - p / 0.03));
           entryHazeRef.current.style.opacity = eh.toFixed(3);
         }
         if (exitFlashRef.current) {
-          const ef = Math.max(0, Math.min(1, (p - 0.95) / 0.05));
+          const ef = Math.max(0, Math.min(1, (p - 0.955) / 0.045));
           exitFlashRef.current.style.opacity = ef.toFixed(3);
         }
       };
@@ -155,10 +150,10 @@ export function Act2Studio3D() {
       id="act-2"
       ref={sectionRef}
       onPointerMove={handlePointerMove}
-      className="relative h-[580vh] w-full bg-[#8B6E52]"
+      className="relative h-[680vh] w-full bg-[#8B6E52]"
     >
       <div className="sticky top-0 h-[100dvh] w-full overflow-hidden">
-        {/* === SINGLE REAL-TIME R3F WEBGL CANVAS (SUNLIT RETRO PC -> DIGITAL TWIN PORTAL!) === */}
+        {/* === SINGLE REAL-TIME R3F WEBGL CANVAS (SEAMLESS LIVE 3D CRT PORTAL!) === */}
         <StudioSceneCanvas scrollRef={studio3DRef} active={inView} />
 
         {/* Screen-reader accessible mirror of the real 3D WebGL headline */}
@@ -174,17 +169,10 @@ export function Act2Studio3D() {
               02.0 // GOLDEN-HOUR DESK
             </span>
             <p className="mt-1.5 font-display text-base sm:text-xl font-extrabold leading-snug text-white drop-shadow-[0_6px_18px_rgba(28,16,6,0.85)]">
-              Every bridge &amp; codebase starts at the desk — scroll into the screen.
+              Every bridge &amp; codebase starts at the desk — dive into the live screen.
             </p>
           </div>
         </div>
-
-        {/* === CRT PHOSPHOR PORTAL DIVE FLASH === */}
-        <div
-          ref={portalFlashRef}
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 z-20 bg-[radial-gradient(circle_at_50%_50%,#E0F2FE_0%,#38BDF8_45%,#07111E_100%)] opacity-0 will-change-[opacity]"
-        />
 
         {/* === PHASE 2: SAFE-AREA EDITORIAL TELEMETRY OVERLAY (INSIDE DIGITAL TWIN) === */}
         <div
