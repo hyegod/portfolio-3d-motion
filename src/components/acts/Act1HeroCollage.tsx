@@ -24,11 +24,12 @@ const FOLIO_CHARS = PORTFOLIO_DATA.hero.boldTitle.split("");
 export function Act1HeroCollage() {
   const sectionRef = useRef<HTMLElement>(null);
   const cameraRigRef = useRef<HTMLDivElement>(null);
-  const whiteIntroRef = useRef<HTMLDivElement>(null);
   const exitFlashRef = useRef<HTMLDivElement>(null);
   const fgLeavesRef = useRef<HTMLDivElement>(null);
   const mgStageRef = useRef<HTMLDivElement>(null);
   const bgArcsRef = useRef<SVGSVGElement>(null);
+  const introTlRef = useRef<gsap.core.Timeline | null>(null);
+  const idleTweensRef = useRef<gsap.core.Tween[]>([]);
 
   // Independent multi-depth prop refs for true After-Effects fly-through parallax!
   const propDraftingRef = useRef<HTMLDivElement>(null);
@@ -41,30 +42,40 @@ export function Act1HeroCollage() {
   const tapeRowRef = useRef<HTMLDivElement>(null);
   const topPillRef = useRef<HTMLDivElement>(null);
 
-  const { setActiveChapter, setLetterboxActive } = useShowreel();
+  const { setActiveChapter, setLetterboxActive, isAppReady } = useShowreel();
+  const isAppReadyRef = useRef(isAppReady);
+
+  // Trigger Act 1's elastic spring entrance right as LoadingScreen shutters part!
+  useEffect(() => {
+    isAppReadyRef.current = isAppReady;
+    if (isAppReady && introTlRef.current) {
+      introTlRef.current.play(0);
+    }
+  }, [isAppReady]);
 
   useEffect(() => {
     const section = sectionRef.current;
     const cameraRig = cameraRigRef.current;
-    const whiteIntro = whiteIntroRef.current;
     const exitFlash = exitFlashRef.current;
-    if (!section || !cameraRig || !whiteIntro || !exitFlash) return;
+    if (!section || !cameraRig || !exitFlash) return;
+
+    const isTouchOnly = window.matchMedia("(pointer: coarse)").matches;
+    const prefersReducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    ).matches;
 
     const ctx = gsap.context(() => {
-      // 1. Living Kinetic Intro Choreography (Per-letter elastic spring + prop pop)
-      const introTl = gsap.timeline({ defaults: { ease: "expo.out" } });
+      // 1. Living Kinetic Intro Choreography (Paused until LoadingScreen opens!)
+      const introTl = gsap.timeline({
+        paused: true,
+        defaults: { ease: "expo.out" },
+      });
 
       introTl
         .fromTo(
-          whiteIntro,
-          { opacity: 1 },
-          { opacity: 0, duration: 0.75, ease: "power2.out" },
-          0
-        )
-        .fromTo(
           cameraRig,
-          { scale: 1.14, rotate: -2 },
-          { scale: 1, rotate: 0, duration: 1.15, ease: "expo.out" },
+          { scale: 1.12, rotate: -1.8 },
+          { scale: 1, rotate: 0, duration: 1.1, ease: "expo.out" },
           0
         )
         .from(
@@ -74,11 +85,11 @@ export function Act1HeroCollage() {
             opacity: 0,
             y: 38,
             rotate: (i) => (i % 2 === 0 ? -18 : 18),
-            duration: 0.95,
-            stagger: 0.065,
+            duration: 0.9,
+            stagger: 0.06,
             ease: "back.out(1.65)",
           },
-          0.1
+          0.12
         )
         .from(
           ".hero-char",
@@ -106,25 +117,38 @@ export function Act1HeroCollage() {
           0.42
         );
 
-      // Continuous subtle alive kinetic wave on individual letters after intro settles
-      gsap.to(".hero-char", {
-        y: (i) => (i % 2 === 0 ? -5 : 5),
-        duration: 2.2,
-        stagger: { each: 0.14, repeat: -1, yoyo: true },
-        ease: "sine.inOut",
-        delay: 1.15,
-      });
+      introTlRef.current = introTl;
+      if (prefersReducedMotion) {
+        introTl.progress(1);
+      } else if (isAppReadyRef.current) {
+        introTl.play(0);
+      }
 
-      // Continuous gentle alive rock on the lime tape strip
-      gsap.to(".hero-tape-live", {
-        rotate: 5.5,
-        y: -4,
-        duration: 2.6,
-        repeat: -1,
-        yoyo: true,
-        ease: "sine.inOut",
-        delay: 1.0,
-      });
+      // Continuous subtle alive kinetic wave — auto-paused when scrolled past Act 1!
+      const idleList: gsap.core.Tween[] = [];
+      if (!prefersReducedMotion) {
+        idleList.push(
+          gsap.to(".hero-char", {
+            y: (i) => (i % 2 === 0 ? -5 : 5),
+            duration: 2.2,
+            stagger: { each: 0.14, repeat: -1, yoyo: true },
+            ease: "sine.inOut",
+            delay: 1.35,
+          })
+        );
+        idleList.push(
+          gsap.to(".hero-tape-live", {
+            rotate: 5.5,
+            y: -4,
+            duration: 2.6,
+            repeat: -1,
+            yoyo: true,
+            ease: "sine.inOut",
+            delay: 1.2,
+          })
+        );
+      }
+      idleTweensRef.current = idleList;
 
       // 2. TRUE MULTI-LAYER CAMERA FLY-THROUGH ON SCROLL
       // Every prop flies past the camera lens at its own Z-depth, angle & speed!
@@ -137,10 +161,15 @@ export function Act1HeroCollage() {
           onEnter: () => {
             setActiveChapter("act-1");
             setLetterboxActive(true);
+            idleTweensRef.current.forEach((tw) => tw.play());
           },
           onEnterBack: () => {
             setActiveChapter("act-1");
             setLetterboxActive(true);
+            idleTweensRef.current.forEach((tw) => tw.play());
+          },
+          onLeave: () => {
+            idleTweensRef.current.forEach((tw) => tw.pause());
           },
         },
       });
@@ -228,7 +257,15 @@ export function Act1HeroCollage() {
         );
     }, section);
 
-    // 3. Multi-plane 3D Perspective Pointer Parallax (desktop)
+    // 3. Multi-plane 3D Perspective Pointer Parallax (desktop fine-pointer only!)
+    if (isTouchOnly || prefersReducedMotion) {
+      return () => {
+        introTlRef.current = null;
+        idleTweensRef.current = [];
+        ctx.revert();
+      };
+    }
+
     const mgQuickX = mgStageRef.current
       ? gsap.quickTo(mgStageRef.current, "x", { duration: 0.45, ease: "power2.out" })
       : null;
@@ -255,8 +292,9 @@ export function Act1HeroCollage() {
       : null;
 
     const handleMouseMove = (e: MouseEvent) => {
-      const nx = (e.clientX / window.innerWidth - 0.5) * 2;
-      const ny = (e.clientY / window.innerHeight - 0.5) * 2;
+      if (window.scrollY > window.innerHeight * 2.2) return;
+      const nx = (e.clientX / Math.max(1, window.innerWidth) - 0.5) * 2;
+      const ny = (e.clientY / Math.max(1, window.innerHeight) - 0.5) * 2;
       bgQuickX?.(nx * 14);
       bgQuickY?.(ny * 10);
       mgQuickX?.(nx * -18);
@@ -270,6 +308,8 @@ export function Act1HeroCollage() {
     window.addEventListener("mousemove", handleMouseMove, { passive: true });
     return () => {
       window.removeEventListener("mousemove", handleMouseMove);
+      introTlRef.current = null;
+      idleTweensRef.current = [];
       ctx.revert();
     };
   }, [setActiveChapter, setLetterboxActive]);
@@ -477,12 +517,6 @@ export function Act1HeroCollage() {
             </div>
           </div>
         </div>
-
-        <div
-          ref={whiteIntroRef}
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 z-40 bg-white"
-        />
 
         <div
           ref={exitFlashRef}

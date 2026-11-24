@@ -41,7 +41,8 @@ export function Act2Studio3D() {
   const entryHazeRef = useRef<HTMLDivElement>(null);
   const exitFlashRef = useRef<HTMLDivElement>(null);
 
-  const { setActiveChapter, setLetterboxActive, studio3DRef } = useShowreel();
+  const { setActiveChapter, setLetterboxActive, markStudio3DReady, studio3DRef } =
+    useShowreel();
 
   useEffect(() => {
     const section = sectionRef.current;
@@ -52,7 +53,7 @@ export function Act2Studio3D() {
         setInView(entry.isIntersecting);
         studio3DRef.current.inView = entry.isIntersecting;
       },
-      { rootMargin: "250px 0px" }
+      { rootMargin: "400px 0px" }
     );
     observer.observe(section);
 
@@ -154,7 +155,11 @@ export function Act2Studio3D() {
     >
       <div className="sticky top-0 h-[100dvh] w-full overflow-hidden">
         {/* === SINGLE REAL-TIME R3F WEBGL CANVAS (SEAMLESS LIVE 3D CRT PORTAL!) === */}
-        <StudioSceneCanvas scrollRef={studio3DRef} active={inView} />
+        <StudioSceneCanvas
+          scrollRef={studio3DRef}
+          active={inView}
+          onReady={markStudio3DReady}
+        />
 
         {/* Screen-reader accessible mirror of the real 3D WebGL headline */}
         <h2 className="sr-only">{PORTFOLIO_DATA.studio3D.heroGlassHeadline}</h2>
@@ -177,7 +182,7 @@ export function Act2Studio3D() {
         {/* === PHASE 2: SAFE-AREA EDITORIAL TELEMETRY OVERLAY (INSIDE DIGITAL TWIN) === */}
         <div
           ref={editorialRef}
-          className="pointer-events-none absolute inset-0 z-10 mx-auto flex max-w-[1440px] flex-col justify-between px-6 py-[9.5dvh] sm:px-14 opacity-0 will-change-transform"
+          className="pointer-events-none absolute inset-0 z-10 mx-auto flex max-w-[1440px] flex-col justify-between px-5 pt-[max(58px,9.5dvh)] pb-[max(46px,9.5dvh)] sm:px-14 opacity-0 will-change-transform"
         >
           <div className="max-w-[270px] sm:max-w-sm rounded-2xl border border-white/10 bg-[#07111E]/65 px-4 py-3 backdrop-blur-md">
             <span className="block font-mono text-[9px] font-bold uppercase tracking-[0.22em] text-[#38BDF8]">

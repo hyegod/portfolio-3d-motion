@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ArrowUpRight, Gauge } from "lucide-react";
@@ -11,8 +12,12 @@ import {
 } from "@/data/portfolio";
 import { useShowreel } from "@/context/ShowreelContext";
 import { ToolBadge } from "@/components/ui/ToolBadges";
-import { ProjectModal } from "@/components/ui/ProjectModal";
 import { CodeMotionScene } from "@/components/ui/CodeMotionAssets";
+
+const ProjectModal = dynamic(
+  () => import("@/components/ui/ProjectModal").then((m) => m.ProjectModal),
+  { ssr: false }
+);
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -47,7 +52,17 @@ export function Act5WorkShowcase() {
   const [activeFilter, setActiveFilter] = useState<FilterTab>("ALL");
   const [modalProject, setModalProject] = useState<WorkProject | null>(null);
 
-  const { setActiveChapter, setLetterboxActive } = useShowreel();
+  const {
+    setActiveChapter,
+    setLetterboxActive,
+    setProjectModalOpen,
+    scrollToY,
+  } = useShowreel();
+
+  useEffect(() => {
+    setProjectModalOpen(modalProject !== null);
+    return () => setProjectModalOpen(false);
+  }, [modalProject, setProjectModalOpen]);
 
   const filteredProjects = useMemo(() => {
     if (activeFilter === "ALL") return PORTFOLIO_DATA.workSection.projects;
@@ -88,6 +103,9 @@ export function Act5WorkShowcase() {
         const localHold = clamp01(exactPos - i + 0.5);
 
         if (slide) {
+          const isOccluded =
+            (i > 0 && wipeProgress <= 0.002) || nextWipe >= 0.998;
+          slide.style.visibility = isOccluded ? "hidden" : "visible";
           if (i === 0) {
             slide.style.clipPath = "inset(0% 0% 0% 0%)";
           } else {
@@ -147,7 +165,15 @@ export function Act5WorkShowcase() {
       updateReel(st.progress);
     }, section);
 
-    return () => ctx.revert();
+    // Refresh downstream ScrollTriggers (Act 6) whenever filter height changes
+    const refreshId = window.setTimeout(() => {
+      ScrollTrigger.refresh();
+    }, 60);
+
+    return () => {
+      window.clearTimeout(refreshId);
+      ctx.revert();
+    };
   }, [filteredProjects, setActiveChapter, setLetterboxActive]);
 
   const jumpToReelIndex = (idx: number) => {
@@ -156,7 +182,7 @@ export function Act5WorkShowcase() {
     const rectTop = section.getBoundingClientRect().top + window.scrollY;
     const scrollable = Math.max(1, section.offsetHeight - window.innerHeight);
     const targetY = rectTop + (idx / (filteredProjects.length - 1)) * scrollable;
-    window.scrollTo({ top: targetY, behavior: "smooth" });
+    scrollToY(targetY);
   };
 
   const heightClass =
@@ -325,11 +351,13 @@ export function Act5WorkShowcase() {
         </div>
       </div>
 
-      {/* Rounded Case Study Modal */}
-      <ProjectModal
-        project={modalProject}
-        onClose={() => setModalProject(null)}
-      />
+      {/* Lazy-Loaded Rounded Case Study Modal */}
+      {modalProject && (
+        <ProjectModal
+          project={modalProject}
+          onClose={() => setModalProject(null)}
+        />
+      )}
     </section>
   );
 }

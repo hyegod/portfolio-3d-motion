@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import {
@@ -9,6 +9,7 @@ import {
   RoundedBox,
   Sparkles,
 } from "@react-three/drei";
+import { detectWebGLSupport, isCompactViewport } from "@/lib/webgl";
 
 export interface SkillsScrollState {
   progress: number;
@@ -260,7 +261,7 @@ function SkillsCinemaRig({
       <pointLight position={[2.5, 1.5, 3]} intensity={1.7} distance={16} color="#C6FF3D" />
       <pointLight position={[-2.5, -1, 3]} intensity={1.5} distance={16} color="#FF6B4A" />
 
-      <Environment resolution={128}>
+      <Environment resolution={128} frames={1}>
         <Lightformer
           form="rect"
           intensity={3.2}
@@ -318,7 +319,7 @@ function CivilWorld3D({
 
   useFrame((state) => {
     const t = state.clock.elapsedTime;
-    const { progress: p, activeRow } = scrollRef.current;
+    const { progress: p } = scrollRef.current;
     const { chapterIdx, local } = getActiveSkillChapter(p);
 
     if (groupRef.current) {
@@ -1088,28 +1089,19 @@ function HobbiesWorld3D({
 }
 
 export default function Skills3DStage({ scrollRef, active }: Skills3DStageProps) {
-  const [webglReady, setWebglReady] = useState(true);
-
-  useEffect(() => {
-    try {
-      const test = document.createElement("canvas");
-      const gl = test.getContext("webgl2") || test.getContext("webgl");
-      if (!gl) setWebglReady(false);
-    } catch {
-      setWebglReady(false);
-    }
-  }, []);
+  const [webglReady] = useState<boolean>(() => detectWebGLSupport());
+  const [compact] = useState<boolean>(() => isCompactViewport());
 
   if (!webglReady) return null;
 
   return (
     <Canvas
-      dpr={[1, 1.6]}
+      dpr={compact ? [1, 1.3] : [1, 1.6]}
       frameloop={active ? "always" : "demand"}
       camera={{ position: [-3.15, -1.28, 3.85], fov: 50, near: 0.1, far: 45 }}
       gl={{
         alpha: true,
-        antialias: true,
+        antialias: !compact,
         powerPreference: "high-performance",
       }}
       className="pointer-events-none h-full w-full"

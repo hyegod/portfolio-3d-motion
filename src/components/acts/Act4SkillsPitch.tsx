@@ -254,6 +254,8 @@ const STAND_LIT = [
 export function Act4SkillsPitch() {
   const sectionRef = useRef<HTMLElement>(null);
   const [inView, setInView] = useState(false);
+  // True lazy-load gate: only download & mount Act 4's second WebGL context when approaching Act 3/4!
+  const [stageMounted, setStageMounted] = useState(false);
 
   const skillsScrollRef = useRef<SkillsScrollState>({
     progress: 0,
@@ -313,7 +315,7 @@ export function Act4SkillsPitch() {
   const standCursorRef = useRef<HTMLDivElement>(null);
   const isStandLitRef = useRef(false);
 
-  const { setActiveChapter, setLetterboxActive, setContactOpen } =
+  const { setActiveChapter, setLetterboxActive, setContactOpen, scrollToY } =
     useShowreel();
 
   const setStandOutDOM = (lit: boolean) => {
@@ -345,9 +347,21 @@ export function Act4SkillsPitch() {
       ([entry]) => {
         setInView(entry.isIntersecting);
       },
-      { rootMargin: "250px 0px" }
+      { rootMargin: "320px 0px" }
     );
     observer.observe(section);
+
+    // Pre-mount Act 4's lazy 3D chunk 1400px ahead of entry so shaders compile before user arrives!
+    const lazyObserver = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setStageMounted(true);
+          lazyObserver.disconnect();
+        }
+      },
+      { rootMargin: "1400px 0px" }
+    );
+    lazyObserver.observe(section);
 
     let lastLitTab = -1;
 
@@ -971,6 +985,7 @@ export function Act4SkillsPitch() {
 
     return () => {
       observer.disconnect();
+      lazyObserver.disconnect();
       ctx.revert();
     };
   }, [setActiveChapter, setLetterboxActive]);
@@ -981,10 +996,7 @@ export function Act4SkillsPitch() {
     const rect = el.getBoundingClientRect();
     const absTop = window.scrollY + rect.top;
     const travel = Math.max(0, el.offsetHeight - window.innerHeight);
-    window.scrollTo({
-      top: absTop + travel * ratio,
-      behavior: "smooth",
-    });
+    scrollToY(absTop + travel * ratio);
   };
 
   const handlePointerMove = (e: React.PointerEvent<HTMLElement>) => {
@@ -1008,7 +1020,7 @@ export function Act4SkillsPitch() {
         <div
           ref={hudNavRef}
           style={{ opacity: 0, visibility: "hidden" }}
-          className="pointer-events-auto absolute left-4 top-20 sm:left-10 sm:top-22 z-[48] flex flex-wrap items-center gap-1.5 sm:gap-2"
+          className="pointer-events-auto no-scrollbar absolute left-4 top-14 sm:left-10 sm:top-20 z-[48] flex max-w-[calc(100vw-2rem)] flex-nowrap items-center gap-1 sm:gap-2 overflow-x-auto"
         >
           {CHAPTERS.map((ch, idx) => (
             <button
@@ -1018,7 +1030,7 @@ export function Act4SkillsPitch() {
               }}
               type="button"
               onClick={() => jumpToRatio(ch.jumpRatio)}
-              className="rounded-xl px-3 py-1 font-mono text-[10px] sm:text-[11px] font-extrabold tracking-wider transition-all duration-200 cursor-pointer"
+              className="touch-manipulation shrink-0 whitespace-nowrap rounded-xl px-2.5 sm:px-3 py-1 font-mono text-[9.5px] sm:text-[11px] font-extrabold tracking-wider transition-all duration-200 cursor-pointer"
             >
               {ch.shortTab}
             </button>
@@ -1165,7 +1177,9 @@ export function Act4SkillsPitch() {
           style={{ opacity: 0, visibility: "hidden" }}
           className="pointer-events-none absolute inset-0 z-[34] will-change-[opacity,transform]"
         >
-          <Skills3DStage scrollRef={skillsScrollRef} active={inView} />
+          {stageMounted && (
+            <Skills3DStage scrollRef={skillsScrollRef} active={inView} />
+          )}
         </div>
 
         {/* Soft Bottom Vignette Only for Crisp White Typography Contrast (Zero Boxes!) */}
@@ -1330,7 +1344,7 @@ export function Act4SkillsPitch() {
                 fgChapterRefs.current[cIdx] = el;
               }}
               style={{ visibility: "hidden", opacity: 0 }}
-              className="pointer-events-none absolute inset-0 z-[42] mx-auto flex max-w-[1440px] flex-col justify-between px-5 pb-7 pt-32 sm:px-12 sm:pb-10 lg:pt-32"
+              className="pointer-events-none absolute inset-0 z-[42] mx-auto flex max-w-[1440px] flex-col justify-between px-4 pb-6 pt-26 sm:px-12 sm:pb-10 sm:pt-32"
             >
               {/* TOP EDITORIAL DISCIPLINE LOCKUP (FRAMELESS + TILTED TAPE STICKER + SQUIRCLE ICONS!) */}
               <div

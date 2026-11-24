@@ -31,11 +31,12 @@ export function ProjectModal({ project, onClose }: ProjectModalProps) {
       role="dialog"
       aria-modal="true"
       aria-label={project.title}
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-[#04090F]/80 p-4 backdrop-blur-md"
+      className="fixed inset-0 z-[100] flex items-center justify-center overflow-hidden bg-[#04090F]/80 p-3 sm:p-4 backdrop-blur-md"
       onClick={onClose}
     >
       <div
-        className="relative max-h-[92dvh] w-full max-w-2xl overflow-y-auto rounded-2xl sm:rounded-3xl border border-white/15 bg-[#091520] p-4 sm:p-8 text-white shadow-[0_32px_90px_rgba(0,0,0,0.85)]"
+        data-lenis-prevent
+        className="relative max-h-[92dvh] w-full max-w-2xl overflow-x-hidden overflow-y-auto rounded-2xl sm:rounded-3xl border border-white/15 bg-[#091520] p-4 sm:p-8 text-white shadow-[0_32px_90px_rgba(0,0,0,0.85)]"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between gap-3">

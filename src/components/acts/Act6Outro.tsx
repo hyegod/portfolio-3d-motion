@@ -170,8 +170,12 @@ export function Act6Outro() {
     spikeRef.current = 1.0;
   }, [selectedChannel]);
 
-  // Zero-rerender live Jakarta WIB clock (updates DOM textContent directly)
+  // Scroll-Scrubbed Kinetic Choreography + On-Demand 60fps Harmonic Oscilloscope & Clock (0% CPU when offscreen!)
   useEffect(() => {
+    const section = sectionRef.current;
+    if (!section) return;
+
+    const isTouchOnly = window.matchMedia("(pointer: coarse)").matches;
     const fmt = new Intl.DateTimeFormat("en-GB", {
       timeZone: "Asia/Jakarta",
       hour12: false,
@@ -179,57 +183,52 @@ export function Act6Outro() {
       minute: "2-digit",
       second: "2-digit",
     });
+
+    let rafId = 0;
+    let clockId = 0;
+    let inViewport = false;
+    let phase = 0;
+
     const tickClock = () => {
       if (clockSpanRef.current) {
         clockSpanRef.current.textContent = `WIB ${fmt.format(new Date())}`;
       }
     };
-    tickClock();
-    const interval = setInterval(tickClock, 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  // Scroll-Scrubbed Kinetic Choreography + Living 60fps Harmonic Oscilloscope
-  useEffect(() => {
-    const section = sectionRef.current;
-    if (!section) return;
-
-    let rafId = 0;
-    let inViewport = false;
-    let phase = 0;
 
     const tickWave = () => {
-      if (inViewport) {
-        phase += 0.065;
-        spikeRef.current *= 0.94;
-        const amp = 10 + spikeRef.current * 14;
-        const f = freqRef.current;
+      if (!inViewport) {
+        rafId = 0;
+        return;
+      }
+      phase += 0.065;
+      spikeRef.current *= 0.94;
+      const amp = 10 + spikeRef.current * 14;
+      const f = freqRef.current;
 
-        if (wavePath1Ref.current && wavePath2Ref.current) {
-          let d1 = "M 0 24";
-          let d2 = "M 0 24";
-          for (let x = 0; x <= 600; x += 20) {
-            const u = x / 600;
-            const envelope = Math.sin(u * Math.PI);
-            const y1 =
-              24 +
-              Math.sin(u * Math.PI * 2 * f - phase) * amp * envelope +
-              Math.cos(u * Math.PI * 5 + phase * 0.7) * 3 * envelope;
-            const y2 =
-              24 +
-              Math.cos(u * Math.PI * 2 * (f * 0.75) + phase * 1.15) *
-                (amp * 0.68) *
-                envelope;
-            d1 += ` L ${x} ${y1.toFixed(1)}`;
-            d2 += ` L ${x} ${y2.toFixed(1)}`;
-          }
-          wavePath1Ref.current.setAttribute("d", d1);
-          wavePath2Ref.current.setAttribute("d", d2);
+      if (wavePath1Ref.current && wavePath2Ref.current) {
+        let d1 = "M 0 24";
+        let d2 = "M 0 24";
+        for (let x = 0; x <= 600; x += 20) {
+          const u = x / 600;
+          const envelope = Math.sin(u * Math.PI);
+          const y1 =
+            24 +
+            Math.sin(u * Math.PI * 2 * f - phase) * amp * envelope +
+            Math.cos(u * Math.PI * 5 + phase * 0.7) * 3 * envelope;
+          const y2 =
+            24 +
+            Math.cos(u * Math.PI * 2 * (f * 0.75) + phase * 1.15) *
+              (amp * 0.68) *
+              envelope;
+          d1 += ` L ${x} ${y1.toFixed(1)}`;
+          d2 += ` L ${x} ${y2.toFixed(1)}`;
         }
+        wavePath1Ref.current.setAttribute("d", d1);
+        wavePath2Ref.current.setAttribute("d", d2);
+      }
 
-        if (radarSweepRef.current) {
-          radarSweepRef.current.style.transform = `rotate(${((phase * 28) % 360).toFixed(1)}deg)`;
-        }
+      if (radarSweepRef.current) {
+        radarSweepRef.current.style.transform = `rotate(${((phase * 28) % 360).toFixed(1)}deg)`;
       }
       rafId = requestAnimationFrame(tickWave);
     };
@@ -237,11 +236,24 @@ export function Act6Outro() {
     const observer = new IntersectionObserver(
       ([entry]) => {
         inViewport = entry.isIntersecting;
+        if (inViewport) {
+          tickClock();
+          if (!clockId) clockId = window.setInterval(tickClock, 1000);
+          if (!rafId) rafId = requestAnimationFrame(tickWave);
+        } else {
+          if (rafId) {
+            cancelAnimationFrame(rafId);
+            rafId = 0;
+          }
+          if (clockId) {
+            window.clearInterval(clockId);
+            clockId = 0;
+          }
+        }
       },
       { rootMargin: "250px 0px" }
     );
     observer.observe(section);
-    rafId = requestAnimationFrame(tickWave);
 
     // Pure deterministic scrub function called BOTH on mount (p=st.progress) AND on every scroll frame!
     const applyProgress = (p: number) => {
@@ -339,36 +351,45 @@ export function Act6Outro() {
       applyProgress(st.progress);
     }, section);
 
-    // Desktop Magnetic Cursor Pull + 3D Stage Tilt
-    const stageRotX = stage3DRef.current
-      ? gsap.quickTo(stage3DRef.current, "rotateX", { duration: 0.5, ease: "power2.out" })
-      : null;
-    const stageRotY = stage3DRef.current
-      ? gsap.quickTo(stage3DRef.current, "rotateY", { duration: 0.5, ease: "power2.out" })
-      : null;
-    const cardX = magneticCardRef.current
-      ? gsap.quickTo(magneticCardRef.current, "x", { duration: 0.38, ease: "power3.out" })
-      : null;
-    const cardY = magneticCardRef.current
-      ? gsap.quickTo(magneticCardRef.current, "y", { duration: 0.38, ease: "power3.out" })
-      : null;
+    // Desktop Magnetic Cursor Pull + 3D Stage Tilt (skipped on touch devices)
+    const stageRotX =
+      !isTouchOnly && stage3DRef.current
+        ? gsap.quickTo(stage3DRef.current, "rotateX", { duration: 0.5, ease: "power2.out" })
+        : null;
+    const stageRotY =
+      !isTouchOnly && stage3DRef.current
+        ? gsap.quickTo(stage3DRef.current, "rotateY", { duration: 0.5, ease: "power2.out" })
+        : null;
+    const cardX =
+      !isTouchOnly && magneticCardRef.current
+        ? gsap.quickTo(magneticCardRef.current, "x", { duration: 0.38, ease: "power3.out" })
+        : null;
+    const cardY =
+      !isTouchOnly && magneticCardRef.current
+        ? gsap.quickTo(magneticCardRef.current, "y", { duration: 0.38, ease: "power3.out" })
+        : null;
 
     const onMouseMove = (e: MouseEvent) => {
       if (!inViewport) return;
-      const nx = (e.clientX / window.innerWidth - 0.5) * 2;
-      const ny = (e.clientY / window.innerHeight - 0.5) * 2;
+      const nx = (e.clientX / Math.max(1, window.innerWidth) - 0.5) * 2;
+      const ny = (e.clientY / Math.max(1, window.innerHeight) - 0.5) * 2;
       stageRotY?.(nx * 5.5);
       stageRotX?.(-ny * 4);
       cardX?.(nx * 10);
       cardY?.(ny * 6);
     };
 
-    window.addEventListener("mousemove", onMouseMove, { passive: true });
+    if (!isTouchOnly) {
+      window.addEventListener("mousemove", onMouseMove, { passive: true });
+    }
 
     return () => {
-      cancelAnimationFrame(rafId);
+      if (rafId) cancelAnimationFrame(rafId);
+      if (clockId) window.clearInterval(clockId);
       observer.disconnect();
-      window.removeEventListener("mousemove", onMouseMove);
+      if (!isTouchOnly) {
+        window.removeEventListener("mousemove", onMouseMove);
+      }
       ctx.revert();
     };
   }, [setActiveChapter, setLetterboxActive]);
@@ -399,7 +420,7 @@ export function Act6Outro() {
       ref={sectionRef}
       className="relative h-[240vh] w-full bg-[#040A12] text-white"
     >
-      <div className="sticky top-0 flex h-[100dvh] w-full flex-col items-center justify-between overflow-hidden bg-[#040A12] px-4 pb-3 pt-11 sm:px-8 sm:pb-5 sm:pt-14 [perspective:1200px]">
+      <div className="sticky top-0 flex h-[100dvh] w-full flex-col items-center justify-between overflow-hidden bg-[#040A12] px-4 pb-3 pt-14 sm:px-8 sm:pb-5 sm:pt-16 [perspective:1200px]">
         {/* === DYNAMIC ACCENT ATMOSPHERE GLOW === */}
         <div
           aria-hidden="true"

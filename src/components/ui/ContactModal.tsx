@@ -90,6 +90,7 @@ export function ContactModal() {
       onClick={() => setContactOpen(false)}
     >
       <div
+        data-lenis-prevent
         className="relative max-h-[92dvh] w-full max-w-xl overflow-x-hidden overflow-y-auto rounded-3xl border border-white/15 bg-gradient-to-b from-[#0B1A28] to-[#050C14] p-5 sm:p-8 text-white shadow-[0_32px_95px_rgba(0,0,0,0.9)]"
         onClick={(e) => e.stopPropagation()}
       >

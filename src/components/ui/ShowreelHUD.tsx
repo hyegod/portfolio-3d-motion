@@ -16,6 +16,7 @@ export function ShowreelHUD() {
     isAutoPlaying,
     toggleAutoPlay,
     setContactOpen,
+    isAppReady,
   } = useShowreel();
 
   return (
@@ -31,15 +32,21 @@ export function ShowreelHUD() {
 
       {/* Minimal Top-Right Controls: Play Reel & Let's Talk ONLY */}
       <div
-        className="pointer-events-auto fixed right-4 sm:right-7 z-50 flex items-center gap-2 transition-all duration-300"
+        className={`fixed right-3 sm:right-7 z-50 flex items-center gap-1.5 sm:gap-2 transition-all duration-500 ${
+          isAppReady
+            ? "pointer-events-auto opacity-100 translate-y-0"
+            : "pointer-events-none opacity-0 -translate-y-2"
+        }`}
         style={{
-          top: letterboxActive ? "clamp(6px, 1.3vh, 13px)" : "14px",
+          top: letterboxActive
+            ? "max(env(safe-area-inset-top, 0px) + 6px, clamp(6px, 1.3vh, 13px))"
+            : "calc(env(safe-area-inset-top, 0px) + 14px)",
         }}
       >
         <button
           type="button"
           onClick={toggleAutoPlay}
-          className={`pointer-events-auto flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 font-mono text-[10px] sm:text-[11px] font-bold uppercase tracking-wider shadow-[0_10px_28px_rgba(0,0,0,0.4)] backdrop-blur-md transition cursor-pointer ${
+          className={`pointer-events-auto touch-manipulation flex items-center gap-1.5 rounded-full border px-3 sm:px-3.5 py-1.5 font-mono text-[10px] sm:text-[11px] font-bold uppercase tracking-wider shadow-[0_10px_28px_rgba(0,0,0,0.4)] backdrop-blur-md transition cursor-pointer ${
             isAutoPlaying
               ? "border-[#FF6B4A] bg-[#FF6B4A] text-white"
               : "border-white/20 bg-[#07131C]/80 text-white hover:border-[#38BDF8]"
@@ -61,7 +68,7 @@ export function ShowreelHUD() {
         <button
           type="button"
           onClick={() => setContactOpen(true)}
-          className="pointer-events-auto flex items-center gap-1 rounded-full bg-[#C6FF3D] px-4 py-1.5 font-mono text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-[#07131C] shadow-[0_10px_28px_rgba(198,255,61,0.3)] transition hover:scale-[1.04] hover:bg-white cursor-pointer"
+          className="pointer-events-auto touch-manipulation flex items-center gap-1 rounded-full bg-[#C6FF3D] px-3.5 sm:px-4 py-1.5 font-mono text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-[#07131C] shadow-[0_10px_28px_rgba(198,255,61,0.3)] transition hover:scale-[1.04] hover:bg-white cursor-pointer"
         >
           <span>Let&apos;s Talk</span>
           <ArrowUpRight className="h-3.5 w-3.5" />

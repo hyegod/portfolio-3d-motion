@@ -19,25 +19,64 @@ export function SmoothScrollProvider({
     progressBarRef,
     elevationTextRef,
     registerScrollTo,
+    registerScrollToY,
+    contactOpen,
+    projectModalOpen,
+    isAppReady,
     studio3DRef,
   } = useShowreel();
 
   const lenisRef = useRef<Lenis | null>(null);
   const autoPlayRef = useRef(isAutoPlaying);
+  const isScrollLocked = !isAppReady || contactOpen || projectModalOpen;
 
   useEffect(() => {
     autoPlayRef.current = isAutoPlaying;
   }, [isAutoPlaying]);
 
+  // Lock background scroll cleanly while LoadingScreen or any Modal is active
   useEffect(() => {
+    const lenis = lenisRef.current;
+    if (isScrollLocked) {
+      if (autoPlayRef.current) setIsAutoPlaying(false);
+      lenis?.stop();
+      document.documentElement.style.overflow = "hidden";
+    } else {
+      document.documentElement.style.overflow = "";
+      lenis?.start();
+    }
+    return () => {
+      document.documentElement.style.overflow = "";
+    };
+  }, [isScrollLocked, setIsAutoPlaying]);
+
+  // Refresh ScrollTrigger once app finishes preloading so every pinned act is pixel-accurate
+  useEffect(() => {
+    if (!isAppReady) return;
+    const id = window.setTimeout(() => {
+      ScrollTrigger.refresh();
+    }, 120);
+    return () => window.clearTimeout(id);
+  }, [isAppReady]);
+
+  useEffect(() => {
+    const isTouchOnly =
+      typeof window !== "undefined" &&
+      window.matchMedia("(pointer: coarse)").matches;
+
     const lenis = new Lenis({
       duration: 1.05,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       smoothWheel: true,
       wheelMultiplier: 1.0,
-      touchMultiplier: 1.4,
+      touchMultiplier: 1.35,
     });
     lenisRef.current = lenis;
+
+    // Respect initial locked state while preloader is up
+    if (!isAppReady) {
+      lenis.stop();
+    }
 
     let lastElString = "";
     lenis.on("scroll", ({ progress }: { progress: number }) => {
@@ -59,7 +98,7 @@ export function SmoothScrollProvider({
     let lastTime = performance.now();
     const tick = (time: number) => {
       const now = time * 1000;
-      const dt = Math.min(0.05, (now - lastTime) / 1000);
+      const dt = Math.min(0.05, Math.max(0, (now - lastTime) / 1000));
       lastTime = now;
 
       if (autoPlayRef.current) {
@@ -70,7 +109,8 @@ export function SmoothScrollProvider({
         if (currentY >= maxScroll - 4) {
           setIsAutoPlaying(false);
         } else {
-          const pxPerSec = Math.max(260, maxScroll / 30);
+          // ~52 seconds across the entire 6-act cinema showreel
+          const pxPerSec = Math.max(220, maxScroll / 52);
           const nextY = Math.min(maxScroll, currentY + pxPerSec * dt);
           lenis.scrollTo(nextY, { immediate: true });
         }
@@ -95,14 +135,26 @@ export function SmoothScrollProvider({
       }
     };
     const onMouseMove = (e: MouseEvent) => {
-      studio3DRef.current.mouseX = (e.clientX / window.innerWidth) * 2 - 1;
-      studio3DRef.current.mouseY = -(e.clientY / window.innerHeight) * 2 + 1;
+      studio3DRef.current.mouseX = (e.clientX / Math.max(1, window.innerWidth)) * 2 - 1;
+      studio3DRef.current.mouseY = -(e.clientY / Math.max(1, window.innerHeight)) * 2 + 1;
+    };
+
+    let resizeTimer = 0;
+    const onResize = () => {
+      window.clearTimeout(resizeTimer);
+      resizeTimer = window.setTimeout(() => {
+        ScrollTrigger.refresh();
+      }, 220);
     };
 
     window.addEventListener("wheel", stopAutoPlay, { passive: true });
     window.addEventListener("touchstart", stopAutoPlay, { passive: true });
     window.addEventListener("keydown", onKeyDown);
-    window.addEventListener("mousemove", onMouseMove, { passive: true });
+    window.addEventListener("resize", onResize, { passive: true });
+    window.addEventListener("orientationchange", onResize);
+    if (!isTouchOnly) {
+      window.addEventListener("mousemove", onMouseMove, { passive: true });
+    }
 
     registerScrollTo((chapterId: string) => {
       if (chapterId === "top") {
@@ -115,21 +167,31 @@ export function SmoothScrollProvider({
       }
     });
 
+    registerScrollToY((y: number) => {
+      lenis.scrollTo(y, { duration: 1.05 });
+    });
+
     const refreshTimer = window.setTimeout(() => {
       ScrollTrigger.refresh();
-    }, 300);
+    }, 350);
 
     return () => {
       window.clearTimeout(refreshTimer);
+      window.clearTimeout(resizeTimer);
       window.removeEventListener("wheel", stopAutoPlay);
       window.removeEventListener("touchstart", stopAutoPlay);
       window.removeEventListener("keydown", onKeyDown);
-      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("resize", onResize);
+      window.removeEventListener("orientationchange", onResize);
+      if (!isTouchOnly) {
+        window.removeEventListener("mousemove", onMouseMove);
+      }
       gsap.ticker.remove(tick);
       lenis.destroy();
       lenisRef.current = null;
     };
-  }, [elevationTextRef, progressBarRef, registerScrollTo, setIsAutoPlaying, studio3DRef]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [elevationTextRef, progressBarRef, registerScrollTo, registerScrollToY, setIsAutoPlaying, studio3DRef]);
 
   return <>{children}</>;
 }

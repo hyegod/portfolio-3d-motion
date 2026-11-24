@@ -123,18 +123,23 @@ export function SceneRigAndFX({
     []
   );
 
-  // Offscreen Portal Camera & High-DPI RenderTarget for the CRT Monitor Screen!
+  // Offscreen Portal Camera & Adaptive-DPI RenderTarget for the CRT Monitor Screen!
+  // Uses lightweight non-MSAA 960px cap on mobile GPUs vs 4x MSAA 1600px on desktop
   const portalCam = useMemo(
     () => new THREE.PerspectiveCamera(45, 1.6, 0.1, 45),
     []
   );
   const crtFbo = useMemo(() => {
-    const rt = new THREE.WebGLRenderTarget(1280, 800, {
+    const isMobileGpu =
+      typeof window !== "undefined" &&
+      (window.innerWidth < 768 ||
+        window.matchMedia("(pointer: coarse)").matches);
+    const rt = new THREE.WebGLRenderTarget(isMobileGpu ? 768 : 1280, isMobileGpu ? 480 : 800, {
       type: THREE.UnsignedByteType,
       minFilter: THREE.LinearFilter,
       magFilter: THREE.LinearFilter,
       depthBuffer: true,
-      samples: 4,
+      samples: isMobileGpu ? 0 : 4,
     });
     // Render into RGBA8 with exact canvas toneMapping + sRGB output & alpha blending
     // so uPortalBlend = 1.0 matches direct Phase 2 canvas output bit-for-bit (#07111E === #07111E)!
@@ -148,7 +153,8 @@ export function SceneRigAndFX({
 
   useEffect(() => {
     const dpr = gl.getPixelRatio();
-    const w = Math.max(2, Math.min(1920, Math.round(size.width * dpr)));
+    const maxW = size.width < 768 ? 960 : 1600;
+    const w = Math.max(2, Math.min(maxW, Math.round(size.width * dpr)));
     const aspect = size.width / Math.max(1, size.height);
     const h = Math.max(2, Math.round(w / aspect));
     crtFbo.setSize(w, h);

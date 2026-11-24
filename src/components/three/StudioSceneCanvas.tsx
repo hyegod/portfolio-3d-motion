@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { Canvas } from "@react-three/fiber";
 import type { Studio3DScrollState } from "@/context/ShowreelContext";
+import { detectWebGLSupport, isCompactViewport } from "@/lib/webgl";
 import { DeskEnvironment } from "./DeskEnvironment";
 import { PaperPlanePath } from "./PaperPlanePath";
 import { Hero3DText } from "./Hero3DText";
@@ -14,13 +15,18 @@ import { RetroComputerRoom } from "./RetroComputerRoom";
 interface StudioSceneCanvasProps {
   scrollRef: React.MutableRefObject<Studio3DScrollState>;
   active: boolean;
+  onReady?: () => void;
 }
 
 export default function StudioSceneCanvas({
   scrollRef,
   active,
+  onReady,
 }: StudioSceneCanvasProps) {
-  const [webglReady, setWebglReady] = useState(true);
+  const [webglReady] = useState<boolean>(() => detectWebGLSupport());
+  const [compact] = useState<boolean>(() => isCompactViewport());
+  const [warmingUp, setWarmingUp] = useState(true);
+  const readyFiredRef = useRef(false);
 
   const roomGroupRef = useRef<THREE.Group>(null);
   const twinGroupRef = useRef<THREE.Group>(null);
@@ -33,16 +39,13 @@ export default function StudioSceneCanvas({
     inView: true,
   });
 
+  // If WebGL is unavailable, notify preloader immediately so it never stalls
   useEffect(() => {
-    try {
-      const testCanvas = document.createElement("canvas");
-      const gl =
-        testCanvas.getContext("webgl2") || testCanvas.getContext("webgl");
-      if (!gl) setWebglReady(false);
-    } catch {
-      setWebglReady(false);
+    if (!webglReady && !readyFiredRef.current) {
+      readyFiredRef.current = true;
+      onReady?.();
     }
-  }, []);
+  }, [webglReady, onReady]);
 
   if (!webglReady) {
     return (
@@ -62,13 +65,25 @@ export default function StudioSceneCanvas({
   return (
     <Canvas
       shadows="percentage"
-      dpr={[1, 1.65]}
-      frameloop={active ? "always" : "demand"}
+      dpr={compact ? [1, 1.35] : [1, 1.65]}
+      frameloop={active || warmingUp ? "always" : "demand"}
       camera={{ position: [-0.48, 0.72, 1.88], fov: 46, near: 0.04, far: 45 }}
       gl={{
-        antialias: true,
+        antialias: !compact,
         powerPreference: "high-performance",
         alpha: false,
+      }}
+      onCreated={() => {
+        // Allow 2 rendered frames for shader compilation + CRT FBO warmup, then sleep until scrolled near!
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            setWarmingUp(false);
+            if (!readyFiredRef.current) {
+              readyFiredRef.current = true;
+              onReady?.();
+            }
+          });
+        });
       }}
       className="h-full w-full"
     >
