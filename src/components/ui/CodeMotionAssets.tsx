@@ -900,31 +900,41 @@ export function CodeMotionScene({
        ---------------------------------------------------------------------- */
     case "music-daw-session":
       return (
-        <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-gradient-to-br from-[#3B0764] via-[#18181B] to-[#09090B] p-4 sm:p-8 select-none">
-          <div className="relative flex w-full max-w-[580px] flex-col gap-3 rounded-2xl border border-pink-400/30 bg-[#0D0B14]/95 p-5 shadow-[0_24px_65px_rgba(236,72,153,0.28)]">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="h-2.5 w-2.5 rounded-full bg-pink-500 animate-pulse" />
-                <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-pink-300">
-                  NOCTURNE.ALS // 112 BPM • D MINOR
+        <div
+          className={`relative flex h-full w-full items-center justify-center overflow-hidden bg-gradient-to-br from-[#3B0764] via-[#18181B] to-[#09090B] select-none ${
+            compact ? "p-2.5 pb-6" : "p-4 sm:p-8"
+          }`}
+        >
+          <div
+            className={`relative flex w-full max-w-[580px] flex-col rounded-2xl border border-pink-400/30 bg-[#0D0B14]/95 shadow-[0_24px_65px_rgba(236,72,153,0.28)] ${
+              compact ? "gap-1.5 p-2.5" : "gap-3 p-5"
+            }`}
+          >
+            {!compact && (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="h-2.5 w-2.5 rounded-full bg-pink-500 animate-pulse" />
+                  <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-pink-300">
+                    NOCTURNE.ALS // 112 BPM • D MINOR
+                  </span>
+                </div>
+                <span className="rounded bg-amber-400/20 px-2 py-0.5 font-mono text-[9px] font-bold text-amber-300">
+                  GUITAR + SYNTH
                 </span>
               </div>
-              <span className="rounded bg-amber-400/20 px-2 py-0.5 font-mono text-[9px] font-bold text-amber-300">
-                GUITAR + SYNTH
-              </span>
-            </div>
+            )}
 
             {/* Multi-Track MIDI Piano Roll & Audio Regions */}
-            <div className="space-y-2">
-              <div className="flex h-7 items-center gap-2 rounded-lg bg-white/5 px-2">
-                <span className="w-12 font-mono text-[9px] text-pink-300">GTR</span>
-                <div className="h-4 w-28 rounded bg-gradient-to-r from-pink-500 to-rose-400" />
-                <div className="h-4 w-36 rounded bg-gradient-to-r from-pink-500 to-amber-400" />
+            <div className={compact ? "space-y-1" : "space-y-2"}>
+              <div className={`flex items-center gap-2 rounded-lg bg-white/5 px-2 ${compact ? "h-5" : "h-7"}`}>
+                <span className="w-9 font-mono text-[8px] text-pink-300">GTR</span>
+                <div className="h-3 w-20 rounded bg-gradient-to-r from-pink-500 to-rose-400" />
+                <div className="h-3 w-24 rounded bg-gradient-to-r from-pink-500 to-amber-400" />
               </div>
-              <div className="flex h-7 items-center gap-2 rounded-lg bg-white/5 px-2">
-                <span className="w-12 font-mono text-[9px] text-sky-300">KEYS</span>
-                <div className="ml-8 h-4 w-44 rounded bg-gradient-to-r from-sky-400 to-indigo-500" />
-                <div className="h-4 w-20 rounded bg-sky-400/75" />
+              <div className={`flex items-center gap-2 rounded-lg bg-white/5 px-2 ${compact ? "h-5" : "h-7"}`}>
+                <span className="w-9 font-mono text-[8px] text-sky-300">SYNTH</span>
+                <div className="ml-4 h-3 w-28 rounded bg-gradient-to-r from-sky-400 to-indigo-500" />
+                <div className="h-3 w-12 rounded bg-sky-400/75" />
               </div>
               {!compact && (
                 <div className="flex h-7 items-center gap-2 rounded-lg bg-white/5 px-2">
@@ -941,7 +951,11 @@ export function CodeMotionScene({
             </div>
 
             {/* Live Equalizer Frequency Bars */}
-            <div className="mt-1 flex h-16 items-end justify-between gap-1.5 rounded-xl bg-black/60 px-3 py-2">
+            <div
+              className={`flex items-end justify-between gap-1 rounded-xl bg-black/60 px-2.5 py-1.5 ${
+                compact ? "h-8" : "mt-1 h-16"
+              }`}
+            >
               {[34, 68, 52, 92, 76, 44, 86, 98, 60, 48, 82, 64, 38, 72, 54, 42].map(
                 (h, i) => (
                   <span
