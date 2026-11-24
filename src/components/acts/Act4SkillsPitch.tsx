@@ -60,7 +60,7 @@ const CHAPTERS: DisciplineChapter[] = [
     tools: ["autocad", "revit"],
     startP: 0.115,
     endP: 0.315,
-    jumpRatio: 0.16,
+    jumpRatio: 0.153,
     beats: [
       {
         idx: "01",
@@ -103,7 +103,7 @@ const CHAPTERS: DisciplineChapter[] = [
     tools: ["typescript", "python"],
     startP: 0.315,
     endP: 0.51,
-    jumpRatio: 0.36,
+    jumpRatio: 0.352,
     beats: [
       {
         idx: "01",
@@ -146,7 +146,7 @@ const CHAPTERS: DisciplineChapter[] = [
     tools: ["figma"],
     startP: 0.51,
     endP: 0.705,
-    jumpRatio: 0.56,
+    jumpRatio: 0.547,
     beats: [
       {
         idx: "01",
@@ -189,7 +189,7 @@ const CHAPTERS: DisciplineChapter[] = [
     tools: ["music"],
     startP: 0.705,
     endP: 0.85,
-    jumpRatio: 0.74,
+    jumpRatio: 0.735,
     beats: [
       {
         idx: "01",
@@ -262,11 +262,17 @@ export function Act4SkillsPitch() {
     activeRow: 0,
   });
 
-  // Minimal Chapter Switcher, 3D Canvas & Cut Flash refs
+  // Minimal Chapter Switcher, 3D Canvas & Signature Per-Chapter Transition FX refs
   const hudNavRef = useRef<HTMLDivElement>(null);
   const tabBtnRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const canvasLayerRef = useRef<HTMLDivElement>(null);
-  const cutFlashRef = useRef<HTMLDivElement>(null);
+  const scanlineFxRef = useRef<HTMLDivElement>(null);
+  const apertureRingFxRef = useRef<HTMLDivElement>(null);
+  const laserSweepFxRef = useRef<HTMLDivElement>(null);
+  const glitchWrapFxRef = useRef<HTMLDivElement>(null);
+  const glitchBarRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const prismSlashFxRef = useRef<HTMLDivElement>(null);
+  const vinylRippleFxRef = useRef<HTMLDivElement>(null);
 
   // Beat 0: Dynamic Kinetic 45+ Intro refs
   const bg0Ref = useRef<HTMLDivElement>(null);
@@ -449,10 +455,73 @@ export function Act4SkillsPitch() {
         const navVis =
           clamp01((p - 0.11) / 0.03) * (1 - clamp01((p - 0.825) / 0.025));
 
+        const wipeWindows = [
+          { start: 0.105, dur: 0.036 }, // Ch 0 Civil: Blueprint Aperture Iris
+          { start: 0.315, dur: 0.028 }, // Ch 1 Software: Chromatic Glitch + Laser Terminal Scan
+          { start: 0.51, dur: 0.028 }, // Ch 2 UI/UX & 3D: 45-deg Diagonal Prism Slash
+          { start: 0.705, dur: 0.026 }, // Ch 3 Hobbies: Bottom Stage Spotlight + Vinyl Ripples
+        ];
+
+        const activeChIdx =
+          p < 0.315 ? 0 : p < 0.51 ? 1 : p < 0.705 ? 2 : 3;
+
+        // Per-cut transition intensities (ZERO blinding white flash!)
+        const w0 = easeInOutCubic(
+          clamp01((p - wipeWindows[0].start) / wipeWindows[0].dur)
+        );
+        const w1 = easeInOutCubic(
+          clamp01((p - wipeWindows[1].start) / wipeWindows[1].dur)
+        );
+        const w2 = easeInOutCubic(
+          clamp01((p - wipeWindows[2].start) / wipeWindows[2].dur)
+        );
+        const w3 = easeInOutCubic(
+          clamp01((p - wipeWindows[3].start) / wipeWindows[3].dur)
+        );
+
+        const fx0 =
+          p >= wipeWindows[0].start && p <= wipeWindows[0].start + wipeWindows[0].dur
+            ? Math.sin(w0 * Math.PI)
+            : 0;
+        const fx1Wipe =
+          p >= wipeWindows[1].start && p <= wipeWindows[1].start + wipeWindows[1].dur
+            ? Math.sin(w1 * Math.PI)
+            : 0;
+        const fx1Glitch = clamp01(1 - Math.abs(p - 0.318) / 0.024);
+        const fx2 =
+          p >= wipeWindows[2].start && p <= wipeWindows[2].start + wipeWindows[2].dur
+            ? Math.sin(w2 * Math.PI)
+            : 0;
+        const fx2Edge = clamp01(1 - Math.abs(p - 0.516) / 0.022);
+        const fx3 =
+          p >= wipeWindows[3].start && p <= wipeWindows[3].start + wipeWindows[3].dur
+            ? Math.sin(w3 * Math.PI)
+            : 0;
+        const fx3Edge = clamp01(1 - Math.abs(p - 0.71) / 0.02);
+
         if (canvasLayerRef.current) {
           canvasLayerRef.current.style.opacity = foundryVis.toFixed(3);
           canvasLayerRef.current.style.visibility =
             foundryVis > 0.005 ? "visible" : "hidden";
+
+          // Distinct 3D canvas spatial transition momentum per cut (GPU transform only!)
+          if (fx1Glitch > 0.01) {
+            const jitterX = Math.sin(p * 620) * fx1Glitch * 14;
+            const skew = Math.cos(p * 480) * fx1Glitch * 4.5;
+            const scX = 1 + fx1Glitch * 0.035;
+            canvasLayerRef.current.style.transform = `translate3d(${jitterX.toFixed(1)}px, 0, 0) skewX(${skew.toFixed(2)}deg) scaleX(${scX.toFixed(3)})`;
+          } else if (fx2Edge > 0.01) {
+            const dir = p < 0.516 ? -1 : 1;
+            const rotY = dir * fx2Edge * 10.5;
+            const sc = 1 - fx2Edge * 0.045;
+            canvasLayerRef.current.style.transform = `perspective(1100px) rotateY(${rotY.toFixed(2)}deg) scale(${sc.toFixed(3)})`;
+          } else if (fx3Edge > 0.01) {
+            const sc = 1 + fx3Edge * 0.065;
+            const rot = (p < 0.71 ? -1 : 1) * fx3Edge * 1.6;
+            canvasLayerRef.current.style.transform = `scale(${sc.toFixed(3)}) rotate(${rot.toFixed(2)}deg)`;
+          } else {
+            canvasLayerRef.current.style.transform = "none";
+          }
         }
         if (hudNavRef.current) {
           hudNavRef.current.style.opacity = navVis.toFixed(3);
@@ -460,20 +529,111 @@ export function Act4SkillsPitch() {
             navVis > 0.005 ? "visible" : "hidden";
         }
 
-        if (cutFlashRef.current) {
-          const cuts = [0.315, 0.51, 0.705];
-          let flash = 0;
-          for (const cp of cuts) {
-            const dist = Math.abs(p - cp);
-            if (dist < 0.018) {
-              flash = Math.max(flash, (1 - dist / 0.018) * 0.5);
-            }
+        // 1) CRT Scanline Sweep Veil (accents cuts 1, 2, 3 — dark/cyan scan texture, never white!)
+        if (scanlineFxRef.current) {
+          const scanStrength = Math.max(
+            fx1Glitch * 0.9,
+            fx2Edge * 0.42,
+            fx3Edge * 0.55
+          );
+          if (scanStrength <= 0.01) {
+            scanlineFxRef.current.style.visibility = "hidden";
+            scanlineFxRef.current.style.opacity = "0";
+          } else {
+            scanlineFxRef.current.style.visibility = "visible";
+            scanlineFxRef.current.style.opacity = scanStrength.toFixed(3);
+            const yShift = ((p * 2400) % 24).toFixed(1);
+            scanlineFxRef.current.style.backgroundPosition = `0 ${yShift}px`;
           }
-          cutFlashRef.current.style.opacity = flash.toFixed(3);
         }
 
-        const activeChIdx =
-          p < 0.315 ? 0 : p < 0.51 ? 1 : p < 0.705 ? 2 : 3;
+        // 2) FX 0 — Blueprint Amber Aperture Ring (Entering 01 Civil)
+        if (apertureRingFxRef.current) {
+          if (fx0 <= 0.01) {
+            apertureRingFxRef.current.style.visibility = "hidden";
+            apertureRingFxRef.current.style.opacity = "0";
+          } else {
+            const r = w0 * 150;
+            const rInner = Math.max(0, r - 4.5).toFixed(1);
+            const rLime = Math.max(0, r - 1.2).toFixed(1);
+            const rPeak = r.toFixed(1);
+            const rOuter = (r + 3.2).toFixed(1);
+            apertureRingFxRef.current.style.visibility = "visible";
+            apertureRingFxRef.current.style.opacity = fx0.toFixed(3);
+            apertureRingFxRef.current.style.backgroundImage = `radial-gradient(circle at 50% 50%, transparent ${rInner}%, rgba(198,255,61,0.48) ${rLime}%, rgba(245,158,11,0.92) ${rPeak}%, transparent ${rOuter}%)`;
+          }
+        }
+
+        // 3) FX 1A — Vertical Terminal Laser Scan Beam (01 Civil -> 02 Software)
+        if (laserSweepFxRef.current) {
+          if (fx1Wipe <= 0.01) {
+            laserSweepFxRef.current.style.visibility = "hidden";
+            laserSweepFxRef.current.style.opacity = "0";
+          } else {
+            laserSweepFxRef.current.style.visibility = "visible";
+            laserSweepFxRef.current.style.opacity = fx1Wipe.toFixed(3);
+            laserSweepFxRef.current.style.left = `${(w1 * 100).toFixed(2)}%`;
+          }
+        }
+
+        // 4) FX 1B — Chromatic RGB Glitch Slice Bars (01 Civil -> 02 Software)
+        if (glitchWrapFxRef.current) {
+          if (fx1Glitch <= 0.01) {
+            glitchWrapFxRef.current.style.visibility = "hidden";
+            glitchWrapFxRef.current.style.opacity = "0";
+          } else {
+            glitchWrapFxRef.current.style.visibility = "visible";
+            glitchWrapFxRef.current.style.opacity = fx1Glitch.toFixed(3);
+            for (let g = 0; g < 5; g++) {
+              const bar = glitchBarRefs.current[g];
+              if (!bar) continue;
+              const phase = Math.sin(p * (390 + g * 85) + g * 2.1);
+              const tx = phase * (28 + g * 11) * fx1Glitch;
+              const sx = 0.55 + Math.abs(Math.cos(p * 310 + g * 1.4)) * 0.65;
+              bar.style.transform = `translate3d(${tx.toFixed(1)}px, 0, 0) scaleX(${sx.toFixed(3)})`;
+            }
+          }
+        }
+
+        // 5) FX 2 — 45° Diagonal Glass Prism Refraction Blade (02 Software -> 03 UI/UX & 3D)
+        if (prismSlashFxRef.current) {
+          if (fx2 <= 0.01) {
+            prismSlashFxRef.current.style.visibility = "hidden";
+            prismSlashFxRef.current.style.opacity = "0";
+          } else {
+            const pos = w2 * 100;
+            const c0 = Math.max(0, pos - 9).toFixed(1);
+            const c1 = Math.max(0, pos - 3.2).toFixed(1);
+            const c2 = pos.toFixed(1);
+            const c3 = Math.min(100, pos + 3.2).toFixed(1);
+            const c4 = Math.min(100, pos + 9.5).toFixed(1);
+            prismSlashFxRef.current.style.visibility = "visible";
+            prismSlashFxRef.current.style.opacity = (fx2 * 0.92).toFixed(3);
+            prismSlashFxRef.current.style.backgroundImage = `linear-gradient(to bottom right, transparent ${c0}%, rgba(56,189,248,0.58) ${c1}%, rgba(198,255,61,0.95) ${c2}%, rgba(168,85,247,0.62) ${c3}%, transparent ${c4}%)`;
+          }
+        }
+
+        // 6) FX 3 — Analog Vinyl Groove Ripples + Stage Spotlight Arc (03 UI/UX & 3D -> 04 Hobbies)
+        if (vinylRippleFxRef.current) {
+          if (fx3 <= 0.01) {
+            vinylRippleFxRef.current.style.visibility = "hidden";
+            vinylRippleFxRef.current.style.opacity = "0";
+          } else {
+            const r = w3 * 150;
+            const g1a = Math.max(0, r - 18).toFixed(1);
+            const g1b = Math.max(0, r - 16.2).toFixed(1);
+            const g1c = Math.max(0, r - 14.4).toFixed(1);
+            const g2a = Math.max(0, r - 9.5).toFixed(1);
+            const g2b = Math.max(0, r - 7.8).toFixed(1);
+            const g2c = Math.max(0, r - 6.0).toFixed(1);
+            const rA = Math.max(0, r - 3.0).toFixed(1);
+            const rB = r.toFixed(1);
+            const rC = (r + 3.8).toFixed(1);
+            vinylRippleFxRef.current.style.visibility = "visible";
+            vinylRippleFxRef.current.style.opacity = (fx3 * 0.92).toFixed(3);
+            vinylRippleFxRef.current.style.backgroundImage = `radial-gradient(circle at 50% 100%, transparent ${g1a}%, rgba(192,132,252,0.34) ${g1b}%, transparent ${g1c}%, transparent ${g2a}%, rgba(255,107,74,0.48) ${g2b}%, transparent ${g2c}%, transparent ${rA}%, rgba(255,107,74,0.94) ${rB}%, transparent ${rC}%)`;
+          }
+        }
 
         if (activeChIdx !== lastLitTab) {
           lastLitTab = activeChIdx;
@@ -494,7 +654,8 @@ export function Act4SkillsPitch() {
           });
         }
 
-        const s0Fade = clamp01((p - 0.1) / 0.035);
+        // Keep Beat 0 white backdrop cleanly underneath until Ch 0's iris finishes expanding!
+        const s0Fade = clamp01((p - 0.138) / 0.02);
         if (bg0Ref.current) {
           bg0Ref.current.style.opacity = (1 - s0Fade).toFixed(3);
           bg0Ref.current.style.visibility =
@@ -522,30 +683,56 @@ export function Act4SkillsPitch() {
           const headerEl = headerRefs.current[cIdx];
           const spotEl = spotlightWrapRefs.current[cIdx];
 
+          // Preserve outgoing dark chapter backdrop underneath the incoming chapter's wipe -> ZERO white bleed!
+          const nextWin = cIdx < 3 ? wipeWindows[cIdx + 1] : null;
+          const isUnderlayDuringNextWipe =
+            nextWin !== null &&
+            activeChIdx === cIdx + 1 &&
+            irisP < 0.98 &&
+            p >= nextWin.start &&
+            p <= nextWin.start + nextWin.dur + 0.006;
+
           if (bgEl) {
-            if (!isCurrent) {
+            if (isUnderlayDuringNextWipe) {
+              bgEl.style.visibility = "visible";
+              bgEl.style.clipPath = "none";
+            } else if (!isCurrent) {
               bgEl.style.visibility = "hidden";
               bgEl.style.clipPath = "none";
             } else {
               bgEl.style.visibility = "visible";
               if (cIdx === 0) {
-                // Civil: circular iris from center — like a blueprint opening
-                const wipeIn = easeInOutCubic(clamp01((p - 0.105) / 0.035));
-                bgEl.style.clipPath = `circle(${(wipeIn * 150).toFixed(1)}% at 50% 50%)`;
+                // 01 Civil: Center Blueprint Aperture Iris
+                bgEl.style.clipPath =
+                  w0 >= 0.998
+                    ? "none"
+                    : `circle(${(w0 * 150).toFixed(1)}% at 50% 50%)`;
               } else if (cIdx === 1) {
-                // Software: horizontal inset wipe from left → right (like a terminal loading bar)
-                const wipeIn = easeInOutCubic(clamp01((p - 0.315) / 0.03));
-                const pct = ((1 - wipeIn) * 100).toFixed(1);
-                bgEl.style.clipPath = `inset(0 ${pct}% 0 0)`;
+                // 02 Software: Left-to-Right Terminal Laser Scan Wipe
+                if (w1 >= 0.998) {
+                  bgEl.style.clipPath = "none";
+                } else {
+                  const pct = ((1 - w1) * 100).toFixed(1);
+                  bgEl.style.clipPath = `inset(0 ${pct}% 0 0)`;
+                }
               } else if (cIdx === 2) {
-                // UI/UX & 3D: vertical blind drop from top — curtain rising on a stage
-                const wipeIn = easeInOutCubic(clamp01((p - 0.51) / 0.03));
-                const pct = ((1 - wipeIn) * 100).toFixed(1);
-                bgEl.style.clipPath = `inset(0 0 ${pct}% 0)`;
+                // 03 UI/UX & 3D: True 45° Corner-to-Corner Diagonal Prism Slash
+                if (w2 >= 0.998) {
+                  bgEl.style.clipPath = "none";
+                } else {
+                  const s = w2 * 200;
+                  const p2x = Math.min(100, s).toFixed(1);
+                  const p3y = Math.max(0, s - 100).toFixed(1);
+                  const p4x = Math.max(0, s - 100).toFixed(1);
+                  const p5y = Math.min(100, s).toFixed(1);
+                  bgEl.style.clipPath = `polygon(0% 0%, ${p2x}% 0%, ${p2x}% ${p3y}%, ${p4x}% ${p5y}%, 0% ${p5y}%)`;
+                }
               } else {
-                // Hobbies: circle wipe from bottom-center — like a spotlight hitting the stage
-                const wipeIn = easeInOutCubic(clamp01((p - 0.705) / 0.03));
-                bgEl.style.clipPath = `circle(${(wipeIn * 150).toFixed(1)}% at 50% 100%)`;
+                // 04 Hobbies: Bottom-Center Stage Spotlight Iris
+                bgEl.style.clipPath =
+                  w3 >= 0.998
+                    ? "none"
+                    : `circle(${(w3 * 150).toFixed(1)}% at 50% 100%)`;
               }
             }
           }
@@ -553,10 +740,13 @@ export function Act4SkillsPitch() {
           if (fgEl) {
             const fadeEdge =
               cIdx === 3
-                ? 1 - clamp01((irisP - 0.25) / 0.5)
+                ? Math.min(
+                    clamp01((local - 0.04) * 9),
+                    1 - clamp01((irisP - 0.25) / 0.5)
+                  )
                 : Math.min(
-                    clamp01(local * 8),
-                    clamp01((1 - local) * 8 + 0.12)
+                    clamp01((local - 0.04) * 9),
+                    clamp01((1 - local) * 9 + 0.12)
                   );
             const fgOp = isCurrent ? fadeEdge : 0;
 
@@ -567,29 +757,51 @@ export function Act4SkillsPitch() {
               fgEl.style.visibility = "visible";
               fgEl.style.opacity = fgOp.toFixed(3);
 
-              // Distinct spatial motion for each chapter's frameless typography!
-              if (isDesktop && headerEl && spotEl) {
+              // Distinct spatial entrance & continuous parallax motion per chapter!
+              const enterT = easeInOutCubic(clamp01((local - 0.03) / 0.14));
+              const enterRem = 1 - enterT;
+
+              if (headerEl && spotEl) {
                 if (cIdx === 0) {
-                  headerEl.style.transform = `translate3d(0, ${((0.5 - local) * 34).toFixed(1)}px, 0)`;
-                  spotEl.style.transform = `translate3d(0, ${((0.5 - local) * -28).toFixed(1)}px, 0)`;
+                  // Civil: Architectural elevation slide
+                  const hY = (isDesktop ? (0.5 - local) * 34 : 0) - enterRem * 36;
+                  const sY = (isDesktop ? (0.5 - local) * -28 : 0) + enterRem * 28;
+                  headerEl.style.transform = `translate3d(0, ${hY.toFixed(1)}px, 0)`;
+                  headerEl.style.textShadow = "none";
+                  spotEl.style.transform = `translate3d(0, ${sY.toFixed(1)}px, 0)`;
                 } else if (cIdx === 1) {
-                  const zPush = Math.sin(local * Math.PI) * 18;
-                  headerEl.style.transform = `translate3d(${(zPush).toFixed(1)}px, 0, 0)`;
-                  spotEl.style.transform = `translate3d(${(-zPush).toFixed(1)}px, 0, 0)`;
+                  // Software: Horizontal terminal glitch-snap + chromatic RGB split shadow on entry
+                  const zPush = isDesktop ? Math.sin(local * Math.PI) * 18 : 0;
+                  const glitchX = enterRem * -58 + Math.sin(p * 520) * enterRem * 8;
+                  const rgbOff = (enterRem * 4.5).toFixed(1);
+                  headerEl.style.transform = `translate3d(${(zPush + glitchX).toFixed(1)}px, 0, 0) skewX(${(enterRem * -10).toFixed(1)}deg)`;
+                  headerEl.style.textShadow =
+                    enterRem > 0.04
+                      ? `${rgbOff}px 0 rgba(56,189,248,0.85), -${rgbOff}px 0 rgba(244,63,94,0.85)`
+                      : "none";
+                  spotEl.style.transform = `translate3d(${(-zPush + enterRem * 42).toFixed(1)}px, 0, 0)`;
                 } else if (cIdx === 2) {
-                  headerEl.style.transform = `translate3d(${((local - 0.5) * 55).toFixed(1)}px, 0, 0)`;
-                  spotEl.style.transform = `translate3d(${((0.5 - local) * 65).toFixed(1)}px, 0, 0)`;
+                  // UI/UX & 3D: Spatial perspective 3D tilt-in
+                  const hX = isDesktop ? (local - 0.5) * 55 : 0;
+                  const sX = isDesktop ? (0.5 - local) * 65 : 0;
+                  headerEl.style.transform = `perspective(900px) translate3d(${(hX - enterRem * 30).toFixed(1)}px, ${(enterRem * -18).toFixed(1)}px, 0) rotateX(${(enterRem * 28).toFixed(1)}deg)`;
+                  headerEl.style.textShadow = "none";
+                  spotEl.style.transform = `perspective(900px) translate3d(${(sX + enterRem * 30).toFixed(1)}px, 0, 0) rotateX(${(enterRem * -18).toFixed(1)}deg)`;
                 } else {
-                  headerEl.style.transform = `translate3d(0, ${((0.5 - local) * 32).toFixed(1)}px, 0)`;
-                  spotEl.style.transform = `translate3d(0, ${((0.5 - local) * -32).toFixed(1)}px, 0)`;
+                  // Hobbies: Warm organic vinyl stage bloom
+                  const hY = (isDesktop ? (0.5 - local) * 32 : 0) + enterRem * 28;
+                  const sY = (isDesktop ? (0.5 - local) * -32 : 0) + enterRem * 24;
+                  const sc = 0.88 + enterT * 0.12;
+                  headerEl.style.transform = `translate3d(0, ${hY.toFixed(1)}px, 0) rotate(${(enterRem * 3.5).toFixed(1)}deg) scale(${sc.toFixed(3)})`;
+                  headerEl.style.textShadow = "none";
+                  spotEl.style.transform = `translate3d(0, ${sY.toFixed(1)}px, 0) scale(${sc.toFixed(3)})`;
                 }
-              } else if (headerEl && spotEl) {
-                headerEl.style.transform = "none";
-                spotEl.style.transform = "none";
               }
 
               // Continuous analog scroll-drum across the 4 frameless Spotlight Super-Titles (0.0 -> 3.0)
-              const beatFloat = clamp01(local * 1.02) * 3;
+              // Starts gently after the brief wipe settle so Beat 01 lands at 100% clarity!
+              const beatLocal = clamp01((local - 0.14) / 0.8);
+              const beatFloat = beatLocal * 3;
               const activeBeat = Math.min(3, Math.round(beatFloat));
               if (activeChIdx === cIdx) {
                 skillsScrollRef.current.activeRow = activeBeat;
@@ -612,6 +824,7 @@ export function Act4SkillsPitch() {
                       absD <= 0.28 ? 1 : 1 - (absD - 0.28) / 0.26;
                     const eased = norm * norm * (3 - 2 * norm);
                     let transform = "";
+                    let textShadow = "none";
 
                     if (cIdx === 0) {
                       // Civil & Structural — vertical film-roll drum + skewX (blueprint paper feel)
@@ -620,20 +833,24 @@ export function Act4SkillsPitch() {
                       const sc = 0.93 + eased * 0.07;
                       transform = `translate3d(0, ${yShift.toFixed(1)}px, 0) skewX(${skew.toFixed(1)}deg) scale(${sc.toFixed(3)})`;
                     } else if (cIdx === 1) {
-                      // Software & Solvers — horizontal code-scroll swipe + depth push
+                      // Software & Solvers — horizontal code-scroll swipe + live RGB chromatic split while moving!
                       const xShift = absD <= 0.16 ? 0 : d * -95;
                       const yShift = absD <= 0.16 ? 0 : d * 12;
                       const sc = 0.92 + eased * 0.08;
+                      const rgbSplit = absD <= 0.16 ? 0 : Math.min(5, absD * 10);
+                      if (rgbSplit > 0.3) {
+                        textShadow = `${rgbSplit.toFixed(1)}px 0 rgba(56,189,248,0.85), -${rgbSplit.toFixed(1)}px 0 rgba(244,63,94,0.85)`;
+                      }
                       transform = `translate3d(${xShift.toFixed(1)}px, ${yShift.toFixed(1)}px, 0) scale(${sc.toFixed(3)})`;
                     } else if (cIdx === 2) {
                       // UI/UX & 3D — perspective rotateX flip (like a spatial card turning in 3D)
-                      const rotX = absD <= 0.16 ? 0 : d * 24;
+                      const rotX = absD <= 0.16 ? 0 : d * 28;
                       const yShift = absD <= 0.16 ? 0 : d * 22;
-                      const sc = 0.95 + eased * 0.05;
+                      const sc = 0.94 + eased * 0.06;
                       transform = `perspective(900px) translate3d(0, ${yShift.toFixed(1)}px, 0) rotateX(${rotX.toFixed(1)}deg) scale(${sc.toFixed(3)})`;
                     } else {
                       // Hobbies — vinyl spin-in: scale pulse + slight rotation (organic, laid-back)
-                      const sc = 0.66 + eased * 0.34;
+                      const sc = 0.68 + eased * 0.32;
                       const rot = absD <= 0.16 ? 0 : d * -9;
                       const yShift = absD <= 0.16 ? 0 : d * 30;
                       transform = `translate3d(0, ${yShift.toFixed(1)}px, 0) rotate(${rot.toFixed(1)}deg) scale(${sc.toFixed(3)})`;
@@ -642,6 +859,7 @@ export function Act4SkillsPitch() {
                     slide.style.visibility = "visible";
                     slide.style.opacity = eased.toFixed(3);
                     slide.style.transform = transform;
+                    slide.style.textShadow = textShadow;
                   }
                 }
 
@@ -916,7 +1134,7 @@ export function Act4SkillsPitch() {
         <div
           ref={canvasLayerRef}
           style={{ opacity: 0, visibility: "hidden" }}
-          className="pointer-events-none absolute inset-0 z-[34]"
+          className="pointer-events-none absolute inset-0 z-[34] will-change-[opacity,transform]"
         >
           <Skills3DStage scrollRef={skillsScrollRef} active={inView} />
         </div>
@@ -927,11 +1145,90 @@ export function Act4SkillsPitch() {
           className="pointer-events-none absolute inset-x-0 bottom-0 z-[36] h-[44dvh] bg-gradient-to-t from-black/75 via-black/30 to-transparent"
         />
 
-        {/* Cinema Camera Cut Speed-Flash */}
+        {/* ================================================================
+            SIGNATURE NON-FLASH TRANSITION VFX SUITE (CHROMATIC + SCANLINE + 4 UNIQUE CUTS)
+           ================================================================ */}
+        {/* CRT Scanline Sweep Veil */}
         <div
-          ref={cutFlashRef}
+          ref={scanlineFxRef}
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 z-[40] bg-white opacity-0 will-change-[opacity]"
+          style={{
+            opacity: 0,
+            visibility: "hidden",
+            backgroundImage:
+              "repeating-linear-gradient(0deg, rgba(56,189,248,0.12) 0px, rgba(56,189,248,0.12) 1px, rgba(2,6,23,0.18) 1px, rgba(2,6,23,0.18) 2px, transparent 2px, transparent 5px)",
+          }}
+          className="pointer-events-none absolute inset-0 z-[39] will-change-[opacity]"
+        />
+
+        {/* FX 0: Blueprint Amber Aperture Ring + Crosshair Axes (Entering 01 Civil) */}
+        <div
+          ref={apertureRingFxRef}
+          aria-hidden="true"
+          style={{ opacity: 0, visibility: "hidden" }}
+          className="pointer-events-none absolute inset-0 z-[40] mix-blend-screen will-change-[opacity]"
+        >
+          <div className="absolute inset-x-0 top-1/2 h-px bg-gradient-to-r from-transparent via-[#F59E0B]/40 to-transparent" />
+          <div className="absolute inset-y-0 left-1/2 w-px bg-gradient-to-b from-transparent via-[#F59E0B]/40 to-transparent" />
+        </div>
+
+        {/* FX 1A: Vertical Cyan/Lime Terminal Laser Beam (01 Civil -> 02 Software) */}
+        <div
+          ref={laserSweepFxRef}
+          aria-hidden="true"
+          style={{ opacity: 0, visibility: "hidden", left: "0%" }}
+          className="pointer-events-none absolute inset-y-0 z-[40] -ml-16 w-16 mix-blend-screen will-change-[left,opacity]"
+        >
+          <div className="h-full w-full bg-gradient-to-r from-transparent via-[#38BDF8]/45 to-[#C6FF3D]" />
+          <div className="absolute right-0 inset-y-0 w-[3px] bg-[#E0F2FE] shadow-[0_0_24px_#38BDF8,0_0_48px_#C6FF3D]" />
+        </div>
+
+        {/* FX 1B: Chromatic RGB Glitch Slice Bars (01 Civil -> 02 Software) */}
+        <div
+          ref={glitchWrapFxRef}
+          aria-hidden="true"
+          style={{ opacity: 0, visibility: "hidden" }}
+          className="pointer-events-none absolute inset-0 z-[40] overflow-hidden mix-blend-screen will-change-[opacity]"
+        >
+          {[
+            { top: "14%", height: "3px", width: "58%", left: "12%", color: "rgba(56,189,248,0.8)", shadow: "10px 0 0 rgba(244,63,94,0.72), -8px 0 0 rgba(198,255,61,0.7)" },
+            { top: "31%", height: "6px", width: "74%", left: "18%", color: "rgba(198,255,61,0.55)", shadow: "-14px 0 0 rgba(56,189,248,0.75), 14px 0 0 rgba(244,63,94,0.75)" },
+            { top: "51%", height: "4px", width: "86%", left: "7%", color: "rgba(244,63,94,0.68)", shadow: "12px 0 0 rgba(56,189,248,0.82), -10px 0 0 rgba(198,255,61,0.65)" },
+            { top: "69%", height: "7px", width: "62%", left: "26%", color: "rgba(56,189,248,0.62)", shadow: "-16px 0 0 rgba(244,63,94,0.72), 9px 0 0 rgba(198,255,61,0.62)" },
+            { top: "84%", height: "3px", width: "52%", left: "16%", color: "rgba(198,255,61,0.7)", shadow: "11px 0 0 rgba(56,189,248,0.78), -11px 0 0 rgba(244,63,94,0.68)" },
+          ].map((bar, idx) => (
+            <div
+              key={idx}
+              ref={(el) => {
+                glitchBarRefs.current[idx] = el;
+              }}
+              style={{
+                top: bar.top,
+                height: bar.height,
+                width: bar.width,
+                left: bar.left,
+                backgroundColor: bar.color,
+                boxShadow: bar.shadow,
+              }}
+              className="absolute will-change-transform"
+            />
+          ))}
+        </div>
+
+        {/* FX 2: 45° Diagonal Glass Prism Refraction Blade (02 Software -> 03 UI/UX & 3D) */}
+        <div
+          ref={prismSlashFxRef}
+          aria-hidden="true"
+          style={{ opacity: 0, visibility: "hidden" }}
+          className="pointer-events-none absolute inset-0 z-[40] mix-blend-screen will-change-[opacity]"
+        />
+
+        {/* FX 3: Concentric Vinyl Groove Ripples + Stage Spotlight Arc (03 UI/UX & 3D -> 04 Hobbies) */}
+        <div
+          ref={vinylRippleFxRef}
+          aria-hidden="true"
+          style={{ opacity: 0, visibility: "hidden" }}
+          className="pointer-events-none absolute inset-0 z-[40] mix-blend-screen will-change-[opacity]"
         />
 
         {/* ================================================================
@@ -1034,8 +1331,10 @@ export function Act4SkillsPitch() {
                 {/* Minimal Frameless 01-04 Beat Switcher (Pure Typography, Zero Card Borders!) */}
                 <div className="pointer-events-auto flex flex-wrap items-center gap-3 sm:gap-5">
                   {ch.beats.map((beat, bIdx) => {
+                    const beatLocalTarget =
+                      bIdx === 0 ? 0.19 : 0.14 + (bIdx / 3) * 0.8;
                     const targetP =
-                      ch.startP + (bIdx / 3) * (ch.endP - ch.startP - 0.02);
+                      ch.startP + beatLocalTarget * (ch.endP - ch.startP);
                     return (
                       <button
                         key={beat.idx}

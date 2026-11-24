@@ -188,6 +188,25 @@ function SkillsCinemaRig({
     lookSpline.getPoint(u, tempLook);
 
     const sample = sampleCameraPath(CHAPTER_CAMERA_PATHS[chapterIdx], u);
+    // Distinct per-chapter camera entry punch (decays cleanly to 0 by local = 0.18)
+    const entryDecay = 1 - smoothstep(0.0, 0.18, u);
+    const entryFovKick =
+      chapterIdx === 1
+        ? entryDecay * 13 // Software: hyperspace FPV warp entry
+        : chapterIdx === 2
+          ? entryDecay * -6 // UI/UX: crisp telephoto dolly zoom-in
+          : chapterIdx === 3
+            ? entryDecay * 7 // Hobbies: dramatic low-stage reveal pull
+            : 0;
+    const entryRollKick =
+      chapterIdx === 1
+        ? entryDecay * -0.14
+        : chapterIdx === 2
+          ? entryDecay * 0.08
+          : chapterIdx === 3
+            ? entryDecay * -0.07
+            : 0;
+
     const tx = tempPos.x + pointerX * 0.35;
     const ty = tempPos.y + pointerY * -0.24 + yLiftMobile;
     const tz = tempPos.z + zPullback;
@@ -196,8 +215,8 @@ function SkillsCinemaRig({
     const ly = tempLook.y + yLiftMobile * 0.85;
     const lz = tempLook.z;
 
-    const tRoll = sample.roll + pointerX * -0.025;
-    const tFov = sample.fov + fovBoost;
+    const tRoll = sample.roll + entryRollKick + pointerX * -0.025;
+    const tFov = sample.fov + entryFovKick + fovBoost;
 
     // Snap cleanly when switching chapters so each chapter starts on its exact signature framing!
     if (lastChapterRef.current !== chapterIdx) {
@@ -535,15 +554,19 @@ function SoftwareWorld3D({
       if (chapterIdx !== 1) return;
     }
 
-    // Open wide tunnel corridor smoothly as FPV camera rockets through the matrix!
-    const explode = 0.88 + Math.sin(local * Math.PI * 0.88) * 0.72;
+    // Hyper-cube matrix burst-open on chapter entry (local: 0 -> 0.18) then smooth FPV tunnel corridor!
+    const matrixEnter = smoothstep(0.0, 0.18, local);
+    const enterSpring = easeOutBack(matrixEnter);
+    const explode =
+      (0.32 + 0.56 * enterSpring) + Math.sin(local * Math.PI * 0.88) * 0.72;
+    const twistUnwind = (1 - matrixEnter) * 0.65;
 
     if (coreRef.current) {
-      coreRef.current.rotation.y = -t * 1.6;
+      coreRef.current.rotation.y = -t * 1.6 + twistUnwind * 3.2;
       coreRef.current.rotation.x = t * 1.15;
-      coreRef.current.position.z = -0.85;
-      const pulse = 1 + Math.sin(t * 4.2) * 0.12;
-      coreRef.current.scale.setScalar(pulse);
+      coreRef.current.position.z = -0.85 - (1 - matrixEnter) * 1.6;
+      const pulse = (0.4 + 0.6 * enterSpring) * (1 + Math.sin(t * 4.2) * 0.12);
+      coreRef.current.scale.setScalar(Math.max(0.1, pulse));
     }
 
     coords.forEach(([cx, cy, cz], idx) => {
@@ -558,8 +581,11 @@ function SoftwareWorld3D({
         cy * dist,
         cz * dist * 1.25 - 0.6
       );
-      m.rotation.x = t * 0.25 * cx;
-      m.rotation.y = t * 0.3 * cy;
+      const nodeScale = 0.48 + 0.52 * clamp01(enterSpring);
+      m.scale.setScalar(nodeScale);
+      m.rotation.x = t * 0.25 * cx + twistUnwind * cy;
+      m.rotation.y = t * 0.3 * cy + twistUnwind * cx;
+      m.rotation.z = twistUnwind;
     });
 
     // High-speed Z-corridor streaming data capsules rushing past camera!
@@ -668,6 +694,7 @@ function DesignWorld3D({
   const groupRef = useRef<THREE.Group>(null);
   const planeRefs = useRef<(THREE.Group | null)[]>([]);
   const keyframeRefs = useRef<(THREE.Group | null)[]>([]);
+  const ribbonRef = useRef<THREE.Mesh>(null);
 
   // Staggered X/Y/Z spatial gallery positions so lateral S-curve camera slaloms right past each screen!
   const cardAnchors: [number, number, number, number][] = useMemo(
@@ -712,12 +739,30 @@ function DesignWorld3D({
       const pl = planeRefs.current[i];
       if (!pl) continue;
       const [ax, ay, az, rotY] = cardAnchors[i];
+      // Staggered 3D spatial flip-in fan on chapter entry (local: 0 -> 0.24), then pure smooth glide!
+      const cardEnterRaw = clamp01((local - i * 0.025) / 0.14);
+      const cardEnter = easeOutBack(cardEnterRaw);
+      const settled = clamp01(cardEnterRaw);
+      const flipAngle = (1 - settled) * (i % 2 === 0 ? -1.15 : 1.15);
+      const liftY = (1 - cardEnter) * -0.58;
+      const slideX = (1 - settled) * (i % 2 === 0 ? -0.65 : 0.65);
+
       // 100% smooth continuous scroll + breathing motion (ZERO discrete step jumps!)
       const scrollGlideY = (local - 0.5) * (i % 2 === 0 ? 0.18 : -0.18);
-      const floatY = ay + scrollGlideY + Math.sin(t * 1.7 + i * 1.1) * 0.055;
-      pl.position.set(ax, floatY, az);
-      pl.rotation.y = rotY + (local - 0.5) * 0.26;
-      pl.rotation.z = Math.sin(t * 1.2 + i) * 0.02;
+      const floatY = ay + scrollGlideY + liftY + Math.sin(t * 1.7 + i * 1.1) * 0.055;
+      pl.position.set(ax + slideX, floatY, az);
+      pl.rotation.y = rotY + (local - 0.5) * 0.26 + flipAngle;
+      pl.rotation.z = Math.sin(t * 1.2 + i) * 0.02 + (1 - settled) * (i % 2 === 0 ? 0.18 : -0.18);
+      pl.scale.setScalar(Math.max(0.35, 0.5 + 0.5 * cardEnter));
+    }
+
+    if (ribbonRef.current) {
+      const ribEnter = smoothstep(0.0, 0.16, local);
+      ribbonRef.current.scale.set(
+        0.55 + 0.45 * ribEnter,
+        0.55 + 0.45 * ribEnter,
+        0.55 + 0.45 * ribEnter
+      );
     }
 
     for (let k = 0; k < 6; k++) {
@@ -803,7 +848,7 @@ function DesignWorld3D({
       ))}
 
       {/* Smooth 3D Bezier Motion Spline Weaving Through Gallery */}
-      <mesh geometry={ribbonGeo}>
+      <mesh ref={ribbonRef} geometry={ribbonGeo}>
         <meshStandardMaterial
           color="#C6FF3D"
           emissive="#C6FF3D"
@@ -843,6 +888,7 @@ function HobbiesWorld3D({
   scrollRef: React.MutableRefObject<SkillsScrollState>;
 }) {
   const groupRef = useRef<THREE.Group>(null);
+  const fretboardRef = useRef<THREE.Group>(null);
   const eqBarRefs = useRef<(THREE.Group | null)[]>([]);
   const stringRefs = useRef<(THREE.Mesh | null)[]>([]);
   const turntableRef = useRef<THREE.Group>(null);
@@ -855,22 +901,43 @@ function HobbiesWorld3D({
   useFrame((state) => {
     const t = state.clock.elapsedTime;
     const { progress: p } = scrollRef.current;
-    const { chapterIdx } = getActiveSkillChapter(p);
+    const { chapterIdx, local } = getActiveSkillChapter(p);
 
     if (groupRef.current) {
       groupRef.current.visible = chapterIdx === 3;
       if (chapterIdx !== 3) return;
     }
 
+    // Analog stage-spotlight rise & center-outward EQ surge on entry (local: 0 -> 0.24)
+    const stageEnter = smoothstep(0.0, 0.22, local);
+    const stageSpring = easeOutBack(stageEnter);
+
+    if (fretboardRef.current) {
+      fretboardRef.current.position.set(
+        -0.25 - (1 - stageEnter) * 0.55,
+        0.02 - (1 - stageSpring) * 0.85,
+        0.45
+      );
+      fretboardRef.current.rotation.set(
+        0.38,
+        0.22,
+        -0.58 - (1 - stageEnter) * 0.28
+      );
+    }
+
     const beatOmega = (112 / 60) * Math.PI * 2;
     for (let i = 0; i < eqBars.length; i++) {
       const bar = eqBarRefs.current[i];
       if (!bar) continue;
+      const distFromCenter = Math.abs(i - 8.5);
+      const eqEnter = easeOutBack(
+        clamp01((local - distFromCenter * 0.011) / 0.14)
+      );
       const groove =
         0.35 +
         0.45 * Math.abs(Math.sin(t * beatOmega * 0.5 + i * 0.45)) +
         0.28 * Math.abs(Math.cos(t * beatOmega + i * 0.85));
-      const h = Math.max(0.26, groove * 2.15);
+      const h = Math.max(0.12, groove * 2.15 * Math.max(0.15, eqEnter));
       bar.scale.y = h;
       bar.position.y = -1.42 + h * 0.5;
     }
@@ -883,10 +950,16 @@ function HobbiesWorld3D({
     }
 
     if (turntableRef.current) {
-      turntableRef.current.position.y = 0.48 + Math.sin(t * 1.5) * 0.08;
+      turntableRef.current.position.y =
+        0.48 + Math.sin(t * 1.5) * 0.08 - (1 - stageSpring) * 0.7;
+      turntableRef.current.scale.setScalar(
+        Math.max(0.45, 0.55 + 0.45 * stageSpring)
+      );
     }
     if (vinylDiscRef.current) {
-      vinylDiscRef.current.rotation.y = t * 2.6;
+      // Energetic vinyl scratch spin-up decaying smoothly into 33 RPM spin!
+      const spinBurst = (1 - stageEnter) * (1 - stageEnter) * 7.5;
+      vinylDiscRef.current.rotation.y = t * 2.6 + spinBurst;
     }
   });
 
@@ -898,7 +971,7 @@ function HobbiesWorld3D({
       <Sparkles count={50} scale={[9, 5, 8]} size={2.4} speed={0.45} color="#FF6B4A" />
 
       {/* Sweeping Angled 6-String Electric Guitar Fretboard Runway */}
-      <group position={[-0.25, 0.02, 0.45]} rotation={[0.38, 0.22, -0.58]}>
+      <group ref={fretboardRef} position={[-0.25, 0.02, 0.45]} rotation={[0.38, 0.22, -0.58]}>
         <RoundedBox args={[0.68, 3.55, 0.14]} radius={0.055} smoothness={4}>
           <meshStandardMaterial color="#1A1023" metalness={0.6} roughness={0.28} />
         </RoundedBox>
