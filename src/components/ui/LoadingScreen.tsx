@@ -6,10 +6,10 @@ import { PORTFOLIO_DATA } from "@/data/portfolio";
 import { useShowreel } from "@/context/ShowreelContext";
 
 /**
- * Branded Axis._ Cinema Preloader & Asset Warmup Screen
- * - Waits for real Google Fonts (`document.fonts.ready`), DOM load, and Act 2's 3D WebGL warmup
- * - Includes a fast fail-safe timeout (2.4s max) so slow/no-WebGL devices never stall
- * - Exits via a dramatic split-shutter aperture reveal synchronized with Act 1's hero entrance
+ * Minimalist Cinema Preloader
+ * - Pure matte obsidian canvas, subtle wordmark, 1.5px hairline progress & whisper counter
+ * - Still waits for real Google Fonts, DOM load, and Act 2 WebGL warmup (2.4s fail-safe max)
+ * - Exits with a single smooth upward curtain wipe synchronized with Act 1's hero entrance
  */
 export function LoadingScreen() {
   const { studio3DReady, setAppReady } = useShowreel();
@@ -44,10 +44,8 @@ export function LoadingScreen() {
   // 1. Track real readiness signals + hard fail-safe ceiling
   useEffect(() => {
     startedAtRef.current = performance.now();
-
     let cancelled = false;
 
-    // A) Typography readiness
     if (typeof document !== "undefined" && document.fonts?.ready) {
       document.fonts.ready.then(() => {
         if (!cancelled) setFontsReady(true);
@@ -59,7 +57,6 @@ export function LoadingScreen() {
       return () => window.clearTimeout(t);
     }
 
-    // B) Window/DOM load readiness
     const onLoad = () => {
       if (!cancelled) setDomReady(true);
     };
@@ -69,7 +66,6 @@ export function LoadingScreen() {
       window.addEventListener("load", onLoad, { once: true });
     }
 
-    // C) Hard fail-safe ceiling (2.4s) so no user or device ever gets stuck
     const failSafe = window.setTimeout(() => {
       if (!cancelled) {
         setFontsReady(true);
@@ -85,13 +81,12 @@ export function LoadingScreen() {
     };
   }, []);
 
-  // 2. Smooth 60fps interpolated percentage counter -> triggers synchronized shutter reveal at 100%
+  // 2. Smooth interpolated progress -> clean upward curtain exit at 100%
   useEffect(() => {
     if (unmounted) return;
     let rafId = 0;
     let current = 0;
-
-    const MIN_VISIBLE_MS = 680;
+    const MIN_VISIBLE_MS = 580;
 
     const step = () => {
       const elapsed = performance.now() - startedAtRef.current;
@@ -99,12 +94,10 @@ export function LoadingScreen() {
       const dDone = domReadyRef.current;
       const wDone = studioReadyRef.current || forceReadyRef.current;
 
-      // Weighted target based on real readiness milestones
       let target = 24;
       if (fDone) target += 28;
       if (dDone) target += 20;
       if (wDone) target += 28;
-      // Gentle ambient progress crawl up to 88% while waiting on WebGL shader compile
       if (!wDone) {
         target = Math.min(88, Math.max(target, 28 + (elapsed / 2200) * 58));
       }
@@ -123,7 +116,6 @@ export function LoadingScreen() {
 
       if (rounded >= 100 && !triggeredExitRef.current) {
         triggeredExitRef.current = true;
-        // Refresh GSAP ScrollTrigger right before opening curtains
         try {
           ScrollTrigger.refresh();
         } catch {
@@ -133,7 +125,7 @@ export function LoadingScreen() {
         setAppReady(true);
         window.setTimeout(() => {
           setUnmounted(true);
-        }, 720);
+        }, 700);
         return;
       }
 
@@ -146,112 +138,40 @@ export function LoadingScreen() {
 
   if (unmounted) return null;
 
-  const webglStageDone = studio3DReady || forceReady;
-  const scrollStageDone = displayPct >= 98;
   const pctStr = String(displayPct).padStart(2, "0");
 
   return (
     <div
       aria-live="polite"
-      aria-label="Loading portfolio experience"
-      className={`fixed inset-0 z-[200] overflow-hidden ${
-        exiting ? "pointer-events-none" : "pointer-events-auto"
+      aria-label="Loading portfolio"
+      className={`fixed inset-0 z-[200] flex items-center justify-center bg-[#050C14] transition-transform duration-700 ease-[cubic-bezier(0.76,0,0.24,1)] will-change-transform ${
+        exiting ? "pointer-events-none -translate-y-full" : "pointer-events-auto translate-y-0"
       }`}
     >
-      {/* Top Split Shutter Panel */}
       <div
-        className={`absolute inset-x-0 top-0 h-1/2 bg-[#050C14] transition-transform duration-700 ease-[cubic-bezier(0.76,0,0.24,1)] will-change-transform ${
-          exiting ? "-translate-y-full" : "translate-y-0"
+        className={`flex flex-col items-center gap-4 transition-all duration-350 ease-out ${
+          exiting ? "-translate-y-3 opacity-0" : "translate-y-0 opacity-100"
         }`}
       >
-        <div className="blueprint-grid absolute inset-0 opacity-35" />
-        <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-[#C6FF3D]/70 to-transparent" />
-      </div>
-
-      {/* Bottom Split Shutter Panel */}
-      <div
-        className={`absolute inset-x-0 bottom-0 h-1/2 bg-[#050C14] transition-transform duration-700 ease-[cubic-bezier(0.76,0,0.24,1)] will-change-transform ${
-          exiting ? "translate-y-full" : "translate-y-0"
-        }`}
-      >
-        <div className="blueprint-grid absolute inset-0 opacity-35" />
-        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#38BDF8]/70 to-transparent" />
-      </div>
-
-      {/* Subtle Ambient Core Glow + Center Telemetry HUD */}
-      <div
-        className={`relative z-10 flex h-full w-full flex-col items-center justify-center px-6 text-center transition-all duration-400 ease-out ${
-          exiting ? "scale-95 opacity-0" : "scale-100 opacity-100"
-        }`}
-      >
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute h-[320px] w-[320px] sm:h-[460px] sm:w-[460px] rounded-full bg-[#1D4ED8]/20 blur-[100px]"
-        />
-
-        {/* Telemetry Status Pill */}
-        <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.04] px-3.5 py-1 font-mono text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.24em] text-[#38BDF8] backdrop-blur-sm">
-          <span className="h-2 w-2 animate-pulse rounded-full bg-[#C6FF3D]" />
-          <span>Initializing 3D Digital Twin</span>
+        {/* Minimal Brand Mark */}
+        <div className="font-display text-2xl sm:text-3xl font-extrabold tracking-tight text-white select-none">
+          {PORTFOLIO_DATA.brand.name}
+          <span className="text-[#C6FF3D]">.</span>
+          <span className="inline-block animate-pulse text-[#C6FF3D]">_</span>
         </div>
 
-        {/* Brand + Giant Monospace Percentage */}
-        <div className="mt-5 flex flex-col items-center">
-          <div className="font-display text-2xl sm:text-3xl font-black tracking-tight text-white">
-            {PORTFOLIO_DATA.brand.name}
-            <span className="text-[#C6FF3D]">{PORTFOLIO_DATA.brand.markSuffix}</span>
+        {/* Hairline Progress Bar + Quiet Counter */}
+        <div className="flex items-center gap-3">
+          <div className="h-[1.5px] w-28 sm:w-36 overflow-hidden rounded-full bg-white/12">
+            <div
+              className="h-full w-full origin-left bg-[#C6FF3D] will-change-transform"
+              style={{ transform: `scaleX(${displayPct / 100})` }}
+            />
           </div>
-          <div className="mt-1 font-display text-[clamp(3.75rem,14vw,7.5rem)] font-black leading-none tracking-tighter text-white tabular-nums">
+          <span className="w-7 text-right font-mono text-[11px] font-medium tracking-widest text-white/45 tabular-nums">
             {pctStr}
-            <span className="text-[#C6FF3D] text-[0.45em] align-top ml-1">%</span>
-          </div>
-        </div>
-
-        {/* Real Asset Warmup Checklist */}
-        <div className="mt-5 flex flex-wrap items-center justify-center gap-2 sm:gap-3 font-mono text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.18em]">
-          <span
-            className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 transition-colors duration-200 ${
-              fontsReady
-                ? "border-[#C6FF3D]/45 bg-[#C6FF3D]/12 text-[#C6FF3D]"
-                : "border-white/10 bg-white/[0.03] text-slate-400"
-            }`}
-          >
-            <span className={`h-1.5 w-1.5 rounded-full ${fontsReady ? "bg-[#C6FF3D]" : "bg-slate-500"}`} />
-            01 Fonts
-          </span>
-          <span
-            className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 transition-colors duration-200 ${
-              webglStageDone
-                ? "border-[#38BDF8]/45 bg-[#38BDF8]/12 text-[#38BDF8]"
-                : "border-white/10 bg-white/[0.03] text-slate-400"
-            }`}
-          >
-            <span className={`h-1.5 w-1.5 rounded-full ${webglStageDone ? "bg-[#38BDF8]" : "bg-slate-500"}`} />
-            02 WebGL Core
-          </span>
-          <span
-            className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 transition-colors duration-200 ${
-              scrollStageDone
-                ? "border-[#FF6B4A]/45 bg-[#FF6B4A]/12 text-[#FF6B4A]"
-                : "border-white/10 bg-white/[0.03] text-slate-400"
-            }`}
-          >
-            <span className={`h-1.5 w-1.5 rounded-full ${scrollStageDone ? "bg-[#FF6B4A]" : "bg-slate-500"}`} />
-            03 Motion Rig
           </span>
         </div>
-
-        {/* Sleek Linear Progress Track */}
-        <div className="mt-6 h-[3px] w-full max-w-[260px] sm:max-w-[340px] overflow-hidden rounded-full bg-white/12">
-          <div
-            className="h-full w-full origin-left bg-gradient-to-r from-[#38BDF8] via-[#C6FF3D] to-[#FF6B4A] transition-transform duration-100 ease-out will-change-transform"
-            style={{ transform: `scaleX(${displayPct / 100})` }}
-          />
-        </div>
-
-        <p className="mt-3 font-mono text-[9px] uppercase tracking-[0.22em] text-slate-500">
-          {PORTFOLIO_DATA.brand.roleLine}
-        </p>
       </div>
     </div>
   );
