@@ -86,11 +86,11 @@ export function ContactModal() {
       role="dialog"
       aria-modal="true"
       aria-label="Direct Dispatch Console"
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-[#03070E]/85 p-3 sm:p-5 backdrop-blur-md"
+      className="fixed inset-0 z-[100] flex items-center justify-center overflow-hidden bg-[#03070E]/85 p-3 sm:p-5 backdrop-blur-md"
       onClick={() => setContactOpen(false)}
     >
       <div
-        className="relative max-h-[92dvh] w-full max-w-xl overflow-y-auto rounded-3xl border border-white/15 bg-gradient-to-b from-[#0B1A28] to-[#050C14] p-5 sm:p-8 text-white shadow-[0_32px_95px_rgba(0,0,0,0.9)]"
+        className="relative max-h-[92dvh] w-full max-w-xl overflow-x-hidden overflow-y-auto rounded-3xl border border-white/15 bg-gradient-to-b from-[#0B1A28] to-[#050C14] p-5 sm:p-8 text-white shadow-[0_32px_95px_rgba(0,0,0,0.9)]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Ambient Top Glow */}
@@ -195,7 +195,7 @@ export function ContactModal() {
         </div>
 
         {/* Dispatch Action Strip */}
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-white/10 pt-3.5">
+        <div className="mt-4 flex flex-col gap-2 border-t border-white/10 pt-3.5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
           <button
             type="button"
             onClick={copyDirectEmail}
