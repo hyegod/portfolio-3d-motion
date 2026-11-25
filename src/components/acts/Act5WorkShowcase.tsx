@@ -106,12 +106,9 @@ export function Act5WorkShowcase() {
           const isOccluded =
             (i > 0 && wipeProgress <= 0.002) || nextWipe >= 0.998;
           slide.style.visibility = isOccluded ? "hidden" : "visible";
-          if (i === 0) {
-            slide.style.clipPath = "inset(0% 0% 0% 0%)";
-          } else {
-            const leftPct = (1 - wipeProgress) * 100;
-            slide.style.clipPath = `inset(0% 0% 0% ${leftPct.toFixed(2)}%)`;
-          }
+          // Pure GPU translate3d shutter wipe (ZERO SVG clip-path re-rasterization on mobile/tablet!)
+          const leftPct = i === 0 ? 0 : (1 - wipeProgress) * 100;
+          slide.style.transform = `translate3d(${leftPct.toFixed(2)}%, 0, 0)`;
           slide.style.pointerEvents = i === activeIdx ? "auto" : "none";
         }
 
@@ -206,10 +203,10 @@ export function Act5WorkShowcase() {
             ref={(el) => {
               slideRefs.current[idx] = el;
             }}
-            className="absolute inset-0 h-full w-full overflow-hidden bg-[#050C14] will-change-[clip-path]"
+            className="absolute inset-0 h-full w-full overflow-hidden bg-[#050C14] [contain:layout_style_paint] will-change-transform"
             style={{
               zIndex: 10 + idx,
-              clipPath: idx === 0 ? "inset(0% 0% 0% 0%)" : "inset(0% 0% 0% 100%)",
+              transform: idx === 0 ? "translate3d(0%, 0, 0)" : "translate3d(100%, 0, 0)",
             }}
           >
             {/* Full-Bleed 100vw x 100vh Live 4K Motion Visual with Ken-Burns Zoom */}

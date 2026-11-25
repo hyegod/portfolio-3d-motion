@@ -9,6 +9,7 @@ import { useShowreel } from "@/context/ShowreelContext";
 import { ToolBadge } from "@/components/ui/ToolBadges";
 import { CodeCreatorPortrait } from "@/components/ui/CodeMotionAssets";
 import type { SkillsScrollState } from "@/components/three/Skills3DStage";
+import { isCompactViewport } from "@/lib/webgl";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -264,20 +265,19 @@ export function Act4SkillsPitch() {
     activeRow: 0,
   });
 
-  // Minimal Chapter Switcher, 3D Canvas & Synchronized Midpoint Transition Curtain/FX refs
+  // Minimal Chapter Switcher, 3D Canvas & Zero-Paint GPU Compositor Transition Refs
   const hudNavRef = useRef<HTMLDivElement>(null);
   const tabBtnRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const canvasLayerRef = useRef<HTMLDivElement>(null);
   const scanlineFxRef = useRef<HTMLDivElement>(null);
+  const apertureWrapFxRef = useRef<HTMLDivElement>(null);
   const apertureRingFxRef = useRef<HTMLDivElement>(null);
   const cyberCurtainRef = useRef<HTMLDivElement>(null);
   const laserSweepFxRef = useRef<HTMLDivElement>(null);
   const glitchWrapFxRef = useRef<HTMLDivElement>(null);
   const glitchBarRefs = useRef<(HTMLDivElement | null)[]>([]);
   const prismCurtainRef = useRef<HTMLDivElement>(null);
-  const prismSlashFxRef = useRef<HTMLDivElement>(null);
   const vinylDomeRef = useRef<HTMLDivElement>(null);
-  const vinylRippleFxRef = useRef<HTMLDivElement>(null);
   const stageCurtainWrapRef = useRef<HTMLDivElement>(null);
   const stageCurtainLeftRef = useRef<HTMLDivElement>(null);
   const stageCurtainRightRef = useRef<HTMLDivElement>(null);
@@ -364,6 +364,7 @@ export function Act4SkillsPitch() {
     lazyObserver.observe(section);
 
     let lastLitTab = -1;
+    const isCompact = isCompactViewport();
 
     const ctx = gsap.context(() => {
       const applyIntroEntrance = (ep: number, pinnedP: number) => {
@@ -501,25 +502,28 @@ export function Act4SkillsPitch() {
 
         const show3D = p >= 0.095 && irisP < 0.98;
         if (canvasLayerRef.current) {
-          canvasLayerRef.current.style.opacity = show3D ? "1" : "0";
-          canvasLayerRef.current.style.visibility = show3D ? "visible" : "hidden";
-          // Cut 0 clips the 3D canvas TOGETHER with the amber sky & Civil title inside the aperture!
-          canvasLayerRef.current.style.clipPath = inCut0
-            ? `circle(${(w0 * 150).toFixed(1)}% at 50% 50%)`
-            : "none";
+          // On mobile/tablet avoid expensive CSS clip-path & 3D perspective transforms on a live WebGL <Canvas>!
+          // (The 3D camera inside Skills3DStage handles native WebGL FOV/roll motion at 0 CSS readback cost.)
+          const cOp = !show3D ? 0 : isCompact && inCut0 ? w0 : 1;
+          canvasLayerRef.current.style.opacity = cOp.toFixed(3);
+          canvasLayerRef.current.style.visibility =
+            cOp > 0.005 ? "visible" : "hidden";
+          canvasLayerRef.current.style.clipPath =
+            !isCompact && inCut0
+              ? `circle(${(w0 * 150).toFixed(1)}% at 50% 50%)`
+              : "none";
 
-          // Distinct 3D canvas spatial transition momentum synced around exact cut midpoints
-          if (fx1Glitch > 0.01) {
+          if (!isCompact && fx1Glitch > 0.01) {
             const jitterX = Math.sin(p * 640) * fx1Glitch * 14;
             const skew = Math.cos(p * 480) * fx1Glitch * 4.5;
             const scX = 1 + fx1Glitch * 0.04;
             canvasLayerRef.current.style.transform = `translate3d(${jitterX.toFixed(1)}px, 0, 0) skewX(${skew.toFixed(2)}deg) scaleX(${scX.toFixed(3)})`;
-          } else if (fx2Env > 0.01) {
+          } else if (!isCompact && fx2Env > 0.01) {
             const dir = u2 < 0.5 ? -1 : 1;
             const rotY = dir * fx2Env * 11;
             const sc = 1 - fx2Env * 0.045;
             canvasLayerRef.current.style.transform = `perspective(1100px) rotateY(${rotY.toFixed(2)}deg) scale(${sc.toFixed(3)})`;
-          } else if (fx3Env > 0.01) {
+          } else if (!isCompact && fx3Env > 0.01) {
             const sc = 1 + fx3Env * 0.06;
             const rot = (u3 < 0.5 ? -1 : 1) * fx3Env * 1.5;
             canvasLayerRef.current.style.transform = `scale(${sc.toFixed(3)}) rotate(${rot.toFixed(2)}deg)`;
@@ -533,12 +537,12 @@ export function Act4SkillsPitch() {
             navVis > 0.005 ? "visible" : "hidden";
         }
 
-        // CRT Scanline Sweep Veil (dark/cyan texture across cuts 1, 2, 3 — zero white flash!)
+        // CRT Scanline Sweep Veil — pure GPU translate3d + opacity (ZERO paint, ZERO readback!)
         if (scanlineFxRef.current) {
           const scanStrength = Math.max(
-            fx1Glitch * 0.92,
-            fx2Env * 0.45,
-            fx3Env * 0.55
+            fx1Glitch * 0.85,
+            fx2Env * 0.4,
+            fx3Env * 0.5
           );
           if (scanStrength <= 0.01) {
             scanlineFxRef.current.style.visibility = "hidden";
@@ -546,31 +550,26 @@ export function Act4SkillsPitch() {
           } else {
             scanlineFxRef.current.style.visibility = "visible";
             scanlineFxRef.current.style.opacity = scanStrength.toFixed(3);
-            const yShift = ((p * 2400) % 24).toFixed(1);
-            scanlineFxRef.current.style.backgroundPosition = `0 ${yShift}px`;
+            const yShift = ((p * 2400) % 20).toFixed(1);
+            scanlineFxRef.current.style.transform = `translate3d(0, ${yShift}px, 0)`;
           }
         }
 
-        // FX 0: Blueprint Amber Aperture Ring (Intro -> 01 Civil, synced with circular clipPath!)
-        if (apertureRingFxRef.current) {
+        // FX 0: Blueprint Amber Aperture Ring — pure GPU scale() on pre-painted ring (ZERO repaint!)
+        if (apertureWrapFxRef.current && apertureRingFxRef.current) {
           if (fx0 <= 0.01) {
-            apertureRingFxRef.current.style.visibility = "hidden";
-            apertureRingFxRef.current.style.opacity = "0";
+            apertureWrapFxRef.current.style.visibility = "hidden";
+            apertureWrapFxRef.current.style.opacity = "0";
           } else {
-            const r = w0 * 150;
-            const rInner = Math.max(0, r - 4.5).toFixed(1);
-            const rLime = Math.max(0, r - 1.2).toFixed(1);
-            const rPeak = r.toFixed(1);
-            const rOuter = (r + 3.2).toFixed(1);
-            apertureRingFxRef.current.style.visibility = "visible";
-            apertureRingFxRef.current.style.opacity = fx0.toFixed(3);
-            apertureRingFxRef.current.style.backgroundImage = `radial-gradient(circle at 50% 50%, transparent ${rInner}%, rgba(198,255,61,0.5) ${rLime}%, rgba(245,158,11,0.94) ${rPeak}%, transparent ${rOuter}%)`;
+            apertureWrapFxRef.current.style.visibility = "visible";
+            apertureWrapFxRef.current.style.opacity = fx0.toFixed(3);
+            const ringScale = Math.max(0.02, w0 * 1.15);
+            apertureRingFxRef.current.style.transform = `translate3d(-50%, -50%, 0) scale(${ringScale.toFixed(4)})`;
           }
         }
 
         // FX 1: Cyber Terminal Laser Shutter + Chromatic RGB Glitch (01 Civil -> 02 Software)
-        // Phase A (u1 <= 0.5): sweeps IN left->right covering Civil; swap happens at u1 = 0.5 (p = 0.315)
-        // Phase B (u1 > 0.5): sweeps OFF left->right uncovering Software!
+        // 100% pure GPU translate3d (ZERO clip-path, ZERO left layout reflow, ZERO mix-blend readback!)
         if (cyberCurtainRef.current && laserSweepFxRef.current) {
           if (!inCut1) {
             cyberCurtainRef.current.style.visibility = "hidden";
@@ -580,20 +579,20 @@ export function Act4SkillsPitch() {
             cyberCurtainRef.current.style.visibility = "visible";
             if (u1 <= 0.5) {
               const tIn = easeInOutCubic(u1 * 2);
-              const rightPct = ((1 - tIn) * 100).toFixed(1);
-              cyberCurtainRef.current.style.clipPath = `inset(0 ${rightPct}% 0 0)`;
+              const tx = ((tIn - 1) * 100).toFixed(2);
+              cyberCurtainRef.current.style.transform = `translate3d(${tx}%, 0, 0)`;
               const beamOp = Math.sin(tIn * Math.PI);
               laserSweepFxRef.current.style.visibility = beamOp > 0.01 ? "visible" : "hidden";
               laserSweepFxRef.current.style.opacity = beamOp.toFixed(3);
-              laserSweepFxRef.current.style.left = `${(tIn * 100).toFixed(2)}%`;
+              laserSweepFxRef.current.style.transform = `translate3d(${(tIn * 100).toFixed(2)}vw, 0, 0)`;
             } else {
               const tOut = easeInOutCubic((u1 - 0.5) * 2);
-              const leftPct = (tOut * 100).toFixed(1);
-              cyberCurtainRef.current.style.clipPath = `inset(0 0 0 ${leftPct}%)`;
+              const tx = (tOut * 100).toFixed(2);
+              cyberCurtainRef.current.style.transform = `translate3d(${tx}%, 0, 0)`;
               const beamOp = Math.sin(tOut * Math.PI);
               laserSweepFxRef.current.style.visibility = beamOp > 0.01 ? "visible" : "hidden";
               laserSweepFxRef.current.style.opacity = beamOp.toFixed(3);
-              laserSweepFxRef.current.style.left = `${(tOut * 100).toFixed(2)}%`;
+              laserSweepFxRef.current.style.transform = `translate3d(${(tOut * 100).toFixed(2)}vw, 0, 0)`;
             }
           }
         }
@@ -616,102 +615,42 @@ export function Act4SkillsPitch() {
           }
         }
 
-        // FX 2: 45° Diagonal Glass Prism Sheet + Prismatic Refraction Blade (02 Software -> 03 UI/UX & 3D)
-        // Phase A (u2 <= 0.5): slashes IN top-left -> bottom-right over Software; swap at u2 = 0.5 (p = 0.510)
-        // Phase B (u2 > 0.5): clears OUT top-left -> bottom-right unveiling UI/UX & 3D!
-        if (prismCurtainRef.current && prismSlashFxRef.current) {
+        // FX 2: 45° Diagonal Glass Prism Sheet + Built-In Luminous Edge Blades (02 Software -> 03 UI/UX & 3D)
+        // 100% pure GPU translate3d + rotate(45deg) — ZERO clip-path: polygon() & ZERO gradient repaints!
+        if (prismCurtainRef.current) {
           if (!inCut2) {
             prismCurtainRef.current.style.visibility = "hidden";
-            prismSlashFxRef.current.style.visibility = "hidden";
-            prismSlashFxRef.current.style.opacity = "0";
           } else {
             prismCurtainRef.current.style.visibility = "visible";
-            let bladePos = 0;
-            let bladeOp = 0;
-            if (u2 <= 0.5) {
-              const tIn = easeInOutCubic(u2 * 2);
-              const s = tIn * 200;
-              const p2x = Math.min(100, s).toFixed(1);
-              const p3y = Math.max(0, s - 100).toFixed(1);
-              const p4x = Math.max(0, s - 100).toFixed(1);
-              const p5y = Math.min(100, s).toFixed(1);
-              prismCurtainRef.current.style.clipPath = `polygon(0% 0%, ${p2x}% 0%, ${p2x}% ${p3y}%, ${p4x}% ${p5y}%, 0% ${p5y}%)`;
-              bladePos = tIn * 100;
-              bladeOp = Math.sin(tIn * Math.PI);
-            } else {
-              const tOut = easeInOutCubic((u2 - 0.5) * 2);
-              const s = tOut * 200;
-              const aX = Math.min(100, s).toFixed(1);
-              const aY = Math.max(0, s - 100).toFixed(1);
-              const bX = Math.max(0, s - 100).toFixed(1);
-              const bY = Math.min(100, s).toFixed(1);
-              prismCurtainRef.current.style.clipPath = `polygon(${aX}% ${aY}%, 100% ${aY}%, 100% 100%, ${bX}% 100%, ${bX}% ${bY}%)`;
-              bladePos = tOut * 100;
-              bladeOp = Math.sin(tOut * Math.PI);
-            }
-
-            if (bladeOp <= 0.01) {
-              prismSlashFxRef.current.style.visibility = "hidden";
-              prismSlashFxRef.current.style.opacity = "0";
-            } else {
-              const c0 = Math.max(0, bladePos - 9).toFixed(1);
-              const c1 = Math.max(0, bladePos - 3.2).toFixed(1);
-              const c2 = bladePos.toFixed(1);
-              const c3 = Math.min(100, bladePos + 3.2).toFixed(1);
-              const c4 = Math.min(100, bladePos + 9.5).toFixed(1);
-              prismSlashFxRef.current.style.visibility = "visible";
-              prismSlashFxRef.current.style.opacity = (bladeOp * 0.95).toFixed(3);
-              prismSlashFxRef.current.style.backgroundImage = `linear-gradient(to bottom right, transparent ${c0}%, rgba(56,189,248,0.6) ${c1}%, rgba(198,255,61,0.96) ${c2}%, rgba(168,85,247,0.64) ${c3}%, transparent ${c4}%)`;
-            }
+            const slidePct =
+              u2 <= 0.5
+                ? (easeInOutCubic(u2 * 2) - 1) * 100
+                : easeInOutCubic((u2 - 0.5) * 2) * 100;
+            prismCurtainRef.current.style.transform = `translate3d(-50%, -50%, 0) rotate(45deg) translate3d(${slidePct.toFixed(2)}%, 0, 0)`;
           }
         }
 
         // FX 3: Bottom Vinyl Spotlight Dome -> Twin Stage Curtains Parting (03 UI/UX & 3D -> 04 Hobbies)
-        // Phase A (u3 <= 0.5): dark stage dome blooms up from 50% 100% over UI/UX; swap at u3 = 0.5 (p = 0.705)
-        // Phase B (u3 > 0.5): twin midnight curtains part open horizontally revealing Hobbies stage!
+        // 100% pure GPU scale() + translate3d() — ZERO clip-path: circle() & ZERO gradient repaints!
         if (
           vinylDomeRef.current &&
-          vinylRippleFxRef.current &&
           stageCurtainWrapRef.current &&
           stageCurtainLeftRef.current &&
           stageCurtainRightRef.current
         ) {
           if (!inCut3) {
             vinylDomeRef.current.style.visibility = "hidden";
-            vinylRippleFxRef.current.style.visibility = "hidden";
-            vinylRippleFxRef.current.style.opacity = "0";
             stageCurtainWrapRef.current.style.visibility = "hidden";
           } else if (u3 <= 0.5) {
             const tIn = easeInOutCubic(u3 * 2);
-            const r = tIn * 150;
+            const domeScale = Math.max(0.01, tIn * 1.16);
             vinylDomeRef.current.style.visibility = "visible";
-            vinylDomeRef.current.style.clipPath = `circle(${r.toFixed(1)}% at 50% 100%)`;
+            vinylDomeRef.current.style.transform = `translate3d(-50%, -50%, 0) scale(${domeScale.toFixed(4)})`;
             stageCurtainWrapRef.current.style.visibility = "hidden";
-
-            const ripOp = Math.sin(tIn * Math.PI);
-            if (ripOp <= 0.01) {
-              vinylRippleFxRef.current.style.visibility = "hidden";
-              vinylRippleFxRef.current.style.opacity = "0";
-            } else {
-              const g1a = Math.max(0, r - 18).toFixed(1);
-              const g1b = Math.max(0, r - 16.2).toFixed(1);
-              const g1c = Math.max(0, r - 14.4).toFixed(1);
-              const g2a = Math.max(0, r - 9.5).toFixed(1);
-              const g2b = Math.max(0, r - 7.8).toFixed(1);
-              const g2c = Math.max(0, r - 6.0).toFixed(1);
-              const rA = Math.max(0, r - 3.0).toFixed(1);
-              const rB = r.toFixed(1);
-              const rC = (r + 3.8).toFixed(1);
-              vinylRippleFxRef.current.style.visibility = "visible";
-              vinylRippleFxRef.current.style.opacity = (ripOp * 0.94).toFixed(3);
-              vinylRippleFxRef.current.style.backgroundImage = `radial-gradient(circle at 50% 100%, transparent ${g1a}%, rgba(192,132,252,0.38) ${g1b}%, transparent ${g1c}%, transparent ${g2a}%, rgba(255,107,74,0.52) ${g2b}%, transparent ${g2c}%, transparent ${rA}%, rgba(255,107,74,0.95) ${rB}%, transparent ${rC}%)`;
-            }
           } else {
             const tOut = easeInOutCubic((u3 - 0.5) * 2);
             const shift = (tOut * 105).toFixed(2);
             vinylDomeRef.current.style.visibility = "hidden";
-            vinylRippleFxRef.current.style.visibility = "hidden";
-            vinylRippleFxRef.current.style.opacity = "0";
             stageCurtainWrapRef.current.style.visibility = "visible";
             stageCurtainLeftRef.current.style.transform = `translate3d(-${shift}%, 0, 0)`;
             stageCurtainRightRef.current.style.transform = `translate3d(${shift}%, 0, 0)`;
@@ -766,27 +705,36 @@ export function Act4SkillsPitch() {
           const headerEl = headerRefs.current[cIdx];
           const spotEl = spotlightWrapRefs.current[cIdx];
 
-          if (bgEl) {
+            if (bgEl) {
             if (!isCurrent) {
               bgEl.style.visibility = "hidden";
+              bgEl.style.opacity = "0";
               bgEl.style.clipPath = "none";
             } else {
               bgEl.style.visibility = "visible";
-              // Cut 0 clips Civil's sky in exact lockstep with canvasLayerRef & fgChapterRefs[0]!
-              // Cuts 1..3 swap seamlessly behind the z-[44] synchronized midpoint curtains!
-              bgEl.style.clipPath =
-                cIdx === 0 && inCut0
-                  ? `circle(${(w0 * 150).toFixed(1)}% at 50% 50%)`
-                  : "none";
+              if (cIdx === 0 && inCut0) {
+                if (isCompact) {
+                  bgEl.style.clipPath = "none";
+                  bgEl.style.opacity = w0.toFixed(3);
+                } else {
+                  bgEl.style.opacity = "1";
+                  bgEl.style.clipPath = `circle(${(w0 * 150).toFixed(1)}% at 50% 50%)`;
+                }
+              } else {
+                bgEl.style.opacity = "1";
+                bgEl.style.clipPath = "none";
+              }
             }
           }
 
           if (fgEl) {
             const fgOp = !isCurrent
               ? 0
-              : cIdx === 3
-                ? 1 - clamp01((irisP - 0.25) / 0.5)
-                : 1;
+              : cIdx === 0 && isCompact && inCut0
+                ? w0
+                : cIdx === 3
+                  ? 1 - clamp01((irisP - 0.25) / 0.5)
+                  : 1;
 
             if (fgOp <= 0.005) {
               fgEl.style.visibility = "hidden";
@@ -796,7 +744,7 @@ export function Act4SkillsPitch() {
               fgEl.style.visibility = "visible";
               fgEl.style.opacity = fgOp.toFixed(3);
               fgEl.style.clipPath =
-                cIdx === 0 && inCut0
+                cIdx === 0 && !isCompact && inCut0
                   ? `circle(${(w0 * 150).toFixed(1)}% at 50% 50%)`
                   : "none";
 
@@ -928,8 +876,14 @@ export function Act4SkillsPitch() {
         // BEAT 5 (0.835 -> 1.00): WHITE CIRCULAR IRIS WIPE + "STAND OUT"
         // ====================================================================
         if (stageFinaleRef.current) {
-          const rad = irisP * 148;
-          stageFinaleRef.current.style.clipPath = `circle(${rad.toFixed(1)}% at 50% 92%)`;
+          if (isCompact) {
+            stageFinaleRef.current.style.clipPath = "none";
+            stageFinaleRef.current.style.transform = `translate3d(0, ${((1 - irisP) * 100).toFixed(2)}%, 0)`;
+          } else {
+            const rad = irisP * 148;
+            stageFinaleRef.current.style.transform = "none";
+            stageFinaleRef.current.style.clipPath = `circle(${rad.toFixed(1)}% at 50% 92%)`;
+          }
           stageFinaleRef.current.style.opacity = irisP > 0.005 ? "1" : "0";
           stageFinaleRef.current.style.visibility =
             irisP > 0.005 ? "visible" : "hidden";
@@ -965,7 +919,7 @@ export function Act4SkillsPitch() {
         trigger: section,
         start: "top top",
         end: "bottom bottom",
-        scrub: 0.55,
+        scrub: isCompact ? 0.22 : 0.55,
         onEnter: () => {
           setActiveChapter("act-4");
           setLetterboxActive(false);
@@ -1189,17 +1143,17 @@ export function Act4SkillsPitch() {
         />
 
         {/* ================================================================
-            SYNCHRONIZED MIDPOINT TRANSITION CURTAINS & VFX (z-[44..45])
-            Sweeps OVER both 3D canvas (z-34) & titles (z-42), swaps at exact midpoint u = 0.5!
+            100% GPU COMPOSITOR-ONLY MIDPOINT TRANSITION CURTAINS & VFX (z-[44..45])
+            ZERO clip-path repaints, ZERO backgroundImage repaints, ZERO mix-blend WebGL readbacks!
            ================================================================ */}
-        {/* FX 1 Curtain: Cyber Terminal Laser Shutter (01 Civil -> 02 Software) */}
+        {/* FX 1 Curtain: Cyber Terminal Laser Shutter (01 Civil -> 02 Software, pure translate3d) */}
         <div
           ref={cyberCurtainRef}
           aria-hidden="true"
-          style={{ visibility: "hidden" }}
-          className="pointer-events-none absolute inset-0 z-[44] overflow-hidden bg-[#040B18] bg-[radial-gradient(circle_at_50%_50%,rgba(56,189,248,0.28)_0%,rgba(29,78,216,0.22)_46%,#040B18_85%)]"
+          style={{ visibility: "hidden", transform: "translate3d(-100%, 0, 0)" }}
+          className="pointer-events-none absolute inset-0 z-[44] overflow-hidden bg-[#040B18] bg-[radial-gradient(circle_at_50%_50%,rgba(56,189,248,0.28)_0%,rgba(29,78,216,0.22)_46%,#040B18_85%)] [contain:layout_style_paint] will-change-transform"
         >
-          <div className="dot-grid-dark absolute inset-0 opacity-75" />
+          <div className="dot-grid-dark absolute inset-0 opacity-70" />
           <div className="absolute inset-0 flex items-center justify-center">
             <span className="font-mono text-[11px] sm:text-xs font-bold uppercase tracking-[0.42em] text-[#38BDF8]/55">
               SYS // SOLVER MATRIX
@@ -1207,42 +1161,57 @@ export function Act4SkillsPitch() {
           </div>
         </div>
 
-        {/* FX 2 Curtain: 45° Diagonal Glass Prism Sheet (02 Software -> 03 UI/UX & 3D) */}
+        {/* FX 2 Curtain: 45° Diagonal Glass Prism Sheet + Built-In Chromatic Blades (pure translate3d + rotate) */}
         <div
           ref={prismCurtainRef}
           aria-hidden="true"
-          style={{ visibility: "hidden" }}
-          className="pointer-events-none absolute inset-0 z-[44] overflow-hidden bg-[#0A0F24] bg-[radial-gradient(circle_at_50%_48%,rgba(198,255,61,0.18)_0%,rgba(124,58,237,0.34)_48%,#0A0F24_86%)]"
+          style={{
+            visibility: "hidden",
+            transform: "translate3d(-50%, -50%, 0) rotate(45deg) translate3d(-100%, 0, 0)",
+          }}
+          className="pointer-events-none absolute left-1/2 top-1/2 z-[44] h-[165vmax] w-[165vmax] overflow-visible bg-[#0A0F24] bg-[radial-gradient(circle_at_50%_50%,rgba(198,255,61,0.16)_0%,rgba(124,58,237,0.34)_48%,#0A0F24_86%)] [contain:layout_style_paint] will-change-transform"
         >
-          <div className="blueprint-grid absolute inset-0 opacity-40" />
+          <div className="blueprint-grid absolute inset-0 opacity-35" />
+          {/* Leading Diagonal Prismatic Refraction Edge (Right edge of rotated sheet) */}
+          <div className="absolute inset-y-0 -right-12 w-24 bg-gradient-to-r from-[#A855F7]/60 via-[#C6FF3D]/90 to-[#38BDF8]/0" />
+          <div className="absolute inset-y-0 right-0 w-[3px] bg-[#C6FF3D] shadow-[0_0_24px_#C6FF3D,0_0_48px_#38BDF8]" />
+          {/* Trailing Diagonal Prismatic Refraction Edge (Left edge of rotated sheet) */}
+          <div className="absolute inset-y-0 -left-12 w-24 bg-gradient-to-l from-[#38BDF8]/60 via-[#C6FF3D]/90 to-[#A855F7]/0" />
+          <div className="absolute inset-y-0 left-0 w-[3px] bg-[#C6FF3D] shadow-[0_0_24px_#C6FF3D,0_0_48px_#A855F7]" />
         </div>
 
-        {/* FX 3A Curtain: Midnight Vinyl Stage Dome (u3: 0 -> 0.5) */}
+        {/* FX 3A Curtain: Midnight Vinyl Stage Dome + Concentric Groove Ripples (pure GPU scale!) */}
         <div
           ref={vinylDomeRef}
           aria-hidden="true"
-          style={{ visibility: "hidden" }}
-          className="pointer-events-none absolute inset-0 z-[44] overflow-hidden bg-[#0D0716]"
-        />
+          style={{
+            visibility: "hidden",
+            transform: "translate3d(-50%, -50%, 0) scale(0.01)",
+          }}
+          className="pointer-events-none absolute left-1/2 top-full z-[44] h-[220vmax] w-[220vmax] rounded-full bg-[#0D0716] border-[3px] border-[#FF6B4A]/90 shadow-[0_0_40px_rgba(255,107,74,0.65)] [contain:layout_style_paint] will-change-transform"
+        >
+          <div className="absolute inset-[7%] rounded-full border-2 border-[#FF6B4A]/45" />
+          <div className="absolute inset-[15%] rounded-full border border-[#C084FC]/40" />
+        </div>
 
-        {/* FX 3B Curtain: Twin Stage Curtains Parting From Center (u3: 0.5 -> 1.0) */}
+        {/* FX 3B Curtain: Twin Stage Curtains Parting From Center (u3: 0.5 -> 1.0, pure translate3d) */}
         <div
           ref={stageCurtainWrapRef}
           aria-hidden="true"
           style={{ visibility: "hidden" }}
-          className="pointer-events-none absolute inset-0 z-[44] overflow-hidden"
+          className="pointer-events-none absolute inset-0 z-[44] overflow-hidden [contain:layout_style_paint]"
         >
           <div
             ref={stageCurtainLeftRef}
-            className="absolute inset-y-0 left-0 w-1/2 bg-[#0D0716] border-r-2 border-[#FF6B4A]/80 shadow-[12px_0_45px_rgba(255,107,74,0.45)] will-change-transform"
+            className="absolute inset-y-0 left-0 w-1/2 bg-[#0D0716] border-r-2 border-[#FF6B4A]/85 shadow-[12px_0_38px_rgba(255,107,74,0.45)] will-change-transform"
           />
           <div
             ref={stageCurtainRightRef}
-            className="absolute inset-y-0 right-0 w-1/2 bg-[#0D0716] border-l-2 border-[#C084FC]/80 shadow-[-12px_0_45px_rgba(192,132,252,0.45)] will-change-transform"
+            className="absolute inset-y-0 right-0 w-1/2 bg-[#0D0716] border-l-2 border-[#C084FC]/85 shadow-[-12px_0_38px_rgba(192,132,252,0.45)] will-change-transform"
           />
         </div>
 
-        {/* CRT Scanline Sweep Veil */}
+        {/* CRT Scanline Sweep Veil (oversized -top-6 so pure translate3d scrolls scanlines with ZERO repaint!) */}
         <div
           ref={scanlineFxRef}
           aria-hidden="true"
@@ -1252,44 +1221,49 @@ export function Act4SkillsPitch() {
             backgroundImage:
               "repeating-linear-gradient(0deg, rgba(56,189,248,0.12) 0px, rgba(56,189,248,0.12) 1px, rgba(2,6,23,0.18) 1px, rgba(2,6,23,0.18) 2px, transparent 2px, transparent 5px)",
           }}
-          className="pointer-events-none absolute inset-0 z-[45] will-change-[opacity]"
+          className="pointer-events-none absolute inset-x-0 -top-6 bottom-0 z-[45] will-change-[transform,opacity]"
         />
 
-        {/* FX 0: Blueprint Amber Aperture Ring + Crosshair Axes (Entering 01 Civil) */}
+        {/* FX 0: Blueprint Amber Aperture Ring + Crosshair Axes (Pre-painted ring scaled purely on GPU!) */}
         <div
-          ref={apertureRingFxRef}
+          ref={apertureWrapFxRef}
           aria-hidden="true"
           style={{ opacity: 0, visibility: "hidden" }}
-          className="pointer-events-none absolute inset-0 z-[45] mix-blend-screen will-change-[opacity]"
+          className="pointer-events-none absolute inset-0 z-[45] overflow-hidden will-change-[opacity]"
         >
           <div className="absolute inset-x-0 top-1/2 h-px bg-gradient-to-r from-transparent via-[#F59E0B]/40 to-transparent" />
           <div className="absolute inset-y-0 left-1/2 w-px bg-gradient-to-b from-transparent via-[#F59E0B]/40 to-transparent" />
+          <div
+            ref={apertureRingFxRef}
+            style={{ transform: "translate3d(-50%, -50%, 0) scale(0.02)" }}
+            className="absolute left-1/2 top-1/2 h-[150vmax] w-[150vmax] rounded-full border-[4px] border-[#F59E0B] shadow-[0_0_32px_rgba(245,158,11,0.75),inset_0_0_24px_rgba(198,255,61,0.45)] will-change-transform"
+          />
         </div>
 
-        {/* FX 1A: Symmetric Vertical Cyan/Lime Terminal Laser Beam (01 Civil -> 02 Software) */}
+        {/* FX 1A: Symmetric Vertical Cyan/Lime Terminal Laser Beam (pure translate3d, ZERO left reflow!) */}
         <div
           ref={laserSweepFxRef}
           aria-hidden="true"
-          style={{ opacity: 0, visibility: "hidden", left: "0%" }}
-          className="pointer-events-none absolute inset-y-0 z-[45] -ml-10 w-20 mix-blend-screen will-change-[left,opacity]"
+          style={{ opacity: 0, visibility: "hidden", transform: "translate3d(0vw, 0, 0)" }}
+          className="pointer-events-none absolute inset-y-0 left-0 z-[45] -ml-10 w-20 will-change-[transform,opacity]"
         >
-          <div className="h-full w-full bg-gradient-to-r from-transparent via-[#38BDF8]/55 to-transparent" />
-          <div className="absolute left-1/2 -translate-x-1/2 inset-y-0 w-[3px] bg-[#E0F2FE] shadow-[0_0_24px_#38BDF8,0_0_48px_#C6FF3D]" />
+          <div className="h-full w-full bg-gradient-to-r from-transparent via-[#38BDF8]/50 to-transparent" />
+          <div className="absolute left-1/2 -translate-x-1/2 inset-y-0 w-[3px] bg-[#E0F2FE] shadow-[0_0_22px_#38BDF8,0_0_40px_#C6FF3D]" />
         </div>
 
-        {/* FX 1B: Chromatic RGB Glitch Slice Bars (01 Civil -> 02 Software) */}
+        {/* FX 1B: Chromatic RGB Glitch Slice Bars (Zero mix-blend-screen WebGL readback!) */}
         <div
           ref={glitchWrapFxRef}
           aria-hidden="true"
           style={{ opacity: 0, visibility: "hidden" }}
-          className="pointer-events-none absolute inset-0 z-[45] overflow-hidden mix-blend-screen will-change-[opacity]"
+          className="pointer-events-none absolute inset-0 z-[45] overflow-hidden will-change-[opacity]"
         >
           {[
-            { top: "14%", height: "3px", width: "58%", left: "12%", color: "rgba(56,189,248,0.8)", shadow: "10px 0 0 rgba(244,63,94,0.72), -8px 0 0 rgba(198,255,61,0.7)" },
-            { top: "31%", height: "6px", width: "74%", left: "18%", color: "rgba(198,255,61,0.55)", shadow: "-14px 0 0 rgba(56,189,248,0.75), 14px 0 0 rgba(244,63,94,0.75)" },
-            { top: "51%", height: "4px", width: "86%", left: "7%", color: "rgba(244,63,94,0.68)", shadow: "12px 0 0 rgba(56,189,248,0.82), -10px 0 0 rgba(198,255,61,0.65)" },
-            { top: "69%", height: "7px", width: "62%", left: "26%", color: "rgba(56,189,248,0.62)", shadow: "-16px 0 0 rgba(244,63,94,0.72), 9px 0 0 rgba(198,255,61,0.62)" },
-            { top: "84%", height: "3px", width: "52%", left: "16%", color: "rgba(198,255,61,0.7)", shadow: "11px 0 0 rgba(56,189,248,0.78), -11px 0 0 rgba(244,63,94,0.68)" },
+            { top: "14%", height: "3px", width: "58%", left: "12%", color: "rgba(56,189,248,0.78)", shadow: "10px 0 0 rgba(244,63,94,0.68), -8px 0 0 rgba(198,255,61,0.68)" },
+            { top: "31%", height: "5px", width: "74%", left: "18%", color: "rgba(198,255,61,0.52)", shadow: "-14px 0 0 rgba(56,189,248,0.72), 14px 0 0 rgba(244,63,94,0.72)" },
+            { top: "51%", height: "4px", width: "86%", left: "7%", color: "rgba(244,63,94,0.65)", shadow: "12px 0 0 rgba(56,189,248,0.78), -10px 0 0 rgba(198,255,61,0.62)" },
+            { top: "69%", height: "6px", width: "62%", left: "26%", color: "rgba(56,189,248,0.6)", shadow: "-16px 0 0 rgba(244,63,94,0.68), 9px 0 0 rgba(198,255,61,0.6)" },
+            { top: "84%", height: "3px", width: "52%", left: "16%", color: "rgba(198,255,61,0.68)", shadow: "11px 0 0 rgba(56,189,248,0.74), -11px 0 0 rgba(244,63,94,0.65)" },
           ].map((bar, idx) => (
             <div
               key={idx}
@@ -1308,22 +1282,6 @@ export function Act4SkillsPitch() {
             />
           ))}
         </div>
-
-        {/* FX 2: 45° Diagonal Glass Prism Refraction Blade (02 Software -> 03 UI/UX & 3D) */}
-        <div
-          ref={prismSlashFxRef}
-          aria-hidden="true"
-          style={{ opacity: 0, visibility: "hidden" }}
-          className="pointer-events-none absolute inset-0 z-[45] mix-blend-screen will-change-[opacity]"
-        />
-
-        {/* FX 3: Concentric Vinyl Groove Ripples + Stage Spotlight Arc (03 UI/UX & 3D -> 04 Hobbies) */}
-        <div
-          ref={vinylRippleFxRef}
-          aria-hidden="true"
-          style={{ opacity: 0, visibility: "hidden" }}
-          className="pointer-events-none absolute inset-0 z-[45] mix-blend-screen will-change-[opacity]"
-        />
 
         {/* ================================================================
             4 CARDLESS FRAMELESS KINETIC SUPER-TITLE CHOREOGRAPHIES

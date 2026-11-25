@@ -64,8 +64,8 @@ export default function StudioSceneCanvas({
 
   return (
     <Canvas
-      shadows="percentage"
-      dpr={compact ? [1, 1.35] : [1, 1.65]}
+      shadows={compact ? false : "percentage"}
+      dpr={compact ? [1, 1.1] : [1, 1.6]}
       frameloop={active || warmingUp ? "always" : "demand"}
       camera={{ position: [-0.48, 0.72, 1.88], fov: 46, near: 0.04, far: 45 }}
       gl={{

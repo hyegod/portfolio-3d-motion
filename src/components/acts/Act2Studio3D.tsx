@@ -184,7 +184,7 @@ export function Act2Studio3D() {
           ref={editorialRef}
           className="pointer-events-none absolute inset-0 z-10 mx-auto flex max-w-[1440px] flex-col justify-between px-5 pt-[max(58px,9.5dvh)] pb-[max(46px,9.5dvh)] sm:px-14 opacity-0 will-change-transform"
         >
-          <div className="max-w-[270px] sm:max-w-sm rounded-2xl border border-white/10 bg-[#07111E]/65 px-4 py-3 backdrop-blur-md">
+          <div className="max-w-[270px] sm:max-w-sm rounded-2xl border border-white/10 bg-[#07111E]/88 md:bg-[#07111E]/65 px-4 py-3 md:backdrop-blur-md">
             <span className="block font-mono text-[9px] font-bold uppercase tracking-[0.22em] text-[#38BDF8]">
               02.A // STRUCTURAL DIGITAL TWIN
             </span>
@@ -193,7 +193,7 @@ export function Act2Studio3D() {
             </p>
           </div>
 
-          <div className="ml-auto max-w-[270px] sm:max-w-sm rounded-2xl border border-white/10 bg-[#07111E]/65 px-4 py-3 text-right backdrop-blur-md">
+          <div className="ml-auto max-w-[270px] sm:max-w-sm rounded-2xl border border-white/10 bg-[#07111E]/88 md:bg-[#07111E]/65 px-4 py-3 text-right md:backdrop-blur-md">
             <span className="block font-mono text-[9px] font-bold uppercase tracking-[0.22em] text-[#C6FF3D]">
               02.B // COMPUTATIONAL SOLVER
             </span>

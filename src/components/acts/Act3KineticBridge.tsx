@@ -6,6 +6,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { PORTFOLIO_DATA } from "@/data/portfolio";
 import { useShowreel } from "@/context/ShowreelContext";
 import { ToolBadge } from "@/components/ui/ToolBadges";
+import { isCompactViewport } from "@/lib/webgl";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -83,6 +84,7 @@ export function Act3KineticBridge() {
     if (!section) return;
 
     let lastCreateStage = -1;
+    const isCompact = isCompactViewport();
 
     const ctx = gsap.context(() => {
       const applyProgress = (p: number, updateHud = true) => {
@@ -153,7 +155,15 @@ export function Act3KineticBridge() {
         const b1Local = clamp01((p - 0.26) / 0.25);
 
         if (beat1Ref.current) {
-          beat1Ref.current.style.clipPath = `circle(${(b1Wipe * 150).toFixed(1)}% at 50% 50%)`;
+          if (isCompact) {
+            beat1Ref.current.style.clipPath = "none";
+            beat1Ref.current.style.opacity = b1Wipe.toFixed(3);
+            beat1Ref.current.style.transform = `scale(${(0.88 + b1Wipe * 0.12).toFixed(3)})`;
+          } else {
+            beat1Ref.current.style.opacity = "1";
+            beat1Ref.current.style.transform = "none";
+            beat1Ref.current.style.clipPath = `circle(${(b1Wipe * 150).toFixed(1)}% at 50% 50%)`;
+          }
           beat1Ref.current.style.visibility = b1Wipe > 0.005 ? "visible" : "hidden";
         }
 
@@ -195,13 +205,19 @@ export function Act3KineticBridge() {
         const b2Local = clamp01((p - 0.5) / 0.25);
 
         if (beat2Ref.current) {
-          // Sweeping diagonal razor polygon from right-bottom across to full viewport
-          const lead = 125 - b2Wipe * 155;
-          const tail = 100 - b2Wipe * 155;
-          beat2Ref.current.style.clipPath =
-            b2Wipe >= 0.995
-              ? "polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)"
-              : `polygon(${lead.toFixed(1)}% 0%, 100% 0%, 100% 100%, ${tail.toFixed(1)}% 100%)`;
+          if (isCompact) {
+            beat2Ref.current.style.clipPath = "none";
+            beat2Ref.current.style.transform = `translate3d(${((1 - b2Wipe) * 100).toFixed(2)}%, 0, 0)`;
+          } else {
+            beat2Ref.current.style.transform = "none";
+            // Sweeping diagonal razor polygon from right-bottom across to full viewport
+            const lead = 125 - b2Wipe * 155;
+            const tail = 100 - b2Wipe * 155;
+            beat2Ref.current.style.clipPath =
+              b2Wipe >= 0.995
+                ? "polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)"
+                : `polygon(${lead.toFixed(1)}% 0%, 100% 0%, 100% 100%, ${tail.toFixed(1)}% 100%)`;
+          }
           beat2Ref.current.style.visibility = b2Wipe > 0.005 ? "visible" : "hidden";
         }
 
@@ -246,7 +262,13 @@ export function Act3KineticBridge() {
         const b3Local = clamp01((p - 0.74) / 0.26);
 
         if (beat3Ref.current) {
-          beat3Ref.current.style.clipPath = `circle(${(b3Wipe * 150).toFixed(1)}% at 50% 50%)`;
+          if (isCompact) {
+            beat3Ref.current.style.clipPath = "none";
+            beat3Ref.current.style.transform = `translate3d(0, ${((1 - b3Wipe) * 100).toFixed(2)}%, 0)`;
+          } else {
+            beat3Ref.current.style.transform = "none";
+            beat3Ref.current.style.clipPath = `circle(${(b3Wipe * 150).toFixed(1)}% at 50% 50%)`;
+          }
           beat3Ref.current.style.visibility = b3Wipe > 0.005 ? "visible" : "hidden";
         }
 

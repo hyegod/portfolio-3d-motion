@@ -5,6 +5,7 @@ import * as THREE from "three";
 import { useFrame, useThree } from "@react-three/fiber";
 import { Environment, Lightformer, Sparkles } from "@react-three/drei";
 import type { Studio3DScrollState } from "@/context/ShowreelContext";
+import { isCompactViewport } from "@/lib/webgl";
 
 export const PORTAL_CUT_P = 0.44;
 export const TWIN_START_P = 0.24;
@@ -123,24 +124,27 @@ export function SceneRigAndFX({
     []
   );
 
+  const isCompactGpu = useMemo(() => isCompactViewport(), []);
+  const fboFrameCountRef = useRef(0);
+
   // Offscreen Portal Camera & Adaptive-DPI RenderTarget for the CRT Monitor Screen!
-  // Uses lightweight non-MSAA 960px cap on mobile GPUs vs 4x MSAA 1600px on desktop
+  // Uses lightweight non-MSAA 560px cap on mobile/tablet GPUs vs 4x MSAA 1600px on desktop
   const portalCam = useMemo(
     () => new THREE.PerspectiveCamera(45, 1.6, 0.1, 45),
     []
   );
   const crtFbo = useMemo(() => {
-    const isMobileGpu =
-      typeof window !== "undefined" &&
-      (window.innerWidth < 768 ||
-        window.matchMedia("(pointer: coarse)").matches);
-    const rt = new THREE.WebGLRenderTarget(isMobileGpu ? 768 : 1280, isMobileGpu ? 480 : 800, {
-      type: THREE.UnsignedByteType,
-      minFilter: THREE.LinearFilter,
-      magFilter: THREE.LinearFilter,
-      depthBuffer: true,
-      samples: isMobileGpu ? 0 : 4,
-    });
+    const rt = new THREE.WebGLRenderTarget(
+      isCompactGpu ? 560 : 1280,
+      isCompactGpu ? 360 : 800,
+      {
+        type: THREE.UnsignedByteType,
+        minFilter: THREE.LinearFilter,
+        magFilter: THREE.LinearFilter,
+        depthBuffer: true,
+        samples: isCompactGpu ? 0 : 4,
+      }
+    );
     // Render into RGBA8 with exact canvas toneMapping + sRGB output & alpha blending
     // so uPortalBlend = 1.0 matches direct Phase 2 canvas output bit-for-bit (#07111E === #07111E)!
     rt.texture.colorSpace = THREE.SRGBColorSpace;
@@ -149,16 +153,16 @@ export function SceneRigAndFX({
       rt as THREE.WebGLRenderTarget & { isXRRenderTarget?: boolean }
     ).isXRRenderTarget = true;
     return rt;
-  }, []);
+  }, [isCompactGpu]);
 
   useEffect(() => {
     const dpr = gl.getPixelRatio();
-    const maxW = size.width < 768 ? 960 : 1600;
+    const maxW = isCompactGpu ? 640 : 1600;
     const w = Math.max(2, Math.min(maxW, Math.round(size.width * dpr)));
     const aspect = size.width / Math.max(1, size.height);
     const h = Math.max(2, Math.round(w / aspect));
     crtFbo.setSize(w, h);
-  }, [crtFbo, gl, size.height, size.width]);
+  }, [crtFbo, gl, isCompactGpu, size.height, size.width]);
 
   useEffect(() => {
     return () => {
@@ -222,18 +226,25 @@ export function SceneRigAndFX({
       portalCam.updateProjectionMatrix();
 
       // 2. Render LIVE Babak 2 3D Digital Twin into crtFbo for the CRT Monitor Screen!
-      if (roomGroupRef.current) roomGroupRef.current.visible = false;
-      if (twinGroupRef.current) twinGroupRef.current.visible = true;
-      if (roomLightsRef.current) roomLightsRef.current.visible = false;
-      if (twinLightsRef.current) twinLightsRef.current.visible = true;
-      if (shadowGroupRef.current) shadowGroupRef.current.visible = true;
-      scene.background = studioColor;
+      // On mobile/tablet GPUs, update the CRT screen every 2nd frame (30fps CRT while main camera runs 60fps!)
+      fboFrameCountRef.current += 1;
+      const shouldRenderFbo =
+        !isCompactGpu || fboFrameCountRef.current <= 2 || fboFrameCountRef.current % 2 === 0;
 
-      const prevTarget = gl.getRenderTarget();
-      gl.setRenderTarget(crtFbo);
-      gl.clear(true, true, false);
-      gl.render(scene, portalCam);
-      gl.setRenderTarget(prevTarget);
+      if (shouldRenderFbo) {
+        if (roomGroupRef.current) roomGroupRef.current.visible = false;
+        if (twinGroupRef.current) twinGroupRef.current.visible = true;
+        if (roomLightsRef.current) roomLightsRef.current.visible = false;
+        if (twinLightsRef.current) twinLightsRef.current.visible = true;
+        if (shadowGroupRef.current) shadowGroupRef.current.visible = true;
+        scene.background = studioColor;
+
+        const prevTarget = gl.getRenderTarget();
+        gl.setRenderTarget(crtFbo);
+        gl.clear(true, true, false);
+        gl.render(scene, portalCam);
+        gl.setRenderTarget(prevTarget);
+      }
 
       // Mutate the LIVE compiled ShaderMaterial uniforms directly!
       gl.getDrawingBufferSize(drawBufSize);
@@ -380,7 +391,7 @@ export function SceneRigAndFX({
         <directionalLight position={[-5.5, 3.5, 2.5]} intensity={1.25} color="#38BDF8" />
 
         <Sparkles
-          count={56}
+          count={isCompactGpu ? 24 : 56}
           scale={[7.8, 4.4, 5.5]}
           position={[0, 1.35, 0.2]}
           size={2.4}
@@ -390,7 +401,7 @@ export function SceneRigAndFX({
         />
       </group>
 
-      <Environment resolution={128} frames={1}>
+      <Environment resolution={isCompactGpu ? 64 : 128} frames={1}>
         <Lightformer
           form="rect"
           intensity={2.8}

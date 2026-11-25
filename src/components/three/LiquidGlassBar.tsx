@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useRef } from "react";
+import React, { useMemo, useRef } from "react";
 import * as THREE from "three";
 import { useFrame, useThree } from "@react-three/fiber";
 import { MeshTransmissionMaterial } from "@react-three/drei";
 import type { Studio3DScrollState } from "@/context/ShowreelContext";
+import { isCompactViewport } from "@/lib/webgl";
 
 interface LiquidGlassBarProps {
   scrollRef: React.MutableRefObject<Studio3DScrollState>;
@@ -26,6 +27,7 @@ export function LiquidGlassBar({ scrollRef }: LiquidGlassBarProps) {
   const { size } = useThree();
   const groupRef = useRef<THREE.Group>(null);
   const rimRef = useRef<THREE.Mesh>(null);
+  const isCompactGpu = useMemo(() => isCompactViewport(), []);
 
   useFrame(({ clock }) => {
     const group = groupRef.current;
@@ -64,24 +66,39 @@ export function LiquidGlassBar({ scrollRef }: LiquidGlassBarProps) {
   return (
     <group ref={groupRef} visible={false}>
       <mesh rotation={[0, 0, Math.PI / 2]}>
-        <capsuleGeometry args={[0.25, 2.32, 16, 32]} />
-        <MeshTransmissionMaterial
-          backside={false}
-          samples={4}
-          resolution={512}
-          transmission={0.96}
-          thickness={0.2}
-          roughness={0.02}
-          ior={1.08}
-          chromaticAberration={0.055}
-          anisotropy={0.15}
-          distortion={0.03}
-          distortionScale={0.22}
-          temporalDistortion={0.1}
-          color="#F5EEFF"
-          attenuationColor="#A855F7"
-          attenuationDistance={3.4}
-        />
+        <capsuleGeometry args={[0.25, 2.32, isCompactGpu ? 10 : 16, isCompactGpu ? 20 : 32]} />
+        {isCompactGpu ? (
+          <meshPhysicalMaterial
+            color="#F5EEFF"
+            emissive="#A855F7"
+            emissiveIntensity={0.08}
+            transparent
+            opacity={0.28}
+            roughness={0.06}
+            metalness={0.12}
+            clearcoat={1}
+            clearcoatRoughness={0.06}
+            depthWrite={false}
+          />
+        ) : (
+          <MeshTransmissionMaterial
+            backside={false}
+            samples={4}
+            resolution={512}
+            transmission={0.96}
+            thickness={0.2}
+            roughness={0.02}
+            ior={1.08}
+            chromaticAberration={0.055}
+            anisotropy={0.15}
+            distortion={0.03}
+            distortionScale={0.22}
+            temporalDistortion={0.1}
+            color="#F5EEFF"
+            attenuationColor="#A855F7"
+            attenuationDistance={3.4}
+          />
+        )}
       </mesh>
 
       <mesh ref={rimRef} scale={[1.03, 1.012, 0.4]}>

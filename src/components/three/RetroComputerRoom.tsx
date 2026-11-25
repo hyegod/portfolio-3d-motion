@@ -5,6 +5,7 @@ import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
 import { RoundedBox, Sparkles } from "@react-three/drei";
 import type { Studio3DScrollState } from "@/context/ShowreelContext";
+import { isCompactViewport } from "@/lib/webgl";
 
 interface RetroComputerRoomProps {
   scrollRef: React.MutableRefObject<Studio3DScrollState>;
@@ -312,6 +313,7 @@ export function RetroComputerRoom({
   const steamRefs = useRef<(THREE.Mesh | null)[]>([]);
   const osdMatRef = useRef<THREE.MeshBasicMaterial>(null);
   const mouseMeshRef = useRef<THREE.Group>(null);
+  const isCompactGpu = useMemo(() => isCompactViewport(), []);
 
   const initialUniforms = useMemo(
     () => ({
@@ -728,7 +730,7 @@ export function RetroComputerRoom({
           </mesh>
         ))}
 
-        {/* Individual Sculpted Mechanical Keycaps */}
+        {/* Individual Sculpted Mechanical Keycaps (lightweight boxGeometry on mobile/tablet saves ~80 ExtrudeGeometries!) */}
         {keycaps.map((kc, idx) => (
           <group
             key={idx}
@@ -737,13 +739,20 @@ export function RetroComputerRoom({
             }}
             position={[kc.x, 0.019, kc.z]}
           >
-            <RoundedBox
-              args={[kc.w, 0.014, 0.025]}
-              radius={0.0035}
-              smoothness={2}
-            >
-              <meshStandardMaterial color={kc.col} roughness={0.4} />
-            </RoundedBox>
+            {isCompactGpu ? (
+              <mesh>
+                <boxGeometry args={[kc.w, 0.014, 0.025]} />
+                <meshStandardMaterial color={kc.col} roughness={0.4} />
+              </mesh>
+            ) : (
+              <RoundedBox
+                args={[kc.w, 0.014, 0.025]}
+                radius={0.0035}
+                smoothness={2}
+              >
+                <meshStandardMaterial color={kc.col} roughness={0.4} />
+              </RoundedBox>
+            )}
           </group>
         ))}
       </group>
@@ -838,7 +847,7 @@ export function RetroComputerRoom({
 
       {/* Floating Golden Sunbeam Dust Motes */}
       <Sparkles
-        count={68}
+        count={isCompactGpu ? 26 : 68}
         scale={[2.6, 1.9, 2.2]}
         position={[-0.45, 0.78, 0.25]}
         size={2.6}

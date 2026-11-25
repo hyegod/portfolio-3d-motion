@@ -5,6 +5,7 @@ import Lenis from "lenis";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useShowreel } from "@/context/ShowreelContext";
+import { isCompactViewport } from "@/lib/webgl";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -60,28 +61,16 @@ export function SmoothScrollProvider({
   }, [isAppReady]);
 
   useEffect(() => {
-    const isTouchOnly =
-      typeof window !== "undefined" &&
-      window.matchMedia("(pointer: coarse)").matches;
+    const useNativeTouchScroll = isCompactViewport();
 
-    const lenis = new Lenis({
-      duration: 1.05,
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      smoothWheel: true,
-      wheelMultiplier: 1.0,
-      touchMultiplier: 1.35,
-    });
-    lenisRef.current = lenis;
-
-    // Respect initial locked state while preloader is up
-    if (!isAppReady) {
-      lenis.stop();
-    }
+    // Prevent iOS/Android address-bar resize jumps from triggering jarring ScrollTrigger recalculations
+    ScrollTrigger.config({ ignoreMobileResize: true });
 
     let lastElString = "";
-    lenis.on("scroll", ({ progress }: { progress: number }) => {
-      ScrollTrigger.update();
-      const p = Number.isFinite(progress) ? Math.min(1, Math.max(0, progress)) : 0;
+    const updateHudProgress = (rawProgress: number) => {
+      const p = Number.isFinite(rawProgress)
+        ? Math.min(1, Math.max(0, rawProgress))
+        : 0;
       if (progressBarRef.current) {
         progressBarRef.current.style.transform = `scaleX(${p})`;
       }
@@ -93,7 +82,36 @@ export function SmoothScrollProvider({
           elevationTextRef.current.textContent = nextStr;
         }
       }
-    });
+    };
+
+    // Desktop gets silky Lenis wheel smoothing; Mobile & Tablet keep 100% native 60-120Hz hardware inertia!
+    let lenis: Lenis | null = null;
+    if (!useNativeTouchScroll) {
+      lenis = new Lenis({
+        duration: 1.05,
+        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+        smoothWheel: true,
+        wheelMultiplier: 1.0,
+      });
+      lenisRef.current = lenis;
+      if (!isAppReady) lenis.stop();
+
+      lenis.on("scroll", ({ progress }: { progress: number }) => {
+        ScrollTrigger.update();
+        updateHudProgress(progress);
+      });
+    }
+
+    const onNativeScroll = () => {
+      const maxScroll = Math.max(
+        1,
+        document.documentElement.scrollHeight - window.innerHeight
+      );
+      updateHudProgress(window.scrollY / maxScroll);
+    };
+    if (useNativeTouchScroll) {
+      window.addEventListener("scroll", onNativeScroll, { passive: true });
+    }
 
     let lastTime = performance.now();
     const tick = (time: number) => {
@@ -109,14 +127,17 @@ export function SmoothScrollProvider({
         if (currentY >= maxScroll - 4) {
           setIsAutoPlaying(false);
         } else {
-          // ~52 seconds across the entire 6-act cinema showreel
           const pxPerSec = Math.max(220, maxScroll / 52);
           const nextY = Math.min(maxScroll, currentY + pxPerSec * dt);
-          lenis.scrollTo(nextY, { immediate: true });
+          if (lenis) {
+            lenis.scrollTo(nextY, { immediate: true });
+          } else {
+            window.scrollTo(0, nextY);
+          }
         }
       }
 
-      lenis.raf(now);
+      lenis?.raf(now);
     };
 
     gsap.ticker.add(tick);
@@ -135,16 +156,22 @@ export function SmoothScrollProvider({
       }
     };
     const onMouseMove = (e: MouseEvent) => {
-      studio3DRef.current.mouseX = (e.clientX / Math.max(1, window.innerWidth)) * 2 - 1;
-      studio3DRef.current.mouseY = -(e.clientY / Math.max(1, window.innerHeight)) * 2 + 1;
+      studio3DRef.current.mouseX =
+        (e.clientX / Math.max(1, window.innerWidth)) * 2 - 1;
+      studio3DRef.current.mouseY =
+        -(e.clientY / Math.max(1, window.innerHeight)) * 2 + 1;
     };
 
     let resizeTimer = 0;
+    let lastWidth = window.innerWidth;
     const onResize = () => {
+      // Ignore mobile browser URL-bar height-only resizes while scrolling!
+      if (useNativeTouchScroll && window.innerWidth === lastWidth) return;
+      lastWidth = window.innerWidth;
       window.clearTimeout(resizeTimer);
       resizeTimer = window.setTimeout(() => {
         ScrollTrigger.refresh();
-      }, 220);
+      }, 240);
     };
 
     window.addEventListener("wheel", stopAutoPlay, { passive: true });
@@ -152,23 +179,26 @@ export function SmoothScrollProvider({
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("resize", onResize, { passive: true });
     window.addEventListener("orientationchange", onResize);
-    if (!isTouchOnly) {
+    if (!useNativeTouchScroll) {
       window.addEventListener("mousemove", onMouseMove, { passive: true });
     }
 
     registerScrollTo((chapterId: string) => {
       if (chapterId === "top") {
-        lenis.scrollTo(0, { duration: 1.35 });
+        if (lenis) lenis.scrollTo(0, { duration: 1.35 });
+        else window.scrollTo({ top: 0, behavior: "smooth" });
         return;
       }
       const el = document.getElementById(chapterId);
       if (el) {
-        lenis.scrollTo(el, { duration: 1.25, offset: 0 });
+        if (lenis) lenis.scrollTo(el, { duration: 1.25, offset: 0 });
+        else el.scrollIntoView({ behavior: "smooth" });
       }
     });
 
     registerScrollToY((y: number) => {
-      lenis.scrollTo(y, { duration: 1.05 });
+      if (lenis) lenis.scrollTo(y, { duration: 1.05 });
+      else window.scrollTo({ top: y, behavior: "smooth" });
     });
 
     const refreshTimer = window.setTimeout(() => {
@@ -183,11 +213,13 @@ export function SmoothScrollProvider({
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("resize", onResize);
       window.removeEventListener("orientationchange", onResize);
-      if (!isTouchOnly) {
+      if (useNativeTouchScroll) {
+        window.removeEventListener("scroll", onNativeScroll);
+      } else {
         window.removeEventListener("mousemove", onMouseMove);
       }
       gsap.ticker.remove(tick);
-      lenis.destroy();
+      lenis?.destroy();
       lenisRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

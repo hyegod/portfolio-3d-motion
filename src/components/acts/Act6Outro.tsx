@@ -421,11 +421,13 @@ export function Act6Outro() {
       className="relative h-[240vh] w-full bg-[#040A12] text-white"
     >
       <div className="sticky top-0 flex h-[100dvh] w-full flex-col items-center justify-between overflow-hidden bg-[#040A12] px-4 pb-3 pt-14 sm:px-8 sm:pb-5 sm:pt-16 [perspective:1200px]">
-        {/* === DYNAMIC ACCENT ATMOSPHERE GLOW === */}
+        {/* === DYNAMIC ACCENT ATMOSPHERE GLOW (Pure radial-gradient — ZERO costly CSS blur-[120px]!) === */}
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute left-1/2 top-1/2 h-[480px] w-[480px] sm:h-[640px] sm:w-[640px] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[120px] transition-colors duration-700"
-          style={{ backgroundColor: `${selectedChannel.accent}22` }}
+          className="pointer-events-none absolute left-1/2 top-1/2 h-[640px] w-[640px] sm:h-[820px] sm:w-[820px] -translate-x-1/2 -translate-y-1/2 rounded-full transition-opacity duration-500"
+          style={{
+            backgroundImage: `radial-gradient(circle, ${selectedChannel.accent}2A 0%, ${selectedChannel.accent}0E 38%, transparent 70%)`,
+          }}
         />
         <div className="dot-grid-dark pointer-events-none absolute inset-0 opacity-45" />
 
@@ -648,7 +650,7 @@ export function Act6Outro() {
             {/* === MAGNETIC HERO DISPATCH CAPSULE === */}
             <div
               ref={magneticCardRef}
-              className="relative mt-3 flex w-full max-w-2xl flex-col items-center justify-between gap-2.5 rounded-3xl sm:rounded-full border border-white/20 bg-gradient-to-r from-[#0B1B2B]/95 via-[#0F273D]/95 to-[#091522]/95 p-2.5 sm:flex-row sm:px-4 sm:py-2.5 shadow-[0_22px_60px_rgba(0,0,0,0.75)] backdrop-blur-xl will-change-transform"
+              className="relative mt-3 flex w-full max-w-2xl flex-col items-center justify-between gap-2.5 rounded-3xl sm:rounded-full border border-white/20 bg-gradient-to-r from-[#0B1B2B]/96 via-[#0F273D]/96 to-[#091522]/96 p-2.5 sm:flex-row sm:px-4 sm:py-2.5 shadow-[0_22px_60px_rgba(0,0,0,0.75)] md:backdrop-blur-xl will-change-transform"
             >
               {copied && (
                 <span

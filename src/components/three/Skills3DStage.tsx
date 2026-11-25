@@ -141,8 +141,10 @@ function sampleCameraPath(
  */
 function SkillsCinemaRig({
   scrollRef,
+  compact,
 }: {
   scrollRef: React.MutableRefObject<SkillsScrollState>;
+  compact: boolean;
 }) {
   const { camera, size } = useThree();
   const smoothPos = useMemo(() => new THREE.Vector3(-3.15, -1.28, 3.85), []);
@@ -261,7 +263,7 @@ function SkillsCinemaRig({
       <pointLight position={[2.5, 1.5, 3]} intensity={1.7} distance={16} color="#C6FF3D" />
       <pointLight position={[-2.5, -1, 3]} intensity={1.5} distance={16} color="#FF6B4A" />
 
-      <Environment resolution={128} frames={1}>
+      <Environment resolution={compact ? 64 : 128} frames={1}>
         <Lightformer
           form="rect"
           intensity={3.2}
@@ -294,8 +296,10 @@ function SkillsCinemaRig({
  */
 function CivilWorld3D({
   scrollRef,
+  compact,
 }: {
   scrollRef: React.MutableRefObject<SkillsScrollState>;
+  compact: boolean;
 }) {
   const groupRef = useRef<THREE.Group>(null);
   const floorRefs = useRef<(THREE.Group | null)[]>([]);
@@ -358,7 +362,7 @@ function CivilWorld3D({
     <group ref={groupRef}>
       {/* Wide 3D Structural Site Grid & Atmospheric Dust for Optical Flow */}
       <gridHelper args={[16, 24, "#F59E0B", "#261B10"]} position={[0, -1.68, 0]} />
-      <Sparkles count={45} scale={[9, 6, 9]} size={2.4} speed={0.35} color="#FACC15" />
+      <Sparkles count={compact ? 18 : 45} scale={[9, 6, 9]} size={2.4} speed={0.35} color="#FACC15" />
 
       {/* Surrounding Context Structural Pylons in 3D Depth (Enhances Camera Parallax!) */}
       {[
@@ -512,8 +516,10 @@ function CivilWorld3D({
  */
 function SoftwareWorld3D({
   scrollRef,
+  compact,
 }: {
   scrollRef: React.MutableRefObject<SkillsScrollState>;
+  compact: boolean;
 }) {
   const groupRef = useRef<THREE.Group>(null);
   const coreRef = useRef<THREE.Group>(null);
@@ -601,7 +607,7 @@ function SoftwareWorld3D({
   return (
     <group ref={groupRef}>
       <gridHelper args={[18, 24, "#38BDF8", "#0A1936"]} position={[0, -2.25, -1]} />
-      <Sparkles count={60} scale={[8, 6, 10]} size={2.5} speed={0.55} color="#38BDF8" />
+      <Sparkles count={compact ? 22 : 60} scale={[8, 6, 10]} size={2.5} speed={0.55} color="#38BDF8" />
 
       {/* Central Glowing Volt-Lime Solver Core */}
       <group ref={coreRef}>
@@ -647,16 +653,26 @@ function SoftwareWorld3D({
               nodeRefs.current[idx] = el;
             }}
           >
-            <RoundedBox args={[0.44, 0.44, 0.44]} radius={0.11} smoothness={4}>
-              <meshPhysicalMaterial
-                color={col}
-                emissive={emissiveCol}
-                emissiveIntensity={idx % 4 === 0 ? 0.35 : 0.1}
-                metalness={0.72}
-                roughness={0.18}
-                clearcoat={0.9}
-                clearcoatRoughness={0.12}
-              />
+            <RoundedBox args={[0.44, 0.44, 0.44]} radius={0.11} smoothness={compact ? 2 : 4}>
+              {compact ? (
+                <meshStandardMaterial
+                  color={col}
+                  emissive={emissiveCol}
+                  emissiveIntensity={idx % 4 === 0 ? 0.35 : 0.1}
+                  metalness={0.72}
+                  roughness={0.2}
+                />
+              ) : (
+                <meshPhysicalMaterial
+                  color={col}
+                  emissive={emissiveCol}
+                  emissiveIntensity={idx % 4 === 0 ? 0.35 : 0.1}
+                  metalness={0.72}
+                  roughness={0.18}
+                  clearcoat={0.9}
+                  clearcoatRoughness={0.12}
+                />
+              )}
             </RoundedBox>
           </group>
         );
@@ -689,8 +705,10 @@ function SoftwareWorld3D({
  */
 function DesignWorld3D({
   scrollRef,
+  compact,
 }: {
   scrollRef: React.MutableRefObject<SkillsScrollState>;
+  compact: boolean;
 }) {
   const groupRef = useRef<THREE.Group>(null);
   const planeRefs = useRef<(THREE.Group | null)[]>([]);
@@ -782,7 +800,7 @@ function DesignWorld3D({
   return (
     <group ref={groupRef}>
       <gridHelper args={[18, 24, "#A855F7", "#151936"]} position={[0, -1.85, -0.5]} />
-      <Sparkles count={50} scale={[9, 5, 8]} size={2.2} speed={0.4} color="#C6FF3D" />
+      <Sparkles count={compact ? 18 : 50} scale={[9, 5, 8]} size={2.2} speed={0.4} color="#C6FF3D" />
 
       {/* 4 Staggered Spatial Rounded-2xl Specular UI Screens (depthWrite prevents Z-sort pop!) */}
       {[0, 1, 2, 3].map((idx) => (
@@ -792,14 +810,22 @@ function DesignWorld3D({
             planeRefs.current[idx] = el;
           }}
         >
-          <RoundedBox args={[2.1, 1.36, 0.055]} radius={0.14} smoothness={4}>
-            <meshPhysicalMaterial
-              color="#141E3B"
-              metalness={0.35}
-              roughness={0.15}
-              clearcoat={1}
-              clearcoatRoughness={0.1}
-            />
+          <RoundedBox args={[2.1, 1.36, 0.055]} radius={0.14} smoothness={compact ? 2 : 4}>
+            {compact ? (
+              <meshStandardMaterial
+                color="#141E3B"
+                metalness={0.45}
+                roughness={0.18}
+              />
+            ) : (
+              <meshPhysicalMaterial
+                color="#141E3B"
+                metalness={0.35}
+                roughness={0.15}
+                clearcoat={1}
+                clearcoatRoughness={0.1}
+              />
+            )}
           </RoundedBox>
 
           <RoundedBox
@@ -885,8 +911,10 @@ function DesignWorld3D({
  */
 function HobbiesWorld3D({
   scrollRef,
+  compact,
 }: {
   scrollRef: React.MutableRefObject<SkillsScrollState>;
+  compact: boolean;
 }) {
   const groupRef = useRef<THREE.Group>(null);
   const fretboardRef = useRef<THREE.Group>(null);
@@ -969,7 +997,7 @@ function HobbiesWorld3D({
   return (
     <group ref={groupRef}>
       <gridHelper args={[18, 24, "#FF6B4A", "#24102C"]} position={[0, -1.45, 0]} />
-      <Sparkles count={50} scale={[9, 5, 8]} size={2.4} speed={0.45} color="#FF6B4A" />
+      <Sparkles count={compact ? 18 : 50} scale={[9, 5, 8]} size={2.4} speed={0.45} color="#FF6B4A" />
 
       {/* Sweeping Angled 6-String Electric Guitar Fretboard Runway */}
       <group ref={fretboardRef} position={[-0.25, 0.02, 0.45]} rotation={[0.38, 0.22, -0.58]}>
@@ -1096,7 +1124,7 @@ export default function Skills3DStage({ scrollRef, active }: Skills3DStageProps)
 
   return (
     <Canvas
-      dpr={compact ? [1, 1.3] : [1, 1.6]}
+      dpr={compact ? [1, 1.05] : [1, 1.6]}
       frameloop={active ? "always" : "demand"}
       camera={{ position: [-3.15, -1.28, 3.85], fov: 50, near: 0.1, far: 45 }}
       gl={{
@@ -1106,11 +1134,11 @@ export default function Skills3DStage({ scrollRef, active }: Skills3DStageProps)
       }}
       className="pointer-events-none h-full w-full"
     >
-      <SkillsCinemaRig scrollRef={scrollRef} />
-      <CivilWorld3D scrollRef={scrollRef} />
-      <SoftwareWorld3D scrollRef={scrollRef} />
-      <DesignWorld3D scrollRef={scrollRef} />
-      <HobbiesWorld3D scrollRef={scrollRef} />
+      <SkillsCinemaRig scrollRef={scrollRef} compact={compact} />
+      <CivilWorld3D scrollRef={scrollRef} compact={compact} />
+      <SoftwareWorld3D scrollRef={scrollRef} compact={compact} />
+      <DesignWorld3D scrollRef={scrollRef} compact={compact} />
+      <HobbiesWorld3D scrollRef={scrollRef} compact={compact} />
     </Canvas>
   );
 }

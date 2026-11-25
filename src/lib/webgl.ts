@@ -21,10 +21,19 @@ export function detectWebGLSupport(): boolean {
   }
 }
 
+/**
+ * Covers BOTH phones AND tablets (iPad / Android tablets up to 1280px with touch,
+ * plus any narrow viewport <= 1024px) so tile-based mobile GPUs always use the
+ * ultra-fast low-overdraw rendering tier.
+ */
 export function isCompactViewport(): boolean {
   if (typeof window === "undefined") return false;
+  const coarse = window.matchMedia("(pointer: coarse)").matches;
+  const touchCapable =
+    typeof navigator !== "undefined" && navigator.maxTouchPoints > 0;
   return (
-    window.innerWidth < 768 ||
-    window.matchMedia("(pointer: coarse)").matches
+    window.innerWidth <= 1024 ||
+    coarse ||
+    (touchCapable && window.innerWidth <= 1280)
   );
 }

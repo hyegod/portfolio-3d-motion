@@ -370,7 +370,7 @@ export function Act1HeroCollage() {
               className="hero-prop absolute left-[4%] top-[6%] sm:left-[15%] sm:top-[18%] lg:left-[19%] lg:top-[20%] z-20 will-change-transform"
             >
               <div className="animate-float-gentle">
-                <CodeDraftingToolsProp className="h-18 w-18 sm:h-32 sm:w-32 md:h-40 md:w-40 drop-shadow-[0_22px_28px_rgba(3,10,45,0.72)]" />
+                <CodeDraftingToolsProp className="h-18 w-18 sm:h-32 sm:w-32 md:h-40 md:w-40 md:drop-shadow-[0_22px_28px_rgba(3,10,45,0.72)]" />
               </div>
             </div>
 
@@ -380,7 +380,7 @@ export function Act1HeroCollage() {
               className="hero-prop absolute bottom-[12%] left-[3%] sm:bottom-[15%] sm:left-[11%] lg:left-[15%] z-20 will-change-transform"
             >
               <div className="animate-float-reverse">
-                <CodeEspressoProp className="h-17 w-17 sm:h-28 sm:w-28 md:h-36 md:w-36 drop-shadow-[0_24px_30px_rgba(3,10,45,0.74)]" />
+                <CodeEspressoProp className="h-17 w-17 sm:h-28 sm:w-28 md:h-36 md:w-36 md:drop-shadow-[0_24px_30px_rgba(3,10,45,0.74)]" />
               </div>
             </div>
 
@@ -390,7 +390,7 @@ export function Act1HeroCollage() {
               className="hero-prop absolute bottom-[3%] left-1/2 -translate-x-1/2 sm:translate-x-0 sm:bottom-[9%] sm:left-[25%] lg:left-[29%] z-10 will-change-transform"
             >
               <div className="animate-float-gentle" style={{ animationDelay: "-1.4s" }}>
-                <CodeMechKeyboardProp className="h-17 sm:h-28 md:h-36 w-auto drop-shadow-[0_22px_30px_rgba(3,10,45,0.72)]" />
+                <CodeMechKeyboardProp className="h-17 sm:h-28 md:h-36 w-auto md:drop-shadow-[0_22px_30px_rgba(3,10,45,0.72)]" />
               </div>
             </div>
 
@@ -400,7 +400,7 @@ export function Act1HeroCollage() {
               className="hero-prop absolute right-[3%] top-[5%] sm:right-[14%] sm:top-[5%] lg:right-[20%] z-10 will-change-transform"
             >
               <div className="animate-float-reverse" style={{ animationDelay: "-0.8s" }}>
-                <CodeTurntableProp className="h-20 sm:h-36 md:h-48 w-auto drop-shadow-[0_24px_34px_rgba(3,10,45,0.75)]" />
+                <CodeTurntableProp className="h-20 sm:h-36 md:h-48 w-auto md:drop-shadow-[0_24px_34px_rgba(3,10,45,0.75)]" />
               </div>
             </div>
 
@@ -410,7 +410,7 @@ export function Act1HeroCollage() {
               className="hero-prop absolute bottom-[9%] right-[2%] sm:bottom-[10%] sm:right-[5%] lg:right-[8%] z-20 will-change-transform"
             >
               <div className="animate-float-gentle relative" style={{ animationDelay: "-2.1s" }}>
-                <CodeCreatorPortrait className="h-28 sm:h-52 md:h-68 w-auto drop-shadow-[0_26px_32px_rgba(3,10,45,0.78)]" />
+                <CodeCreatorPortrait className="h-28 sm:h-52 md:h-68 w-auto md:drop-shadow-[0_26px_32px_rgba(3,10,45,0.78)]" />
                 <div className="absolute -bottom-1.5 right-0 -rotate-6 rounded-md bg-[#C6FF3D] px-2 py-0.5 font-mono text-[8px] sm:text-[10px] font-black uppercase tracking-wider text-[#061859] shadow-lg">
                   CIVIL × CODE
                 </div>
